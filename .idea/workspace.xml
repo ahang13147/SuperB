@@ -4,11 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="71113a10-aa88-4c5f-933c-4852af9f6f7d" name="更改" comment="XML change from Guanhang and Jiawei">
-      <change afterPath="$PROJECT_DIR$/GUI-part/booking_centre.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/GUI-part/booking_centre.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/GUI-part/booking_centre.js" afterDir="false" />
+<<<<<<< HEAD
+    <list default="true" id="71113a10-aa88-4c5f-933c-4852af9f6f7d" name="更改" comment="">
+      <change afterPath="$PROJECT_DIR$/test/fetch_diicsu_syllabus.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+=======
+    <list default="true" id="71113a10-aa88-4c5f-933c-4852af9f6f7d" name="更改" comment="test from PC from Guanhang and Jiawei">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+>>>>>>> origin/main
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -19,7 +23,7 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="HTML File" />
+        <option value="Python Script" />
       </list>
     </option>
   </component>
@@ -42,9 +46,7 @@
   &quot;associatedIndex&quot;: 1
 }</component>
   <component name="ProjectId" id="2to2c93oBgrh8ZMEPK6HN0h6EE9" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
-    <ConfirmationsSetting value="2" id="Add" />
-  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -52,7 +54,12 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "DefaultHtmlFileTemplate": "HTML File",
+<<<<<<< HEAD
+    "Python.calendar.executor": "Run",
+    "Python.fetch_diicsu_syllabus.executor": "Run",
+    "Python.syllabus.executor": "Run",
+=======
+>>>>>>> origin/main
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "git-widget-placeholder": "main",
@@ -62,7 +69,11 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
+<<<<<<< HEAD
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
+=======
     "settings.editor.selected.configurable": "project.propVCSSupport.DirectoryMappings",
+>>>>>>> origin/main
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -84,8 +95,12 @@
       <updated>1741004182698</updated>
       <workItem from="1741004183787" duration="1392000" />
       <workItem from="1741006168025" duration="1099000" />
+<<<<<<< HEAD
+      <workItem from="1741085936539" duration="9731000" />
+=======
       <workItem from="1741100796062" duration="148000" />
-      <workItem from="1741101174030" duration="2739000" />
+      <workItem from="1741101174030" duration="317000" />
+>>>>>>> origin/main
     </task>
     <task id="LOCAL-00001" summary="test from PC from Guanhang and Jiawei">
       <option name="closed" value="true" />
@@ -103,20 +118,18 @@
       <option name="project" value="LOCAL" />
       <updated>1741101306762</updated>
     </task>
-    <task id="LOCAL-00003" summary="XML change from Guanhang and Jiawei">
-      <option name="closed" value="true" />
-      <created>1741101591181</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1741101591181</updated>
-    </task>
-    <option name="localTasksCounter" value="4" />
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+<<<<<<< HEAD
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/SuperB$syllabus.coverage" NAME="syllabus 覆盖结果" MODIFIED="1741099357697" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
+    <SUITE FILE_PATH="coverage/SuperB$fetch_diicsu_syllabus.coverage" NAME="fetch_diicsu_syllabus 覆盖结果" MODIFIED="1741103484071" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
+    <SUITE FILE_PATH="coverage/SuperB$calendar.coverage" NAME="calendar 覆盖结果" MODIFIED="1741103007241" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/test" />
+=======
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
       <map>
@@ -130,7 +143,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="test from PC from Guanhang and Jiawei" />
-    <MESSAGE value="XML change from Guanhang and Jiawei" />
-    <option name="LAST_COMMIT_MESSAGE" value="XML change from Guanhang and Jiawei" />
+    <option name="LAST_COMMIT_MESSAGE" value="test from PC from Guanhang and Jiawei" />
+>>>>>>> origin/main
   </component>
 </project>
