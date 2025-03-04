@@ -1,17 +1,9 @@
+
 USE `booking_system_db`;
 SET SQL_SAFE_UPDATES = 0;
 
--- 清空表（按依赖顺序删除）
-DELETE FROM Approvals;   -- 如果存在依赖表
-DELETE FROM Bookings;
-DELETE FROM Room_availability;
 DELETE FROM Rooms;
-DELETE FROM Users;       -- 清空用户表
-
--- 插入用户数据（必须先插入 Users）
-INSERT INTO Users (user_id, username, email, password_hash, role)
-VALUES
-(1, 'test_user', 'test@example.com', 'hashed_password', 'student');  -- 确保 user_id=1 存在
+DELETE FROM Room_availability;
 
 -- 插入房间数据
 INSERT INTO Rooms (room_id, room_name, capacity, equipment, location, availability) 
@@ -20,19 +12,16 @@ VALUES
 (2, 'Room B', 10, 'whiteboard', 'Building B', TRUE),
 (3, 'Room C', 50, 'projector, speaker', 'Building C', TRUE);
 
--- 插入预订数据（修正时间格式）
-INSERT INTO Bookings (user_id, room_id, start_time, end_time, status)
-VALUES 
-(1, 1, '2025-03-05 10:00:00', '2025-03-05 12:00:00', 'pending');  -- 完整的 DATETIME 格式
 
 -- 插入 Room A 的可用性数据
 INSERT INTO Room_availability (availability_id, room_id, available_begin, available_end, available_date, is_available)
 VALUES
-(1, 1, '08:00:00', '12:00:00', '2025-03-05', TRUE),
-(2, 1, '13:00:00', '17:00:00', '2025-03-05', TRUE),
-(3, 2, '09:00:00', '12:00:00', '2025-03-05', TRUE),
-(4, 2, '14:00:00', '17:00:00', '2025-03-05', TRUE),
-(5, 3, '08:00:00', '11:00:00', '2025-03-06', TRUE);
+(1, 1, '08:00:00', '12:00:00', '2025-03-05', TRUE),  -- Room A's availability on 2025-03-05 from 08:00 to 12:00
+(2, 1, '13:00:00', '17:00:00', '2025-03-05', TRUE),  -- Room A's availability on 2025-03-05 from 13:00 to 17:00
+(3, 2, '09:00:00', '12:00:00', '2025-03-05', TRUE),  -- Room B's availability on 2025-03-05 from 09:00 to 12:00
+(4, 2, '14:00:00', '17:00:00', '2025-03-05', TRUE),  -- Room B's availability on 2025-03-05 from 14:00 to 17:00
+(5, 3, '08:00:00', '11:00:00', '2025-03-06', TRUE);  -- Room C's availability on 2025-03-06 from 08:00 to 11:00
+
 
 
 -- INSERT INTO Rooms (room_name, capacity, equipment, location, availability) VALUES
