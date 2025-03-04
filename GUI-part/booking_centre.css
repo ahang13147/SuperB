@@ -1,4 +1,3 @@
-/* booking_centre.css */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -36,17 +35,19 @@ h1 {
     border: 1px solid #ddd;
     border-radius: 4px;
     flex: 1 1 200px;
+    min-height: 40px;
 }
 
 .time-filter {
     display: flex;
     align-items: center;
     gap: 10px;
-    flex: 1 1 250px;
+    flex: 1 1 300px;
 }
 
-.time-filter input {
-    padding: 8px;
+.time-filter select {
+    flex: 1;
+    padding: 10px;
 }
 
 .classroom-grid {
@@ -60,6 +61,11 @@ h1 {
     border-radius: 8px;
     padding: 20px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.classroom-card:hover {
+    transform: translateY(-3px);
 }
 
 .status {
@@ -67,6 +73,7 @@ h1 {
     padding: 5px 10px;
     border-radius: 15px;
     font-size: 0.9em;
+    margin: 10px 0;
 }
 
 .available {
@@ -86,8 +93,13 @@ button {
     padding: 10px 20px;
     border-radius: 4px;
     cursor: pointer;
-    margin-top: 15px;
+    margin-top: 10px;
     width: 100%;
+    transition: opacity 0.2s;
+}
+
+button:hover:not(:disabled) {
+    opacity: 0.9;
 }
 
 button:disabled {
@@ -98,4 +110,9 @@ button:disabled {
 .details {
     margin: 10px 0;
     color: #666;
+    line-height: 1.8;
+}
+
+.details p {
+    margin: 5px 0;
 }
