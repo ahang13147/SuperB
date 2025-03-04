@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Reservation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            height: 100vh; /* 使 body 占满整个视口高度 */
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* 内容靠左对齐 */
+            background-color: #f9f9f9;
+        }
+        header {
+            background-color: #000000;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 24px;
+            width: 100%; /* 顶栏占满宽度 */
+        }
+        .reservation-form {
+            max-width: 600px; /* 放大表单宽度 */
+            width: 100%;
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: white;
+            position: relative; /* 为 Cancel 按钮定位做准备 */
+            flex-grow: 1; /* 让表单区域占满剩余空间 */
+        }
+        .reservation-info {
+            margin-bottom: 15px;
+            font-size: 18px; /* 放大文本 */
+        }
+        .reservation-info label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .cancel-button {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 15px 30px; /* 放大按钮 */
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            position: absolute; /* 绝对定位 */
+            bottom: 20px; /* 距离底部 20px */
+            right: 20px; /* 距离右侧 20px */
+        }
+        .cancel-button:hover {
+            background-color: #cc0000;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    My Reservation
+</header>
+
+<div class="reservation-form">
+    <div class="reservation-info">
+        <label>Time:</label> 10:00 AM - 12:00 PM
+    </div>
+    <div class="reservation-info">
+        <label>Classroom No:</label> Room 101
+    </div>
+    <div class="reservation-info">
+        <label>Location:</label> Building A, 2nd Floor
+    </div>
+    <button class="cancel-button">Cancel</button>
+</div>
+
+</body>
+</html>
