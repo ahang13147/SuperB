@@ -1,7 +1,7 @@
 <!-- booking_centre.html -->
 <!--
 author: Guanhang Zhang & Jiawei You
-Version：0.1
+Version：0.2
 -->
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -24,16 +24,15 @@ Version：0.1
                 <option value="50">50人以上</option>
                 <option value="100">100人以上</option>
             </select>
-            <!-- 修改原时间过滤器部分 -->
-            <select id="startTime">
-                <option value="">选择开始时间</option>
-                <!-- 选项将由JS动态生成 -->
-            </select>
-            <span>至</span>
-            <select id="endTime">
-                <option value="">选择结束时间</option>
-                <!-- 选项将由JS动态生成 -->
-            </select>
+            <div class="time-filter">
+                <select id="startTime">
+                    <option value="">选择开始时间</option>
+                </select>
+                <span>至</span>
+                <select id="endTime">
+                    <option value="">选择结束时间</option>
+                </select>
+            </div>
         </div>
 
         <!-- 教室列表 -->
