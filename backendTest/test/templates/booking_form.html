@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Test Booking Insert (Python/Flask)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input,
+        select {
+            padding: 8px;
+            width: 300px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .message {
+            margin-top: 20px;
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Insert Booking (Python/Flask)</h1>
+    <form method="POST" action="/insert">
+        <div class="form-group">
+            <label>User ID:</label>
+            <input type="number" name="user_id" required>
+        </div>
+        <div class="form-group">
+            <label>Room ID:</label>
+            <input type="number" name="room_id" required>
+        </div>
+        <div class="form-group">
+            <label>Start Time (YYYY-MM-DD HH:MM:SS):</label>
+            <input type="datetime-local" name="start_time" required>
+        </div>
+        <div class="form-group">
+            <label>End Time (YYYY-MM-DD HH:MM:SS):</label>
+            <input type="datetime-local" name="end_time" required>
+        </div>
+        <div class="form-group">
+            <label>Status:</label>
+            <select name="status">
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="canceled">Canceled</option>
+                <option value="rejected">Rejected</option>
+            </select>
+        </div>
+        <button type="submit">Submit Booking</button>
+    </form>
+
+    {% if message %}
+    <div class="message">{{ message }}</div>
+    {% endif %}
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+</body>
+
+</html>
