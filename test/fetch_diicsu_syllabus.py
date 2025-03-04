@@ -3,6 +3,20 @@ from bs4 import BeautifulSoup
 import json
 import re
 
+"""
+Description: 
+    This script retrieves the course schedule for a specific class (Computer D2401) at Central South University 
+    (CSU) by making HTTP requests to the university's academic system. It performs the following tasks:
+    1. Initiates a session to maintain cookies.
+    2. Retrieves the list of available majors and filters for Computer Science and Technology.
+    3. Retrieves the list of available classes and filters for Computer D2401.
+    4. Fetches the schedule for the selected class.
+    5. Parses and displays the schedule data.
+
+Author: Zibang Nie, Xin Yu, Siyan Guo
+Version: 2025-03-04
+"""
+
 # Start session to maintain JSESSIONID
 session = requests.Session()
 
@@ -38,7 +52,7 @@ fixed_json_text = re.sub(r"([{,])\s*([a-zA-Z0-9_]+)\s*:", r'\1"\2":', response_z
 fixed_json_text = re.sub(r":\s*'([^']*)'", r':"\1"', fixed_json_text)
 
 zy_list = json.loads(fixed_json_text)
-zy_id = next((zy["jx01id"] for zy in zy_list if "计算机科学与技术" in zy["zymc"]), None)
+zy_id = next((zy["jx01id"] for zy in zy_list if "\u8ba1\u7b97\u673a\u79d1\u5b66\u4e0e\u6280\u672f" in zy["zymc"]), None)
 
 if not zy_id:
     print("Computer Science and Technology major not found")
@@ -65,7 +79,7 @@ fixed_json_text_bj = re.sub(r"([{,])\s*([a-zA-Z0-9_]+)\s*:", r'\1"\2":', respons
 fixed_json_text_bj = re.sub(r":\s*'([^']*)'", r':"\1"', fixed_json_text_bj)
 
 bj_list = json.loads(fixed_json_text_bj)
-bj_id = next((bj["xx04id"] for bj in bj_list if "计算机D2401" in bj["bj"]), None)
+bj_id = next((bj["xx04id"] for bj in bj_list if "\u8ba1\u7b97\u673aD2401" in bj["bj"]), None)
 
 if not bj_id:
     print("Computer D2401 class not found")
@@ -81,7 +95,7 @@ form_data = {
     "yxbh": "tc9qn3Xixg",
     "rxnf": "2024",
     "zy": zy_id,
-    "bjbh": "计算机D2401",
+    "bjbh": "\u8ba1\u7b97\u673aD2401",
     "zc": "1",
     "xnxq01id": "2024-2025-2",
     "xx04mc": "",
