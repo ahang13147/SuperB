@@ -4,15 +4,24 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="71113a10-aa88-4c5f-933c-4852af9f6f7d" name="更改" comment="test from PC from Guanhang and Jiawei">
+    <list default="true" id="71113a10-aa88-4c5f-933c-4852af9f6f7d" name="更改" comment="XML change from Guanhang and Jiawei">
+      <change afterPath="$PROJECT_DIR$/GUI-part/booking_centre.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/GUI-part/booking_centre.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/GUI-part/booking_centre.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="HTML File" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -33,7 +42,9 @@
   &quot;associatedIndex&quot;: 1
 }</component>
   <component name="ProjectId" id="2to2c93oBgrh8ZMEPK6HN0h6EE9" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -41,6 +52,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "DefaultHtmlFileTemplate": "HTML File",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "git-widget-placeholder": "main",
@@ -73,7 +85,7 @@
       <workItem from="1741004183787" duration="1392000" />
       <workItem from="1741006168025" duration="1099000" />
       <workItem from="1741100796062" duration="148000" />
-      <workItem from="1741101174030" duration="317000" />
+      <workItem from="1741101174030" duration="2739000" />
     </task>
     <task id="LOCAL-00001" summary="test from PC from Guanhang and Jiawei">
       <option name="closed" value="true" />
@@ -91,7 +103,15 @@
       <option name="project" value="LOCAL" />
       <updated>1741101306762</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="XML change from Guanhang and Jiawei">
+      <option name="closed" value="true" />
+      <created>1741101591181</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1741101591181</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -110,6 +130,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="test from PC from Guanhang and Jiawei" />
-    <option name="LAST_COMMIT_MESSAGE" value="test from PC from Guanhang and Jiawei" />
+    <MESSAGE value="XML change from Guanhang and Jiawei" />
+    <option name="LAST_COMMIT_MESSAGE" value="XML change from Guanhang and Jiawei" />
   </component>
 </project>

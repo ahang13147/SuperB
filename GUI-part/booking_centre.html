@@ -1,0 +1,45 @@
+<!-- booking_centre.html -->
+<!--
+author: Guanhang Zhang & Jiawei You
+Version：0.1
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教室预约系统</title>
+    <link rel="stylesheet" href="booking_centre.css">
+</head>
+<body>
+    <div class="container">
+        <h1>教室预约系统</h1>
+
+        <!-- 搜索和过滤区域 -->
+        <div class="filters">
+            <input type="text" id="searchKeyword" placeholder="搜索教室名称...">
+            <select id="capacityFilter">
+                <option value="0">所有容量</option>
+                <option value="30">30人以上</option>
+                <option value="50">50人以上</option>
+                <option value="100">100人以上</option>
+            </select>
+            <!-- 修改原时间过滤器部分 -->
+            <select id="startTime">
+                <option value="">选择开始时间</option>
+                <!-- 选项将由JS动态生成 -->
+            </select>
+            <span>至</span>
+            <select id="endTime">
+                <option value="">选择结束时间</option>
+                <!-- 选项将由JS动态生成 -->
+            </select>
+        </div>
+
+        <!-- 教室列表 -->
+        <div id="classroomList" class="classroom-grid"></div>
+    </div>
+
+    <script src="booking_centre.js"></script>
+</body>
+</html>
