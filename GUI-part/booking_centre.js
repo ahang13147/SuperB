@@ -1,48 +1,61 @@
+
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('文档加载完成，开始初始化...');
+    console.log('The document is loaded and initialization begins...');
 
     // 加载时间段配置
     let timeSlots;
     try {
-        console.log('正在加载 time_slots.json...');
+        console.log('loading time_slots.json...');
         const response = await fetch('time_slots.json');
-        if (!response.ok) throw new Error(`HTTP错误! 状态码: ${response.status}`);
+        if (!response.ok) throw new Error(`HTTP error! Status code: ${response.status}`);
         timeSlots = await response.json();
-        console.log('成功加载时间段配置:', timeSlots);
+        console.log('The time range configuration was successfully loaded. Procedure:', timeSlots);
     } catch (error) {
-        console.error('加载时间段配置失败:', error);
-        alert('无法加载时间段配置，请检查控制台日志');
+        console.error('Failed to configure the loading time range:', error);
+        alert('Unable to load the time period configuration, check the console log');
         return;
     }
 
     // 模拟教室数据（增加更多测试数据）
     const classrooms = [
+         {
+        name: "101 classroom",
+        capacity: 50,
+        availableTimes: [
+            { time: "08:00-08:45", booked: false },
+            { time: "10:00-10:45", booked: true }
+        ],
+        isBooked: false
+    },
         {
-            name: "101教室",
-            capacity: 50,
-            availableTimes: ["08:00-08:45", "10:00-10:45"],
-            isBooked: false
-        },
-        {
-            name: "201阶梯教室",
-            capacity: 150,
-            availableTimes: ["14:00-14:45", "16:00-16:45"],
-            isBooked: true
-        },
-        {
-            name: "301多媒体室",
+    name: "201 Lecture theatre",
+    capacity: 150,
+    availableTimes: [
+        { time: "14:00-14:45", booked: true },  // 已预定
+        { time: "16:00-16:45", booked: false }
+    ],
+    isBooked: false
+    },
+    {
+            name: "301 Multimedia Room",
             capacity: 80,
-            availableTimes: ["19:00-19:45", "19:55-20:40"],
+            availableTimes: [
+                { time: "19:00-19:45", booked: false },
+                { time: "19:55-20:40", booked: false }
+            ],
             isBooked: false
         },
         {
-            name: "A栋实验室",
+            name: "Building A laboratory",
             capacity: 40,
-            availableTimes: ["08:55-09:40", "10:55-11:40"],
+            availableTimes: [
+                { time: "08:55-09:40", booked: false },
+                { time: "10:55-11:40", booked: false }
+            ],
             isBooked: false
         }
     ];
-    console.log('初始化教室数据:', classrooms);
+    console.log('Initialize the classroom data:', classrooms);
 
     // DOM元素引用
     const elements = {
@@ -56,20 +69,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         availableTimesContainer: document.getElementById('availableTimes'),
         confirmBookingButton: document.getElementById('confirmBooking')
     };
-    console.log('DOM元素引用:', elements);
+    console.log('DOM element reference:', elements);
 
     // 初始化时间选择器
     function initTimeSelectors() {
-        console.log('初始化时间选择器...');
-        elements.startSelect.innerHTML = '<option value="">选择开始时间</option>';
-        elements.endSelect.innerHTML = '<option value="">选择结束时间</option>';
+        console.log('Initializes the time selector...');
+        elements.startSelect.innerHTML = '<option value="">Select start time</option>';
+        elements.endSelect.innerHTML = '<option value="">Select end time</option>';
 
         timeSlots.forEach(slot => {
             const [start, end] = slot.split('-');
             elements.startSelect.innerHTML += `<option value="${slot}">${start}</option>`;
             elements.endSelect.innerHTML += `<option value="${slot}">${end}</option>`;
         });
-        console.log('时间选择器初始化完成');
+        console.log('Time selector initialization is complete');
     }
 
     // 筛选逻辑
@@ -79,7 +92,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const selectedStart = elements.startSelect.value;
         const selectedEnd = elements.endSelect.value;
 
-        console.log('当前筛选条件:', {
+        console.log('Current filter:', {
             searchTerm,
             minCapacity,
             selectedStart,
@@ -101,7 +114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 timeMatch = classroom.availableTimes.includes(expectedSlot);
             }
 
-            console.log(`教室 ${classroom.name} 匹配结果:`, {
+            console.log(`classroom ${classroom.name} Matching result:`, {
                 nameMatch,
                 capacityMatch,
                 timeMatch
@@ -113,62 +126,111 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 渲染教室列表
     function renderClassrooms() {
-
-        console.log('开始渲染教室列表...');
-        const filtered = filterClassrooms();
-        elements.classroomList.innerHTML = filtered.map(classroom => `
+        elements.classroomList.innerHTML = classrooms.map(classroom => `
             <div class="classroom-card">
                 <h3>${classroom.name}</h3>
                 <div class="details">
                     <p>容纳人数：${classroom.capacity}人</p>
                     <p>可预约时段：</p>
                     <ul>
-                        ${classroom.availableTimes.map(t => `<li>${t}</li>`).join('')}
+                        ${classroom.availableTimes.map(t => `
+                            <li class="${t.booked ? 'booked-slot' : ''}">
+                                ${t.time} 
+                                ${t.booked ? '<span class="booked-marker">⛔️</span>' : ''}
+                            </li>
+                        `).join('')}
                     </ul>
                 </div>
                 <span class="status ${classroom.isBooked ? 'booked' : 'available'}">
-                    ${classroom.isBooked ? '已预约' : '可预约'}
+                    ${classroom.isBooked ? 'Be already full' : 'Can be booked'}
                 </span>
                 <button ${classroom.isBooked ? 'disabled' : ''}>
-                    ${classroom.isBooked ? '已满' : '立即预约'}
+                    ${classroom.isBooked ? 'Be already full' : 'Book now'}
                 </button>
             </div>
         `).join('');
 
         // 添加事件监听器
-        document.querySelectorAll('.classroom-card button').forEach(button => {
-            button.addEventListener('click', function() {
-                const classroomCard = this.closest('.classroom-card');
-                const availableTimes = classroomCard.querySelectorAll('.details ul li');
-                elements.availableTimesContainer.innerHTML = '';
+         document.querySelectorAll('.classroom-card button').forEach(button => {
+        button.addEventListener('click', function() {
+            const classroomCard = this.closest('.classroom-card');
+            const classroom = classrooms.find(c => c.name === classroomCard.querySelector('h3').textContent);
 
-                availableTimes.forEach(time => {
-                    const timeSlot = document.createElement('div');
-                    timeSlot.innerHTML = `
-                        <input type="radio" name="timeSlot" id="slot_${time.textContent}" value="${time.textContent}">
-                        <label for="slot_${time.textContent}">🕒 ${time.textContent}</label>
-                    `;
+            elements.availableTimesContainer.innerHTML = '';
 
-                    timeSlot.addEventListener('click', function() {
-                        document.querySelectorAll('#availableTimes div').forEach(d => d.classList.remove('checked'));
+            classroom.availableTimes.forEach(timeSlot => {
+                const div = document.createElement('div');
+                div.className = timeSlot.booked ? 'time-slot-booked' : '';
+                div.innerHTML = `
+                    <input 
+                        type="radio" 
+                        name="timeSlot" 
+                        id="slot_${timeSlot.time}" 
+                        value="${timeSlot.time}"
+                        ${timeSlot.booked ? 'disabled' : ''}
+                    >
+                    <label for="slot_${timeSlot.time}">
+                        ${timeSlot.booked ? '⛔️ ' : '🕒 '}
+                        ${timeSlot.time}
+                        ${timeSlot.booked ? '<small>(Be booked)</small>' : ''}
+                    </label>
+                `;
+
+                if (!timeSlot.booked) {
+                    div.addEventListener('click', function() {
+                        document.querySelectorAll('#availableTimes div').forEach(d =>
+                            d.classList.remove('checked'));
                         this.classList.add('checked');
-                        document.querySelector(`#slot_${time.textContent}`).checked = true;
                     });
+                }
 
-                    elements.availableTimesContainer.appendChild(timeSlot);
-                });
-
-                elements.modal.style.display = 'block';
+                elements.availableTimesContainer.appendChild(div);
             });
+
+            elements.modal.style.display = 'block';
         });
+    });
 
 
-        console.log('渲染完成，显示 ${filtered.length} 个教室');
+
+        console.log('Render complete，display ${filtered.length} classroom');
     }
+
+
+    function updateClassroomStatus(classroomName, bookedTime) {
+        const classroom = classrooms.find(c => c.name === classroomName);
+        const timeSlot = classroom.availableTimes.find(t => t.time === bookedTime);
+
+        if (timeSlot) {
+            timeSlot.booked = true;
+            // 检查是否所有时间段都已预定
+            classroom.isBooked = classroom.availableTimes.every(t => t.booked);
+        }
+        renderClassrooms();
+    }
+
+    // 修改后的确认预约逻辑
+    elements.confirmBookingButton.addEventListener('click', function() {
+        const selectedTimeSlot = document.querySelector('input[name="timeSlot"]:checked');
+        if (selectedTimeSlot) {
+            const classroomName = document.querySelector('.classroom-card button:not(:disabled)')
+                .closest('.classroom-card')
+                .querySelector('h3').textContent;
+
+            updateClassroomStatus(classroomName, selectedTimeSlot.value);
+            alert(`Reservation confirmed! Time period：${selectedTimeSlot.value}`);
+            elements.modal.style.display = 'none';
+        } else {
+            alert('Please select a time period');
+        }
+    });
+
+
+
 
     // 初始化事件监听
     function initEventListeners() {
-        console.log('初始化事件监听...');
+        console.log('Initialize event listening...');
         const updateEvents = ['input', 'change'];
         updateEvents.forEach(eventType => {
             elements.searchInput.addEventListener(eventType, renderClassrooms);
@@ -193,14 +255,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.confirmBookingButton.addEventListener('click', function() {
             const selectedTimeSlot = document.querySelector('input[name="timeSlot"]:checked');
             if (selectedTimeSlot) {
-                alert(`预约已确认！时间段：${selectedTimeSlot.value}`);
+                alert(`Reservation confirmed! Time period：${selectedTimeSlot.value}`);
                 elements.modal.style.display = 'none';
             } else {
-                alert('请选择一个时间段');
+                alert('Please select a time period');
             }
         });
 
-        console.log('事件监听初始化完成');
+        console.log('The event listening initialization is complete');
     }
 
     // 执行初始化流程
@@ -208,9 +270,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         initTimeSelectors();
         initEventListeners();
         renderClassrooms();
-        console.log('系统初始化完成');
+        console.log('System initialization is complete');
     } catch (error) {
-        console.error('初始化过程中发生错误:', error);
-        alert('系统初始化失败，请检查控制台日志');
+        console.error('An error occurred during initialization:', error);
+        alert('System initialization failed. Please check console logs');
     }
 });

@@ -4,6 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Room Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        input, button {
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
 </head>
 <body>
     <h1>Room Search</h1>
@@ -14,20 +32,22 @@
         <label for="equipment">Equipment:</label>
         <input type="text" id="equipment" name="equipment">
         <br>
-        <label for="available_date">Available Date:</label>
-        <input type="date" id="available_date" name="available_date">
-        <br>
-        <label for="available_begin">Available Begin Time:</label>
-        <input type="time" id="available_begin" name="available_begin">
-        <br>
-        <label for="available_end">Available End Time:</label>
-        <input type="time" id="available_end" name="available_end">
-        <br>
         <button type="submit">Search</button>
     </form>
 
     <h2>Results:</h2>
-    <pre id="results"></pre>
+    <table id="results-table">
+        <thead>
+            <tr>
+                <th>Room ID</th>
+                <th>Room Name</th>
+                <th>Capacity</th>
+                <th>Equipment</th>
+                <th>Location</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 
     <script>
         document.getElementById('search-form').addEventListener('submit', function(event) {
@@ -36,24 +56,41 @@
             // Collect form data
             const conditions = {
                 capacity: document.getElementById('capacity').value || null,
-                equipment: document.getElementById('equipment').value || null,
-                available_date: document.getElementById('available_date').value || null,
-                available_begin: document.getElementById('available_begin').value || null,
-                available_end: document.getElementById('available_end').value || null,
+                equipment: document.getElementById('equipment').value || null
             };
 
-            // Send the search request
-            fetch('http://localhost:5000/search', {
+            // Make the POST request to search
+            fetch('http://127.0.0.1:5000/search', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ conditions }),
+                body: JSON.stringify({ table: "rooms", conditions })
             })
             .then(response => response.json())
             .then(data => {
-                // Display the results
-                document.getElementById('results').textContent = JSON.stringify(data, null, 2);
+                console.log(data); // For debugging
+                const tableBody = document.querySelector("#results-table tbody");
+                tableBody.innerHTML = ''; // Clear previous results
+
+                // If data has records, display them in the table
+                if (data.data && data.data.length > 0) {
+                    data.data.forEach(record => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${record.room_id}</td>
+                            <td>${record.room_name}</td>
+                            <td>${record.capacity}</td>
+                            <td>${record.equipment}</td>
+                            <td>${record.location}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                } else {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td colspan="5">No records found</td>`;
+                    tableBody.appendChild(row);
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
