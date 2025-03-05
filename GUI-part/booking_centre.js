@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="classroom-card">
                 <h3>${classroom.name}</h3>
                 <div class="details">
-                    <p>capacity：${classroom.capacity}人</p>
+                    <p>capacity：${classroom.capacity}people</p>
                     <p>Available time slot：</p>
                     <ul>
                         ${classroom.availableTimes.map(t => `<li>${t}</li>`).join('')}
