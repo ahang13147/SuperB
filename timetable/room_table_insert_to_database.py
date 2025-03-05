@@ -25,6 +25,10 @@ timetable = {
     "Notes": [""] * 7
 }
 
+# ============================ Class Schedule ================================
+# We'll use a dictionary to store class usage information
+class_usage = {}
+
 # ============================ Start Session and Retrieve Cookies ============================
 session = requests.Session()
 
@@ -45,7 +49,8 @@ url_major = "http://csujwc.its.csu.edu.cn/KbctjcAction.do?method=queryzy"
 url_class = "http://csujwc.its.csu.edu.cn/KbctjcAction.do?method=querybj"
 
 # ============================ Regular Expression for Classroom Extraction ============================
-classroom_pattern = re.compile(r'(外语网络楼\d{3})(?!\d)')#classroom_pattern = re.compile(r'(?:[ABCD]座\d{3}|外语网络楼\d{3})(?!\d)')
+classroom_pattern = re.compile(r'(外语网络楼\d{3})(?!\d)')
+
 
 # ============================ Function to Extract Classroom Names ============================
 def extract_classrooms(course_text):
@@ -57,6 +62,18 @@ def extract_classrooms(course_text):
     """
     classrooms = classroom_pattern.findall(course_text)  # Extract only valid classroom names
     return classrooms
+
+
+# ============================ Class Period to Time Mapping ============================
+# Mapping for class periods to actual times (each class period has two time slots)
+class_periods = {
+    "1-2": [("[08:00-08:45]", "[08:55-09:40]")],
+    "3-4": [("[10:00-10:45]", "[10:55-11:40]")],
+    "5-6": [("[14:00-14:45]", "[14:55-15:40]")],
+    "7-8": [("[16:00-16:45]", "[16:55-17:40]")],
+    "9-10": [("[19:00-19:45]", "[19:55-20:40]")],
+    "11-12": [("[21:00-21:45]", "[21:55-22:40]")]
+}
 
 # ============================ Fetch Data for Each Academic Year ============================
 for year in academic_years:
@@ -148,8 +165,44 @@ for year in academic_years:
                             else:
                                 timetable[time_period][col_idx - 1] = ", ".join(rooms)
 
-# ============================ Print Final Classroom Schedule ============================
-print("\nFinal Consolidated Classroom Usage:")
-for time_slot, schedule in timetable.items():
-    print([time_slot] + schedule)
+                            # Store the room and time slot in class_usage
+                            for room in rooms:
+                                if room not in class_usage:
+                                    class_usage[room] = []
+                                class_usage[room].append(f"周{col_idx} {time_period}")
+
+# ============================ Consolidate Classroom Usage ============================
+classroom_schedule = {}
+
+for room, times in class_usage.items():
+    time_slots = sorted(set(times))  # Remove duplicates and sort the times
+    formatted_times = []
+
+    # Create a list of time slots for each day
+    days_schedule = {i: [] for i in range(7)}  # Days 0-6, where 0=Monday, 6=Sunday
+
+    for time in time_slots:
+        day, period = time.split(" ")
+        day_number = int(day[1]) - 1  # Adjust for 0-based index (e.g., "周1" -> 0, "周2" -> 1)
+
+        time_ranges = class_periods.get(period, [("Unknown Time", "Unknown Time")])
+
+        # Instead of grouping all time ranges into one, now we add them separately
+        for time_range in time_ranges:
+            # Add the time range to the appropriate day
+            days_schedule[day_number].append(f"{time_range[0]}{time_range[1]}")
+
+    # Format the final output for each classroom
+    formatted_schedule = []
+    for day_idx in range(7):
+        if days_schedule[day_idx]:
+            # Join individual time ranges in the correct format, making sure each is in a separate []
+            formatted_schedule.append(f"周{day_idx + 1}" + "".join(days_schedule[day_idx]))
+
+    classroom_schedule[room] = "(" + ",".join(formatted_schedule) + ")"
+
+# ============================ Print Consolidated Classroom Schedule ============================
+print("\nConsolidated Classroom Usage:")
+for room, times in classroom_schedule.items():
+    print(f"{room} {times}")
 

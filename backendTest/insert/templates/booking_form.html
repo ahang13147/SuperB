@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Test Booking Insert (Python/Flask)</title>
+    <title>Booking Form</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -30,12 +30,11 @@
             background: #007bff;
             color: white;
             border: none;
-            cursor: pointer;
         }
 
         .message {
-            margin-top: 20px;
             color: green;
+            margin-top: 20px;
         }
 
         .error {
@@ -45,28 +44,27 @@
 </head>
 
 <body>
-    <h1>Insert Booking (Python/Flask)</h1>
-    <form method="POST" action="/insert">
-        <input type="hidden" name="table" value="Bookings">
+    <h1>Create Booking</h1>
+    <form id="bookingForm">
         <div class="form-group">
             <label>User ID:</label>
             <input type="number" name="user_id" required>
         </div>
         <div class="form-group">
-            <label>Room ID:</label>
-            <input type="number" name="room_id" required>
+            <label>Room Name:</label>
+            <input type="text" name="room_name" required>
         </div>
         <div class="form-group">
-            <label>Booking Date (YYYY-MM-DD):</label>
+            <label>Booking Date:</label>
             <input type="date" name="booking_date" required>
         </div>
         <div class="form-group">
-            <label>Start Time (HH:MM):</label>
-            <input type="time" name="start_time" step="1" required>
+            <label>Start Time:</label>
+            <input type="time" name="start_time" required>
         </div>
         <div class="form-group">
-            <label>End Time (HH:MM):</label>
-            <input type="time" name="end_time" step="1" required>
+            <label>End Time:</label>
+            <input type="time" name="end_time" required>
         </div>
         <div class="form-group">
             <label>Status:</label>
@@ -77,17 +75,39 @@
                 <option value="rejected">Rejected</option>
             </select>
         </div>
-        <button type="submit">Submit Booking</button>
+        <button type="button" onclick="submitBookingForm()">Submit</button>
     </form>
 
-    {% if message %}
-    <div class="message">{{ message }}</div>
-    {% endif %}
-    {% if error %}
-    <div class="error">{{ error }}</div>
-    {% endif %}
+    <div id="messageContainer"></div>
+    <p><a href="/">Go to Room Form</a></p>
 
-    <p><a href="{{ url_for('index') }}">Go to Room Form</a></p>
+    <script>
+        function submitBookingForm() {
+            const formData = {
+                user_id: parseInt(document.querySelector('[name="user_id"]').value),
+                room_name: document.querySelector('[name="room_name"]').value,
+                booking_date: document.querySelector('[name="booking_date"]').value,
+                start_time: document.querySelector('[name="start_time"]').value,
+                end_time: document.querySelector('[name="end_time"]').value,
+                status: document.querySelector('[name="status"]').value
+            };
+
+            fetch('/insert_booking', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('messageContainer');
+                    container.className = data.status === 'success' ? 'message' : 'error';
+                    container.innerHTML = data.message || data.error;
+                    if (data.status === 'success') {
+                        document.getElementById('bookingForm').reset();
+                    }
+                });
+        }
+    </script>
 </body>
 
 </html>

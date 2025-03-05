@@ -1,88 +1,122 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, jsonify  # 新增 jsonify
 import mysql.connector
 from datetime import datetime
 
 app = Flask(__name__)
 
-# 数据库配置
+# 数据库配置（根据你的MySQL信息修改）
 DB_CONFIG = {
     "host": "127.0.0.1",
     "port": 3306,
     "user": "root",
-    "password": "0000",
+    "password": "0000",  # 替换为你的密码
     "database": "booking_system_db"
 }
 
 def get_db_connection():
     try:
-        return mysql.connector.connect(**DB_CONFIG)
+        conn = mysql.connector.connect(**DB_CONFIG)
+        return conn
     except mysql.connector.Error as err:
         print(f"Database connection error: {err}")
         return None
-
-def process_value(value, data_type):
-    """根据数据类型处理值"""
-    if data_type in ['tinyint', 'boolean']:
-        return 1 if value.lower() == 'true' else 0
-    elif data_type == 'time' and len(value) == 5:
-        return f"{value}:00"
-    elif data_type in ['int', 'integer', 'smallint', 'mediumint', 'bigint']:
-        return int(value) if value.isdigit() else value
-    return value
-
-@app.route('/')
-def index():
-    return render_template('room_form.html')
+    
+# 新增查询房间ID的函数
+def get_room_id(room_name):
+    conn = get_db_connection()
+    if not conn:
+        return None
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT room_id FROM Rooms WHERE room_name = %s", (room_name,))
+        result = cursor.fetchone()
+        return result[0] if result else None
+    except mysql.connector.Error as err:
+        print(f"Database error: {err}")
+        return None
+    finally:
+        if conn:
+            conn.close()
+ 
 
 @app.route('/booking')
 def booking():
     return render_template('booking_form.html')
 
-@app.route('/insert', methods=['POST'])
-def dynamic_insert():
-    table = request.form.get('table')
-    if not table:
-        return render_template('error.html', error="Table name required")
+@app.route('/insert_booking', methods=['POST'])
+def insert_booking():
+    data = request.get_json()
+    
+    # 获取房间名称并转换为ID
+    room_name = data['room_name']
+    room_id = get_room_id(room_name)
+    if not room_id:
+        return jsonify({
+            "status": "error",
+            "error": f"Room '{room_name}' does not exist"
+        }), 400
 
+    # 其他字段保持不变
+    user_id = data['user_id']
+    booking_date = data['booking_date']
+    start_time = data['start_time'] + ":00"
+    end_time = data['end_time'] + ":00"
+    status = data['status']
+
+    
     conn = get_db_connection()
     if not conn:
-        return render_template('error.html', error="Database connection failed")
+        return jsonify({"status": "error", "error": "Database connection failed"}), 500
 
     try:
         cursor = conn.cursor()
-        
-        # 验证表是否存在
-        cursor.execute("SHOW TABLES LIKE %s", (table,))
-        if not cursor.fetchone():
-            raise ValueError(f"Table {table} does not exist")
-
-        # 获取列元数据
-        cursor.execute(f"SHOW COLUMNS FROM {table}")
-        columns = [col[0] for col in cursor.fetchall()]
-        form_data = {k: v for k, v in request.form.items() if k != 'table' and k in columns}
-
-        # 类型转换
-        cursor.execute(f"DESCRIBE {table}")
-        type_info = {col[0]: col[1] for col in cursor.fetchall()}
-        processed_data = {}
-        for col, val in form_data.items():
-            data_type = type_info[col].split('(')[0].lower()
-            processed_data[col] = process_value(val, data_type)
-
-        # 构建并执行查询
-        query = f"INSERT INTO {table} ({', '.join(processed_data.keys())}) VALUES ({', '.join(['%s']*len(processed_data))})"
-        cursor.execute(query, list(processed_data.values()))
+        query = """
+        INSERT INTO Bookings (user_id, room_id, start_time, end_time, booking_date, status)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(query, (user_id, room_id, start_time, end_time, booking_date, status))
         conn.commit()
-
-        template = 'room_form.html' if table == 'Rooms' else 'booking_form.html'
-        return render_template(template, message=f"Data inserted into {table} successfully!")
-    
-    except Exception as e:
+        return jsonify({"status": "success", "message": "Booking inserted successfully!"})
+    except mysql.connector.Error as err:
         conn.rollback()
-        template = 'room_form.html' if table == 'Rooms' else 'booking_form.html'
-        return render_template(template, error=str(e))
+        return jsonify({"status": "error", "error": str(err)}), 400
     finally:
-        if conn: conn.close()
+        if conn:
+            conn.close()
+
+@app.route('/')
+def index():
+    return render_template('room_form.html')
+
+@app.route('/insert_room', methods=['POST'])
+def insert_room():
+    data = request.get_json()
+    # 移除了 availability 字段
+    room_name = data['room_name']
+    capacity = data['capacity']
+    equipment = data['equipment']
+    location = data['location']
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"status": "error", "error": "Database connection failed"}), 500
+
+    try:
+        cursor = conn.cursor()
+        # 修改 SQL 语句，移除 availability
+        query = """
+        INSERT INTO Rooms (room_name, capacity, equipment, location)
+        VALUES (%s, %s, %s, %s)
+        """
+        cursor.execute(query, (room_name, capacity, equipment, location))  # 参数减少为 4 个
+        conn.commit()
+        return jsonify({"status": "success", "message": "Room inserted successfully!"})
+    except mysql.connector.Error as err:
+        conn.rollback()
+        return jsonify({"status": "error", "error": str(err)}), 400
+    finally:
+        if conn:
+            conn.close()
 
 if __name__ == '__main__':
     app.run(debug=True)
