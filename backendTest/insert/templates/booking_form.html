@@ -46,7 +46,8 @@
 
 <body>
     <h1>Insert Booking (Python/Flask)</h1>
-    <form method="POST" action="/insert_booking">
+    <form method="POST" action="/insert">
+        <input type="hidden" name="table" value="Bookings">
         <div class="form-group">
             <label>User ID:</label>
             <input type="number" name="user_id" required>
@@ -60,12 +61,12 @@
             <input type="date" name="booking_date" required>
         </div>
         <div class="form-group">
-            <label>Start Time (HH:MM:SS):</label>
-            <input type="time" name="start_time" required>
+            <label>Start Time (HH:MM):</label>
+            <input type="time" name="start_time" step="1" required>
         </div>
         <div class="form-group">
-            <label>End Time (HH:MM:SS):</label>
-            <input type="time" name="end_time" required>
+            <label>End Time (HH:MM):</label>
+            <input type="time" name="end_time" step="1" required>
         </div>
         <div class="form-group">
             <label>Status:</label>
