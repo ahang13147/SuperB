@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import mysql.connector
-from datetime import datetime, timedelta, date, time  # 新增必要类型导入
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 CORS(app)
@@ -29,13 +29,14 @@ def validate_time(time_str):
         return False
 
 
-def format_timedelta(td):
-    """将 timedelta 转换为 HH:MM:SS 字符串"""
-    total_seconds = td.total_seconds()
-    hours = int(total_seconds // 3600)
-    minutes = int((total_seconds % 3600) // 60)
-    seconds = int(total_seconds % 60)
-    return f"{hours:02}:{minutes:02}:{seconds:02}"
+# 将 timedelta 对象转化为 HH:MM 格式字符串
+def format_time(timedelta_obj):
+    if isinstance(timedelta_obj, timedelta):
+        total_seconds = int(timedelta_obj.total_seconds())
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        return f"{hours:02}:{minutes:02}"
+    return timedelta_obj
 
 
 @app.route('/search-rooms', methods=['POST'])
@@ -44,16 +45,18 @@ def search_rooms():
     请求参数示例：
     {
         "capacity": 20,          // 可选，>= 值
-        "equipment": "投影仪",   // 可选，模糊匹配
+        "room_name": "会议室",    // 可选，模糊匹配
         "date": "2025-03-05",    // 可选，精确匹配
         "start_time": "08:00",   // 可选，HH:MM 格式
         "end_time": "12:00"      // 可选，HH:MM 格式
     }
+    所有参数均为可选，可以任意组合
     """
+    # 获取参数
     params = request.json or {}
     capacity = params.get('capacity')
-    equipment = params.get('equipment')
-    date_param = params.get('date')
+    room_name = params.get('room_name')
+    date = params.get('date')
     start_time = params.get('start_time')
     end_time = params.get('end_time')
 
@@ -70,14 +73,8 @@ def search_rooms():
         # 构建基础查询
         query = """
             SELECT 
-                r.room_id,
-                r.room_name,
-                r.capacity,
-                r.equipment,
-                r.location,
-                ra.available_date,
-                ra.available_begin,
-                ra.available_end
+                r.room_id, r.room_name, r.capacity, r.equipment, r.location,
+                ra.available_date, ra.available_begin, ra.available_end
             FROM Rooms r
             JOIN Room_availability ra ON r.room_id = ra.room_id
             WHERE 1=1
@@ -89,13 +86,13 @@ def search_rooms():
             query += " AND r.capacity >= %s"
             query_params.append(int(capacity))
 
-        if equipment:
-            query += " AND r.equipment LIKE %s"
-            query_params.append(f"%{equipment}%")
+        if room_name:
+            query += " AND r.room_name LIKE %s"
+            query_params.append(f"%{room_name}%")
 
-        if date_param:
+        if date:
             query += " AND ra.available_date = %s"
-            query_params.append(date_param)
+            query_params.append(date)
 
         if start_time:
             query += " AND ra.available_begin <= %s"
@@ -105,45 +102,26 @@ def search_rooms():
             query += " AND ra.available_end >= %s"
             query_params.append(f"{end_time}:00")
 
-        # 调试输出
-        print("[执行SQL]", query)
-        print("[查询参数]", query_params)
-
+        # 执行查询
         cursor.execute(query, query_params)
-        raw_results = cursor.fetchall()
+        results = cursor.fetchall()
 
-        # 格式化结果
-        formatted_results = []
-        for item in raw_results:
-            # 处理日期字段
-            if isinstance(item['available_date'], date):
-                item['available_date'] = item['available_date'].strftime("%Y-%m-%d")
-
-            # 处理开始时间字段
-            if isinstance(item['available_begin'], timedelta):
-                item['available_begin'] = format_timedelta(item['available_begin'])
-            elif isinstance(item['available_begin'], time):
-                item['available_begin'] = item['available_begin'].strftime("%H:%M:%S")
-
-            # 处理结束时间字段
-            if isinstance(item['available_end'], timedelta):
-                item['available_end'] = format_timedelta(item['available_end'])
-            elif isinstance(item['available_end'], time):
-                item['available_end'] = item['available_end'].strftime("%H:%M:%S")
-
-            formatted_results.append(item)
+        # 格式化时间字段
+        for result in results:
+            result['available_begin'] = format_time(result['available_begin'])
+            result['available_end'] = format_time(result['available_end'])
 
         return jsonify({
-            "count": len(formatted_results),
-            "results": formatted_results
+            "count": len(results),
+            "results": results
         })
 
     except mysql.connector.Error as e:
-        print(f"数据库错误: {str(e)}")
-        return jsonify({"error": "Database error"}), 500
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
     except Exception as e:
-        print(f"系统错误: {str(e)}", exc_info=True)  # 打印完整堆栈信息
-        return jsonify({"error": "Internal server error"}), 500
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
     finally:
         if 'cursor' in locals():
             cursor.close()
