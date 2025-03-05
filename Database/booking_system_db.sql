@@ -32,8 +32,8 @@ CREATE TABLE Rooms (
     room_name VARCHAR(255) NOT NULL,            -- Room name
     capacity INT NOT NULL,                      -- Room capacity
     equipment TEXT,                             -- Equipment available in the room
-    location VARCHAR(255),                      -- Room's physical location
-    availability BOOLEAN DEFAULT TRUE          -- Availability status of the room
+    location VARCHAR(255)                       -- Room's physical location
+                                                -- availability BOOLEAN DEFAULT TRUE  -- Availability status of the room
 );
 
 -- 1.3 Room Availability Table (Stores room availability information for specific times)

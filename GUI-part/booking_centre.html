@@ -1,15 +1,16 @@
 <!-- booking_centre.html -->
 <!--
 author: Guanhang Zhang & Jiawei You
-Version：1.3.0
-this version decorate the pop-up window for booking
+Version：1.5.0
+this version Beautify the interface
 -->
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>教室预约系统</title>
+    <title>Classroom reservation system</title>
     <link rel="stylesheet" href="booking_centre.css">
     <link rel="stylesheet" href="sidebarAndNotice.css"> <!-- 引入侧边栏的CSS文件 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -19,9 +20,9 @@ this version decorate the pop-up window for booking
     <div id="bookingModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h2>选择预约时间段</h2>
+            <h2>Select an Appointment period</h2>
             <div id="availableTimes"></div>
-            <button id="confirmBooking">确认预约</button>
+            <button id="confirmBooking">Confirm the appointment</button>
         </div>
     </div>
     <div class="main-container">
@@ -48,24 +49,24 @@ this version decorate the pop-up window for booking
         <!-- Content Area -->
         <div class="content-area">
             <div class="container">
-                <h1>教室预约系统</h1>
+                <h1>Classroom reservation system</h1>
 
                 <!-- 搜索和过滤区域 -->
                 <div class="filters">
-                    <input type="text" id="searchKeyword" placeholder="搜索教室名称...">
+                    <input type="text" id="searchKeyword" placeholder="Search classroom name...">
                     <select id="capacityFilter">
-                        <option value="0">所有容量</option>
-                        <option value="30">30人以上</option>
-                        <option value="50">50人以上</option>
-                        <option value="100">100人以上</option>
+                        <option value="0">All capacity</option>
+                        <option value="30">More than 30 people</option>
+                        <option value="50">More than 50 people</option>
+                        <option value="100">More than 100 people</option>
                     </select>
                     <div class="time-filter">
                         <select id="startTime">
-                            <option value="">选择开始时间</option>
+                            <option value="">Select start time</option>
                         </select>
-                        <span>至</span>
+                        <span>to</span>
                         <select id="endTime">
-                            <option value="">选择结束时间</option>
+                            <option value="">Select end time</option>
                         </select>
                     </div>
                 </div>
