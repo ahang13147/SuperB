@@ -59,6 +59,7 @@ def search_rooms():
     date = params.get('date')
     start_time = params.get('start_time')
     end_time = params.get('end_time')
+    equipment = params.get('equipment')
 
     # 参数验证
     if start_time and not validate_time(start_time):
@@ -91,8 +92,10 @@ def search_rooms():
             query_params.append(f"%{room_name}%")
 
         if date:
-            query += " AND ra.available_date = %s"
-            query_params.append(date)
+            # 确保数据库中的 available_date 被转换为只含日期的格式
+            formatted_date = datetime.strptime(date, "%Y-%m-%d").date()
+            query += " AND DATE(ra.available_date) = %s"
+            query_params.append(formatted_date)
 
         if start_time:
             query += " AND ra.available_begin <= %s"
@@ -101,6 +104,10 @@ def search_rooms():
         if end_time:
             query += " AND ra.available_end >= %s"
             query_params.append(f"{end_time}:00")
+        # 新增设备条件
+        if equipment:
+            query += " AND r.equipment LIKE %s"
+            query_params.append(f"%{equipment}%")
 
         # 执行查询
         cursor.execute(query, query_params)
