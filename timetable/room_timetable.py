@@ -45,7 +45,7 @@ url_major = "http://csujwc.its.csu.edu.cn/KbctjcAction.do?method=queryzy"
 url_class = "http://csujwc.its.csu.edu.cn/KbctjcAction.do?method=querybj"
 
 # ============================ Regular Expression for Classroom Extraction ============================
-classroom_pattern = re.compile(r'(?:[ABCD]座\d{3}|外LanguageNetworkBuilding\d{3})(?!\d)')
+classroom_pattern = re.compile(r'(外语网络楼\d{3})(?!\d)')#classroom_pattern = re.compile(r'(?:[ABCD]座\d{3}|外语网络楼\d{3})(?!\d)')
 
 # ============================ Function to Extract Classroom Names ============================
 def extract_classrooms(course_text):
@@ -152,3 +152,4 @@ for year in academic_years:
 print("\nFinal Consolidated Classroom Usage:")
 for time_slot, schedule in timetable.items():
     print([time_slot] + schedule)
+
