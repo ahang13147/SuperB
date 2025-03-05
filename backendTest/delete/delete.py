@@ -1,17 +1,20 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS  # 引入 Flask-CORS
 import mysql.connector
 
 # 初始化 Flask 应用
 app = Flask(__name__)
 
+# 启用跨域支持
+CORS(app)  # 允许所有来源访问，如果想限制特定来源，可以进行配置
+
 # 数据库连接配置
 db_config = {
     "host": "localhost",
     "user": "root",
-    "password": "",  # 填入数据库密码
+    "password": "1234",  # 填入数据库密码
     "database": "booking_system_db"
 }
-
 
 # 连接到 MySQL 数据库
 def get_db_connection():

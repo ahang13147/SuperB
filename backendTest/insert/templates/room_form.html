@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Insert Room (Python/Flask)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input,
+        select {
+            padding: 8px;
+            width: 300px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .message {
+            margin-top: 20px;
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Insert Room (Python/Flask)</h1>
+    <form method="POST" action="/insert_room">
+        <div class="form-group">
+            <label>Room Name:</label>
+            <input type="text" name="room_name" required>
+        </div>
+        <div class="form-group">
+            <label>Capacity:</label>
+            <input type="number" name="capacity" required>
+        </div>
+        <div class="form-group">
+            <label>Equipment:</label>
+            <input type="text" name="equipment" required>
+        </div>
+        <div class="form-group">
+            <label>Location:</label>
+            <input type="text" name="location" required>
+        </div>
+        <div class="form-group">
+            <label>Availability:</label>
+            <select name="availability">
+                <option value="true">Available</option>
+                <option value="false">Not Available</option>
+            </select>
+        </div>
+        <button type="submit">Submit Room</button>
+    </form>
+
+    {% if message %}
+    <div class="message">{{ message }}</div>
+    {% endif %}
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <p><a href="{{ url_for('booking') }}">Go to Booking Form</a></p>
+</body>
+
+</html>
