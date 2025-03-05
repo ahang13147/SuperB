@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Room Availability</title>
+</head>
+<body>
+    <h1>Add Room Availability</h1>
+
+    <!-- 统一的表单输入 -->
+    <form id="availability_form">
+        <label for="room_name">Room Name:</label><br>
+        <input type="text" id="room_name" name="room_name" required><br><br>
+
+        <label for="available_date">Available Date (YYYY-MM-DD):</label><br>
+        <input type="date" id="available_date" name="available_date" required><br><br>
+
+        <label for="available_begin">Available Begin Time (HH:MM:SS):</label><br>
+        <input type="time" id="available_begin" name="available_begin" required><br><br>
+
+        <label for="available_end">Available End Time (HH:MM:SS):</label><br>
+        <input type="time" id="available_end" name="available_end" required><br><br>
+
+        <label for="is_available">Is Available:</label><br>
+        <select id="is_available" name="is_available" required>
+            <option value="1">Yes</option>
+            <option value="0">No</option>
+        </select><br><br>
+
+        <button type="submit">Submit Availability</button>
+    </form>
+
+    <p id="form_message"></p>
+
+    <script>
+        document.getElementById("availability_form").addEventListener("submit", function(event) {
+            event.preventDefault();  // 阻止表单默认提交行为
+
+            // 获取表单数据
+            const roomName = document.getElementById("room_name").value;
+            const availableDate = document.getElementById("available_date").value;
+            const availableBegin = document.getElementById("available_begin").value;
+            const availableEnd = document.getElementById("available_end").value;
+            const isAvailable = document.getElementById("is_available").value;
+
+            if (!roomName || !availableDate || !availableBegin || !availableEnd || isAvailable === null) {
+                alert("All fields are required!");
+                return;
+            }
+
+            // 向后端请求获取 room_id
+            fetch('http://localhost:5000/get_room_id', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ room_name: roomName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.room_id) {
+                    // 如果 room_id 找到了，提交到添加 availability 的 API
+                    const room_id = data.room_id;
+                    fetch('http://localhost:5000/add_room_availability', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            room_id: room_id,
+                            available_date: availableDate,
+                            available_begin: availableBegin,
+                            available_end: availableEnd,
+                            is_available: isAvailable
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById("form_message").textContent = data.message || data.error;
+                    })
+                    .catch(error => {
+                        document.getElementById("form_message").textContent = "Error: " + error.message;
+                    });
+                } else {
+                    document.getElementById("form_message").textContent = "Room not found!";
+                }
+            })
+            .catch(error => {
+                document.getElementById("form_message").textContent = "Error: " + error.message;
+            });
+        });
+    </script>
+</body>
+</html>

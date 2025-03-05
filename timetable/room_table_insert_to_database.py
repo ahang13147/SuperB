@@ -49,7 +49,7 @@ url_major = "http://csujwc.its.csu.edu.cn/KbctjcAction.do?method=queryzy"
 url_class = "http://csujwc.its.csu.edu.cn/KbctjcAction.do?method=querybj"
 
 # ============================ Regular Expression for Classroom Extraction ============================
-classroom_pattern = re.compile(r'(外语网络楼\d{3})(?!\d)')
+classroom_pattern = re.compile(r'外语网络楼(\d{3})')
 
 
 # ============================ Function to Extract Classroom Names ============================
