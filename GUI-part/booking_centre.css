@@ -257,3 +257,73 @@ button:disabled {
     color: #2c3e50;
 }
 
+.time-slot-booked {
+    position: relative;
+    background: repeating-linear-gradient(
+        45deg,
+        #f8f9fa,
+        #f8f9fa 10px,
+        #ffe3e3 10px,
+        #ffe3e3 20px
+    ) !important;
+    border-color: #ff6b6b !important;
+    opacity: 0.7;
+}
+
+.time-slot-booked::after {
+    content: "⛔️";
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2em;
+}
+
+.time-slot-booked label {
+    color: #ff6b6b !important;
+    text-decoration: line-through;
+}
+
+.booked-slot {
+    color: #ff6b6b;
+    position: relative;
+    padding-right: 25px;
+    background: repeating-linear-gradient(
+        45deg,
+        #f8f9fa,
+        #f8f9fa 10px,
+        #ffe3e3 10px,
+        #ffe3e3 20px
+    );
+}
+
+.booked-marker {
+    position: absolute;
+    right: 0;
+    font-size: 0.8em;
+    margin-left: 5px;
+}
+
+/* 禁用状态 */
+button:disabled {
+    background-color: #95a5a6 !important;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.status.booked {
+    background-color: #e74c3c;
+}
+
+/* 弹窗禁用项 */
+.time-slot-booked {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #f8d7da !important;
+    border-color: #f5c6cb !important;
+}
+
+.time-slot-booked label {
+    color: #721c24 !important;
+    text-decoration: line-through;
+}
