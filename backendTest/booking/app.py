@@ -30,8 +30,9 @@ def insert_booking():
     # 获取表单数据
     user_id = request.form['user_id']
     room_id = request.form['room_id']
-    start_time = request.form['start_time'].replace('T', ' ') + ':00'
-    end_time = request.form['end_time'].replace('T', ' ') + ':00'
+    booking_date = request.form['booking_date']  # 获取 booking_date
+    start_time = request.form['start_time']  # 获取 start_time (HH:MM)
+    end_time = request.form['end_time']  # 获取 end_time (HH:MM)
     status = request.form['status']
 
     # 连接数据库
@@ -43,10 +44,13 @@ def insert_booking():
         cursor = conn.cursor()
         # 执行插入操作（使用参数化查询防止SQL注入）
         query = """
-        INSERT INTO Bookings (user_id, room_id, start_time, end_time, status)
-        VALUES (%s, %s, %s, %s, %s)
+        INSERT INTO Bookings (user_id, room_id, start_time, end_time, booking_date, status)
+        VALUES (%s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(query, (user_id, room_id, start_time, end_time, status))
+        # 将时间格式化为 HH:MM:SS
+        start_time_formatted = f"{start_time}:00"
+        end_time_formatted = f"{end_time}:00"
+        cursor.execute(query, (user_id, room_id, start_time_formatted, end_time_formatted, booking_date, status))
         conn.commit()
         return render_template('booking_form.html', message="Booking inserted successfully!")
     except mysql.connector.Error as err:

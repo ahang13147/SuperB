@@ -1,8 +1,8 @@
 <!-- booking_centre.html -->
 <!--
 author: Guanhang Zhang & Jiawei You
-Version：1.2
-this version fixed the bug of the sidebar icon
+Version：1.2.1
+this version adding pop-up window for booking
 -->
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -15,6 +15,15 @@ this version fixed the bug of the sidebar icon
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
+
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>选择预约时间段</h2>
+            <div id="availableTimes"></div>
+            <button id="confirmBooking">确认预约</button>
+        </div>
+    </div>
     <div class="main-container">
         <!-- Sidebar -->
         <div class="sidebar">

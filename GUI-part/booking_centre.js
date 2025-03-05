@@ -1,4 +1,49 @@
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', function() {
+    // 获取弹窗元素
+    const modal = document.getElementById('bookingModal');
+    const closeModal = document.querySelector('.close');
+    const availableTimesContainer = document.getElementById('availableTimes');
+    const confirmBookingButton = document.getElementById('confirmBooking');
+
+    // 关闭弹窗
+    closeModal.onclick = function() {
+        modal.style.display = 'none';
+    }
+
+    // 点击窗口外部关闭弹窗
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    // 处理立即预约按钮点击事件
+    document.querySelectorAll('.classroom-card button').forEach(button => {
+        button.addEventListener('click', function() {
+            const classroomCard = this.closest('.classroom-card');
+            const availableTimes = classroomCard.querySelectorAll('.details ul li');
+
+            // 清空之前的时间段
+            availableTimesContainer.innerHTML = '';
+
+            // 填充可用时间段
+            availableTimes.forEach(time => {
+                const timeSlot = document.createElement('div');
+                timeSlot.textContent = time.textContent;
+                availableTimesContainer.appendChild(timeSlot);
+            });
+
+            // 显示弹窗
+            modal.style.display = 'block';
+        });
+    });
+
+    // 确认预约按钮点击事件
+    confirmBookingButton.addEventListener('click', function() {
+        alert('预约已确认！');
+        modal.style.display = 'none';
+    });
+});document.addEventListener('DOMContentLoaded', async () => {
     console.log('文档加载完成，开始初始化...');
 
     // 加载时间段配置

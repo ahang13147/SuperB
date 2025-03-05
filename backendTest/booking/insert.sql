@@ -20,10 +20,7 @@ VALUES
 (2, 'Room B', 10, 'whiteboard', 'Building B', TRUE),
 (3, 'Room C', 50, 'projector, speaker', 'Building C', TRUE);
 
--- 插入预订数据（修正时间格式）
-INSERT INTO Bookings (user_id, room_id, start_time, end_time, status)
-VALUES 
-(1, 1, '2025-03-05 10:00:00', '2025-03-05 12:00:00', 'pending');  -- 完整的 DATETIME 格式
+
 
 -- 插入 Room A 的可用性数据
 INSERT INTO Room_availability (availability_id, room_id, available_begin, available_end, available_date, is_available)
@@ -33,6 +30,11 @@ VALUES
 (3, 2, '09:00:00', '12:00:00', '2025-03-05', TRUE),
 (4, 2, '14:00:00', '17:00:00', '2025-03-05', TRUE),
 (5, 3, '08:00:00', '11:00:00', '2025-03-06', TRUE);
+
+-- 插入预订数据（修正时间格式）
+INSERT INTO Bookings (user_id, room_id, start_time, end_time, booking_date, status)
+VALUES 
+(1, 1, '10:00:00', '12:00:00','2025-03-05', 'pending');  -- 完整的 DATETIME 格式
 
 
 -- INSERT INTO Rooms (room_name, capacity, equipment, location, availability) VALUES
