@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // 填充可用时间段
                 availableTimes.forEach(time => {
                     const timeSlot = document.createElement('div');
-                    timeSlot.textContent = time.textContent;
+                    timeSlot.innerHTML = `<input type="radio" name="timeSlot" value="${time.textContent}"> ${time.textContent}`;
                     elements.availableTimesContainer.appendChild(timeSlot);
                 });
 
@@ -184,8 +184,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 确认预约按钮点击事件
         elements.confirmBookingButton.addEventListener('click', function() {
-            alert('预约已确认！');
-            elements.modal.style.display = 'none';
+            const selectedTimeSlot = document.querySelector('input[name="timeSlot"]:checked');
+            if (selectedTimeSlot) {
+                alert(`预约已确认！时间段：${selectedTimeSlot.value}`);
+                elements.modal.style.display = 'none';
+            } else {
+                alert('请选择一个时间段');
+            }
         });
 
         console.log('事件监听初始化完成');
