@@ -46,7 +46,8 @@
 
 <body>
     <h1>Insert Room (Python/Flask)</h1>
-    <form method="POST" action="/insert_room">
+    <form method="POST" action="/insert">
+        <input type="hidden" name="table" value="Rooms">
         <div class="form-group">
             <label>Room Name:</label>
             <input type="text" name="room_name" required>
