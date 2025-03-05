@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Delete Records</title>
+    <script>
+        function handleSubmit(event) {
+            event.preventDefault();
+            const table = document.getElementById('table').value;
+            const user_id = document.getElementById('user_id').value;
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const role = document.getElementById('role').value;
+
+            const conditions = {};
+            if (user_id) conditions.user_id = user_id;
+            if (username) conditions.username = username;
+            if (email) conditions.email = email;
+            if (role) conditions.role = role;
+
+            fetch('http://127.0.0.1:5000/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    table: table,
+                    conditions: conditions
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Deletion Result: ' + data.message);
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+            });
+        }
+    </script>
+</head>
+<body>
+
+    <h1>Test Delete Records</h1>
+    <form onsubmit="handleSubmit(event)">
+        <label for="table">Select Table:</label>
+        <select id="table">
+            <option value="Users">Users</option>
+            <option value="Rooms">Rooms</option>
+            <option value="Bookings">Bookings</option>
+            <option value="Approvals">Approvals</option>
+            <option value="Notifications">Notifications</option>
+            <option value="Reports">Reports</option>
+        </select>
+        <br><br>
+
+        <!-- User Table Fields -->
+        <label for="user_id">User ID:</label>
+        <input type="text" id="user_id" placeholder="User ID"><br><br>
+
+        <label for="username">Username:</label>
+        <input type="text" id="username" placeholder="Username"><br><br>
+
+        <label for="email">Email:</label>
+        <input type="text" id="email" placeholder="Email"><br><br>
+
+        <label for="role">Role:</label>
+        <input type="text" id="role" placeholder="Role"><br><br>
+
+        <input type="submit" value="Delete Record">
+    </form>
+
+</body>
+</html>

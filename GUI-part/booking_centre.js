@@ -50,7 +50,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         searchInput: document.getElementById('searchKeyword'),
         capacityFilter: document.getElementById('capacityFilter'),
         startSelect: document.getElementById('startTime'),
-        endSelect: document.getElementById('endTime')
+        endSelect: document.getElementById('endTime'),
+        modal: document.getElementById('bookingModal'),
+        closeModal: document.querySelector('.close'),
+        availableTimesContainer: document.getElementById('availableTimes'),
+        confirmBookingButton: document.getElementById('confirmBooking')
     };
     console.log('DOM元素引用:', elements);
 
@@ -83,6 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         return classrooms.filter(classroom => {
+
             // 名称匹配
             const nameMatch = classroom.name.toLowerCase().includes(searchTerm);
 
@@ -108,10 +113,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 渲染教室列表
     function renderClassrooms() {
+
         console.log('开始渲染教室列表...');
         const filtered = filterClassrooms();
-        console.log('筛选结果:', filtered);
-
         elements.classroomList.innerHTML = filtered.map(classroom => `
             <div class="classroom-card">
                 <h3>${classroom.name}</h3>
@@ -131,6 +135,34 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
         `).join('');
 
+        // 添加事件监听器
+        document.querySelectorAll('.classroom-card button').forEach(button => {
+            button.addEventListener('click', function() {
+                const classroomCard = this.closest('.classroom-card');
+                const availableTimes = classroomCard.querySelectorAll('.details ul li');
+                elements.availableTimesContainer.innerHTML = '';
+
+                availableTimes.forEach(time => {
+                    const timeSlot = document.createElement('div');
+                    timeSlot.innerHTML = `
+                        <input type="radio" name="timeSlot" id="slot_${time.textContent}" value="${time.textContent}">
+                        <label for="slot_${time.textContent}">🕒 ${time.textContent}</label>
+                    `;
+
+                    timeSlot.addEventListener('click', function() {
+                        document.querySelectorAll('#availableTimes div').forEach(d => d.classList.remove('checked'));
+                        this.classList.add('checked');
+                        document.querySelector(`#slot_${time.textContent}`).checked = true;
+                    });
+
+                    elements.availableTimesContainer.appendChild(timeSlot);
+                });
+
+                elements.modal.style.display = 'block';
+            });
+        });
+
+
         console.log('渲染完成，显示 ${filtered.length} 个教室');
     }
 
@@ -144,6 +176,30 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.startSelect.addEventListener(eventType, renderClassrooms);
             elements.endSelect.addEventListener(eventType, renderClassrooms);
         });
+
+        // 关闭弹窗
+        elements.closeModal.onclick = function() {
+            elements.modal.style.display = 'none';
+        }
+
+        // 点击窗口外部关闭弹窗
+        window.onclick = function(event) {
+            if (event.target == elements.modal) {
+                elements.modal.style.display = 'none';
+            }
+        }
+
+        // 确认预约按钮点击事件
+        elements.confirmBookingButton.addEventListener('click', function() {
+            const selectedTimeSlot = document.querySelector('input[name="timeSlot"]:checked');
+            if (selectedTimeSlot) {
+                alert(`预约已确认！时间段：${selectedTimeSlot.value}`);
+                elements.modal.style.display = 'none';
+            } else {
+                alert('请选择一个时间段');
+            }
+        });
+
         console.log('事件监听初始化完成');
     }
 
