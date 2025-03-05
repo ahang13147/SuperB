@@ -1,5 +1,7 @@
+let classrooms;
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('The document is loaded and initialization begins...');
+
 
     // 加载时间段配置
     let timeSlots;
@@ -16,7 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // 模拟教室数据
-    const classrooms = [
+    classrooms = [
         {
             name: "101 classroom",
             capacity: 50,
