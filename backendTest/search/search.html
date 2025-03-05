@@ -3,75 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Room Booking System</title>
+    <title>Room Search</title>
 </head>
 <body>
-    <h1>Room Booking System</h1>
-
-    <!-- 查询表单 -->
+    <h1>Room Search</h1>
     <form id="search-form">
         <label for="capacity">Capacity:</label>
-        <input type="number" id="capacity" name="capacity" placeholder="Enter capacity">
-
+        <input type="number" id="capacity" name="capacity">
+        <br>
         <label for="equipment">Equipment:</label>
-        <input type="text" id="equipment" name="equipment" placeholder="Enter equipment">
-
+        <input type="text" id="equipment" name="equipment">
+        <br>
         <label for="available_date">Available Date:</label>
         <input type="date" id="available_date" name="available_date">
-
+        <br>
         <label for="available_begin">Available Begin Time:</label>
         <input type="time" id="available_begin" name="available_begin">
-
+        <br>
         <label for="available_end">Available End Time:</label>
         <input type="time" id="available_end" name="available_end">
-
+        <br>
         <button type="submit">Search</button>
     </form>
 
-    <!-- 显示查询结果 -->
-    <ul id="room-list"></ul>
+    <h2>Results:</h2>
+    <pre id="results"></pre>
 
     <script>
-        // 获取表单和房间列表
-        const form = document.getElementById('search-form');
-        const roomList = document.getElementById('room-list');
+        document.getElementById('search-form').addEventListener('submit', function(event) {
+            event.preventDefault();
 
-        // 表单提交时，发送 GET 请求到后端
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+            // Collect form data
+            const conditions = {
+                capacity: document.getElementById('capacity').value || null,
+                equipment: document.getElementById('equipment').value || null,
+                available_date: document.getElementById('available_date').value || null,
+                available_begin: document.getElementById('available_begin').value || null,
+                available_end: document.getElementById('available_end').value || null,
+            };
 
-            // 获取表单输入值
-            const capacity = document.getElementById('capacity').value;
-            const equipment = document.getElementById('equipment').value;
-            const available_date = document.getElementById('available_date').value;
-            const available_begin = document.getElementById('available_begin').value;
-            const available_end = document.getElementById('available_end').value;
-
-            // 构建查询 URL
-            let url = 'http://127.0.0.1:5000/rooms?';
-            if (capacity) url += `capacity=${capacity}&`;
-            if (equipment) url += `equipment=${equipment}&`;
-            if (available_date) url += `available_date=${available_date}&`;
-            if (available_begin) url += `available_begin=${available_begin}&`;
-            if (available_end) url += `available_end=${available_end}&`;
-
-            try {
-                // 发送请求到后端获取房间数据
-                const response = await fetch(url);
-                const data = await response.json();
-
-                // 清空之前的结果
-                roomList.innerHTML = '';
-
-                // 将查询结果显示在页面上
-                data.forEach(room => {
-                    const listItem = document.createElement('li');
-                    listItem.textContent = `${room.room_name} (Capacity: ${room.capacity}) - ${room.equipment} - Available on ${room.available_date} from ${room.available_begin} to ${room.available_end}`;
-                    roomList.appendChild(listItem);
-                });
-            } catch (error) {
-                console.error('Error fetching room data:', error);
-            }
+            // Send the search request
+            fetch('http://localhost:5000/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ conditions }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display the results
+                document.getElementById('results').textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         });
     </script>
 </body>
