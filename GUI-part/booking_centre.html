@@ -1,8 +1,8 @@
 <!-- booking_centre.html -->
 <!--
 author: Guanhang Zhang & Jiawei You
-Version：1.0
-this version using the XAMPP for prox and json for the backend data
+Version：1.1
+this version adding the sidebar and notification part
 -->
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -11,35 +11,62 @@ this version using the XAMPP for prox and json for the backend data
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>教室预约系统</title>
     <link rel="stylesheet" href="booking_centre.css">
+    <link rel="stylesheet" href="sidebarAndNotice.css"> <!-- 引入侧边栏的CSS文件 -->
 </head>
 <body>
-    <div class="container">
-        <h1>教室预约系统</h1>
-
-        <!-- 搜索和过滤区域 -->
-        <div class="filters">
-            <input type="text" id="searchKeyword" placeholder="搜索教室名称...">
-            <select id="capacityFilter">
-                <option value="0">所有容量</option>
-                <option value="30">30人以上</option>
-                <option value="50">50人以上</option>
-                <option value="100">100人以上</option>
-            </select>
-            <div class="time-filter">
-                <select id="startTime">
-                    <option value="">选择开始时间</option>
-                </select>
-                <span>至</span>
-                <select id="endTime">
-                    <option value="">选择结束时间</option>
-                </select>
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="nav-item active">
+                <i class="fas fa-calendar-alt nav-icon"></i>
+                Booking Center
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-list-ul nav-icon"></i>
+                My Bookings
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-bell nav-icon"></i>
+                Notifications
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-user-circle nav-icon"></i>
+                Profile
             </div>
         </div>
 
-        <!-- 教室列表 -->
-        <div id="classroomList" class="classroom-grid"></div>
+        <!-- Content Area -->
+        <div class="content-area">
+            <div class="container">
+                <h1>教室预约系统</h1>
+
+                <!-- 搜索和过滤区域 -->
+                <div class="filters">
+                    <input type="text" id="searchKeyword" placeholder="搜索教室名称...">
+                    <select id="capacityFilter">
+                        <option value="0">所有容量</option>
+                        <option value="30">30人以上</option>
+                        <option value="50">50人以上</option>
+                        <option value="100">100人以上</option>
+                    </select>
+                    <div class="time-filter">
+                        <select id="startTime">
+                            <option value="">选择开始时间</option>
+                        </select>
+                        <span>至</span>
+                        <select id="endTime">
+                            <option value="">选择结束时间</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 教室列表 -->
+                <div id="classroomList" class="classroom-grid"></div>
+            </div>
+        </div>
     </div>
 
     <script src="booking_centre.js"></script>
+    <script src="sidebarAndNotice.js"></script>
 </body>
 </html>

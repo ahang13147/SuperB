@@ -116,3 +116,9 @@ button:disabled {
 .details p {
     margin: 5px 0;
 }
+
+.container {
+    padding: 40px;
+    box-sizing: border-box;
+    background: #f8f9fa;
+}
