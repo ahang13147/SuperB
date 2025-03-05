@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('The document is loaded and initialization begins...');
 
