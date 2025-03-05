@@ -87,6 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         return classrooms.filter(classroom => {
+
             // 名称匹配
             const nameMatch = classroom.name.toLowerCase().includes(searchTerm);
 
@@ -112,10 +113,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 渲染教室列表
     function renderClassrooms() {
+
         console.log('开始渲染教室列表...');
         const filtered = filterClassrooms();
-        console.log('筛选结果:', filtered);
-
         elements.classroomList.innerHTML = filtered.map(classroom => `
             <div class="classroom-card">
                 <h3>${classroom.name}</h3>
@@ -140,21 +140,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             button.addEventListener('click', function() {
                 const classroomCard = this.closest('.classroom-card');
                 const availableTimes = classroomCard.querySelectorAll('.details ul li');
-
-                // 清空之前的时间段
                 elements.availableTimesContainer.innerHTML = '';
 
-                // 填充可用时间段
                 availableTimes.forEach(time => {
                     const timeSlot = document.createElement('div');
-                    timeSlot.innerHTML = `<input type="radio" name="timeSlot" value="${time.textContent}"> ${time.textContent}`;
+                    timeSlot.innerHTML = `
+                        <input type="radio" name="timeSlot" id="slot_${time.textContent}" value="${time.textContent}">
+                        <label for="slot_${time.textContent}">🕒 ${time.textContent}</label>
+                    `;
+
+                    timeSlot.addEventListener('click', function() {
+                        document.querySelectorAll('#availableTimes div').forEach(d => d.classList.remove('checked'));
+                        this.classList.add('checked');
+                        document.querySelector(`#slot_${time.textContent}`).checked = true;
+                    });
+
                     elements.availableTimesContainer.appendChild(timeSlot);
                 });
 
-                // 显示弹窗
                 elements.modal.style.display = 'block';
             });
         });
+
 
         console.log('渲染完成，显示 ${filtered.length} 个教室');
     }
