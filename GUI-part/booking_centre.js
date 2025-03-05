@@ -1,49 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // 获取弹窗元素
-    const modal = document.getElementById('bookingModal');
-    const closeModal = document.querySelector('.close');
-    const availableTimesContainer = document.getElementById('availableTimes');
-    const confirmBookingButton = document.getElementById('confirmBooking');
-
-    // 关闭弹窗
-    closeModal.onclick = function() {
-        modal.style.display = 'none';
-    }
-
-    // 点击窗口外部关闭弹窗
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = 'none';
-        }
-    }
-
-    // 处理立即预约按钮点击事件
-    document.querySelectorAll('.classroom-card button').forEach(button => {
-        button.addEventListener('click', function() {
-            const classroomCard = this.closest('.classroom-card');
-            const availableTimes = classroomCard.querySelectorAll('.details ul li');
-
-            // 清空之前的时间段
-            availableTimesContainer.innerHTML = '';
-
-            // 填充可用时间段
-            availableTimes.forEach(time => {
-                const timeSlot = document.createElement('div');
-                timeSlot.textContent = time.textContent;
-                availableTimesContainer.appendChild(timeSlot);
-            });
-
-            // 显示弹窗
-            modal.style.display = 'block';
-        });
-    });
-
-    // 确认预约按钮点击事件
-    confirmBookingButton.addEventListener('click', function() {
-        alert('预约已确认！');
-        modal.style.display = 'none';
-    });
-});document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('文档加载完成，开始初始化...');
 
     // 加载时间段配置
@@ -95,7 +50,11 @@ document.addEventListener('DOMContentLoaded', function() {
         searchInput: document.getElementById('searchKeyword'),
         capacityFilter: document.getElementById('capacityFilter'),
         startSelect: document.getElementById('startTime'),
-        endSelect: document.getElementById('endTime')
+        endSelect: document.getElementById('endTime'),
+        modal: document.getElementById('bookingModal'),
+        closeModal: document.querySelector('.close'),
+        availableTimesContainer: document.getElementById('availableTimes'),
+        confirmBookingButton: document.getElementById('confirmBooking')
     };
     console.log('DOM元素引用:', elements);
 
@@ -176,6 +135,27 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `).join('');
 
+        // 添加事件监听器
+        document.querySelectorAll('.classroom-card button').forEach(button => {
+            button.addEventListener('click', function() {
+                const classroomCard = this.closest('.classroom-card');
+                const availableTimes = classroomCard.querySelectorAll('.details ul li');
+
+                // 清空之前的时间段
+                elements.availableTimesContainer.innerHTML = '';
+
+                // 填充可用时间段
+                availableTimes.forEach(time => {
+                    const timeSlot = document.createElement('div');
+                    timeSlot.textContent = time.textContent;
+                    elements.availableTimesContainer.appendChild(timeSlot);
+                });
+
+                // 显示弹窗
+                elements.modal.style.display = 'block';
+            });
+        });
+
         console.log('渲染完成，显示 ${filtered.length} 个教室');
     }
 
@@ -189,6 +169,25 @@ document.addEventListener('DOMContentLoaded', function() {
             elements.startSelect.addEventListener(eventType, renderClassrooms);
             elements.endSelect.addEventListener(eventType, renderClassrooms);
         });
+
+        // 关闭弹窗
+        elements.closeModal.onclick = function() {
+            elements.modal.style.display = 'none';
+        }
+
+        // 点击窗口外部关闭弹窗
+        window.onclick = function(event) {
+            if (event.target == elements.modal) {
+                elements.modal.style.display = 'none';
+            }
+        }
+
+        // 确认预约按钮点击事件
+        elements.confirmBookingButton.addEventListener('click', function() {
+            alert('预约已确认！');
+            elements.modal.style.display = 'none';
+        });
+
         console.log('事件监听初始化完成');
     }
 
