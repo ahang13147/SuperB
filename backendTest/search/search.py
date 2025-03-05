@@ -98,16 +98,20 @@ def search_rooms():
             query_params.append(formatted_date)
 
         if start_time:
-            query += " AND ra.available_begin <= %s"
+            query += " AND ra.available_begin >= %s"
             query_params.append(f"{start_time}:00")
 
         if end_time:
-            query += " AND ra.available_end >= %s"
+            query += " AND ra.available_end <= %s"
             query_params.append(f"{end_time}:00")
         # 新增设备条件
         if equipment:
             query += " AND r.equipment LIKE %s"
             query_params.append(f"%{equipment}%")
+
+            # 调试输出
+        print("[调试] 最终SQL:", query)
+        print("[调试] 参数:", query_params)
 
         # 执行查询
         cursor.execute(query, query_params)
