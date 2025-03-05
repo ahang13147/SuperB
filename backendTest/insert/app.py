@@ -4,96 +4,85 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-# 数据库配置（根据你的MySQL信息修改）
+# 数据库配置
 DB_CONFIG = {
     "host": "127.0.0.1",
     "port": 3306,
     "user": "root",
-    "password": "0000",  # 替换为你的密码
+    "password": "0000",
     "database": "booking_system_db"
 }
 
 def get_db_connection():
     try:
-        conn = mysql.connector.connect(**DB_CONFIG)
-        return conn
+        return mysql.connector.connect(**DB_CONFIG)
     except mysql.connector.Error as err:
         print(f"Database connection error: {err}")
         return None
+
+def process_value(value, data_type):
+    """根据数据类型处理值"""
+    if data_type in ['tinyint', 'boolean']:
+        return 1 if value.lower() == 'true' else 0
+    elif data_type == 'time' and len(value) == 5:
+        return f"{value}:00"
+    elif data_type in ['int', 'integer', 'smallint', 'mediumint', 'bigint']:
+        return int(value) if value.isdigit() else value
+    return value
 
 @app.route('/')
 def index():
     return render_template('room_form.html')
 
-@app.route('/insert_room', methods=['POST'])
-def insert_room():
-    # 获取表单数据
-    room_name = request.form['room_name']
-    capacity = request.form['capacity']
-    equipment = request.form['equipment']
-    location = request.form['location']
-    availability = request.form['availability'] == 'true'
-
-    # 连接数据库
-    conn = get_db_connection()
-    if not conn:
-        return render_template('room_form.html', error="Database connection failed")
-
-    try:
-        cursor = conn.cursor()
-        # 执行插入操作（使用参数化查询防止SQL注入）
-        query = """
-        INSERT INTO Rooms (room_name, capacity, equipment, location, availability)
-        VALUES (%s, %s, %s, %s, %s)
-        """
-        cursor.execute(query, (room_name, capacity, equipment, location, availability))
-        conn.commit()
-        return render_template('room_form.html', message="Room inserted successfully!")
-    except mysql.connector.Error as err:
-        conn.rollback()
-        return render_template('room_form.html', error=f"Error: {err}")
-    finally:
-        if conn:
-            conn.close()
-
 @app.route('/booking')
 def booking():
     return render_template('booking_form.html')
 
-@app.route('/insert_booking', methods=['POST'])
-def insert_booking():
-    # 获取表单数据
-    user_id = request.form['user_id']
-    room_id = request.form['room_id']
-    booking_date = request.form['booking_date']  # 获取 booking_date
-    start_time = request.form['start_time']  # 获取 start_time (HH:MM)
-    end_time = request.form['end_time']  # 获取 end_time (HH:MM)
-    status = request.form['status']
+@app.route('/insert', methods=['POST'])
+def dynamic_insert():
+    table = request.form.get('table')
+    if not table:
+        return render_template('error.html', error="Table name required")
 
-    # 连接数据库
     conn = get_db_connection()
     if not conn:
-        return render_template('booking_form.html', error="Database connection failed")
+        return render_template('error.html', error="Database connection failed")
 
     try:
         cursor = conn.cursor()
-        # 执行插入操作（使用参数化查询防止SQL注入）
-        query = """
-        INSERT INTO Bookings (user_id, room_id, start_time, end_time, booking_date, status)
-        VALUES (%s, %s, %s, %s, %s, %s)
-        """
-        # 将时间格式化为 HH:MM:SS
-        start_time_formatted = f"{start_time}:00"
-        end_time_formatted = f"{end_time}:00"
-        cursor.execute(query, (user_id, room_id, start_time_formatted, end_time_formatted, booking_date, status))
+        
+        # 验证表是否存在
+        cursor.execute("SHOW TABLES LIKE %s", (table,))
+        if not cursor.fetchone():
+            raise ValueError(f"Table {table} does not exist")
+
+        # 获取列元数据
+        cursor.execute(f"SHOW COLUMNS FROM {table}")
+        columns = [col[0] for col in cursor.fetchall()]
+        form_data = {k: v for k, v in request.form.items() if k != 'table' and k in columns}
+
+        # 类型转换
+        cursor.execute(f"DESCRIBE {table}")
+        type_info = {col[0]: col[1] for col in cursor.fetchall()}
+        processed_data = {}
+        for col, val in form_data.items():
+            data_type = type_info[col].split('(')[0].lower()
+            processed_data[col] = process_value(val, data_type)
+
+        # 构建并执行查询
+        query = f"INSERT INTO {table} ({', '.join(processed_data.keys())}) VALUES ({', '.join(['%s']*len(processed_data))})"
+        cursor.execute(query, list(processed_data.values()))
         conn.commit()
-        return render_template('booking_form.html', message="Booking inserted successfully!")
-    except mysql.connector.Error as err:
+
+        template = 'room_form.html' if table == 'Rooms' else 'booking_form.html'
+        return render_template(template, message=f"Data inserted into {table} successfully!")
+    
+    except Exception as e:
         conn.rollback()
-        return render_template('booking_form.html', error=f"Error: {err}")
+        template = 'room_form.html' if table == 'Rooms' else 'booking_form.html'
+        return render_template(template, error=str(e))
     finally:
-        if conn:
-            conn.close()
+        if conn: conn.close()
 
 if __name__ == '__main__':
     app.run(debug=True)
