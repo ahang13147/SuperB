@@ -328,3 +328,21 @@ button:disabled {
     color: #721c24 !important;
     text-decoration: line-through;
 }
+
+/* 预约成功反馈样式 */
+.booking-feedback {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #2ecc71;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}

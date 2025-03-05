@@ -9,12 +9,15 @@ app = Flask(__name__)
 CORS(app)  # 允许所有来源访问，如果想限制特定来源，可以进行配置
 
 # 数据库连接配置
+
 db_config = {
     "host": "localhost",
+    "port": 3306,
     "user": "root",
-    "password": "",  # 填入数据库密码
+    "password": "root",  # 替换为你的密码
     "database": "booking_system_db"
 }
+
 
 # 连接到 MySQL 数据库
 def get_db_connection():
@@ -23,14 +26,14 @@ def get_db_connection():
 
 # 执行查询操作
 def search_records(query, params):
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)  # 使用 dictionary 返回结果，以便于 JSON 化
-
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)  # 使用 dictionary 返回结果，以便于 JSON 化
         cursor.execute(query, params)
         records = cursor.fetchall()  # 获取所有查询结果
         return records, 200
-    except Exception as e:
+    except mysql.connector.Error as e:
+        print(e)
         return f"Error occurred: {str(e)}", 500
     finally:
         cursor.close()
@@ -48,8 +51,8 @@ def build_search_query(table, conditions):
         if value is not None:
             query_conditions.append(f"{field} = %s")
             params.append(value)
-        else:
-            query_conditions.append(f"{field} IS NULL")
+        # else:
+        #     query_conditions.append(f"{field} IS NULL")
 
     query += " AND ".join(query_conditions)
     return query, params

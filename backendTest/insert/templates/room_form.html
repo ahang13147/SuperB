@@ -46,8 +46,7 @@
 
 <body>
     <h1>Insert Room (Python/Flask)</h1>
-    <form method="POST" action="/insert">
-        <input type="hidden" name="table" value="Rooms">
+    <form id="roomForm"> <!-- 移除 method 和 action -->
         <div class="form-group">
             <label>Room Name:</label>
             <input type="text" name="room_name" required>
@@ -64,15 +63,9 @@
             <label>Location:</label>
             <input type="text" name="location" required>
         </div>
-        <div class="form-group">
-            <label>Availability:</label>
-            <select name="availability">
-                <option value="true">Available</option>
-                <option value="false">Not Available</option>
-            </select>
-        </div>
-        <button type="submit">Submit Room</button>
-    </form>
+
+        <button type="button" onclick="submitRoomForm()">Submit Room</button>
+        </form>
 
     {% if message %}
     <div class="message">{{ message }}</div>
@@ -82,6 +75,38 @@
     {% endif %}
 
     <p><a href="{{ url_for('booking') }}">Go to Booking Form</a></p>
+    <div id="messageContainer"></div> <!-- 消息容器 -->
+    
+    <script>
+        function submitRoomForm() {
+            const formData = {
+                room_name: document.querySelector('[name="room_name"]').value,
+                capacity: parseInt(document.querySelector('[name="capacity"]').value),
+                equipment: document.querySelector('[name="equipment"]').value,
+                location: document.querySelector('[name="location"]').value
+                };
+
+            fetch('/insert_room', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('messageContainer');
+                    container.className = data.status === 'success' ? 'message' : 'error';
+                    container.innerHTML = data.message || data.error;
+                    if (data.status === 'success') {
+                        document.getElementById('roomForm').reset();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+    </script>
 </body>
 
 </html>
