@@ -26,12 +26,13 @@ WHERE
   (available_begin = ? OR ? IS NULL) AND
   (available_end = ? OR ? IS NULL);
 
--- 1.4 Delete Booking by any combination of booking_id, user_id, room_id, status, or any other combination of parameters
+-- 1.4 Delete Booking by room_name, start_time, end_time, booking_date, or any other combination of parameters
 DELETE FROM Bookings
 WHERE
-  (booking_id = ? OR ? IS NULL) AND
-  (user_id = ? OR ? IS NULL) AND
-  (room_id = ? OR ? IS NULL) AND
+  room_id = (SELECT room_id FROM Rooms WHERE room_name = ?) AND
+  start_time = ? AND
+  end_time = ? AND
+  booking_date = ? AND
   (status = ? OR ? IS NULL);
 
 -- 1.5 Delete Approval by any combination of approval_id, booking_id, admin_id, approval_status, or any other combination of parameters

@@ -53,22 +53,21 @@ def search_rooms():
     }
     所有参数均为可选，可以任意组合
     // 发送POST请求
-    fetch('http://localhost:5000/search-rooms', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'  // 设置请求头为JSON
-        },
-        body: JSON.stringify(requestData)  // 将请求体转为JSON字符串
-    })
-    .then(response => response.json())  // 解析返回的JSON数据
-    .then(data => {
-        console.log('Response:', data);  // 打印返回的数据
-    })
-    .catch(error => {
-        console.error('Error:', error);  // 错误处理
-    });
+fetch('http://localhost:5000/search-rooms', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'  // 设置请求头为JSON
+    },
+    body: JSON.stringify(requestData)  // 将请求体转为JSON字符串
+})
+.then(response => response.json())  // 解析返回的JSON数据
+.then(data => {
+    console.log('Response:', data);  // 打印返回的数据
+})
+.catch(error => {
+    console.error('Error:', error);  // 错误处理
+});
     """
-
     # 获取参数
     params = request.json or {}
     capacity = params.get('capacity')
@@ -77,7 +76,6 @@ def search_rooms():
     start_time = params.get('start_time')
     end_time = params.get('end_time')
     equipment = params.get('equipment')
-
 
     # 参数验证
     if start_time and not validate_time(start_time):
@@ -143,6 +141,57 @@ def search_rooms():
         return jsonify({
             "count": len(results),
             "results": results
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+
+@app.route('/bookings', methods=['GET'])
+def get_all_bookings():
+    """
+    获取所有房间预约记录的接口。
+    示例请求：
+    fetch('http://localhost:5000/bookings')
+    .then(response => response.json())
+    .then(data => console.log('Bookings:', data))
+    .catch(error => console.error('Error:', error));
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # 查询所有booking的基本信息
+        query = """
+            SELECT 
+                b.booking_id, b.user_id, b.room_id, b.booking_date, b.start_time, b.end_time,
+                r.room_name, r.location, r.capacity, r.equipment
+            FROM Bookings b
+            JOIN Rooms r ON b.room_id = r.room_id
+            ORDER BY b.booking_date, b.start_time
+        """
+
+        cursor.execute(query)
+        bookings = cursor.fetchall()
+
+        # 格式化时间字段（如果有必要的话）
+        for booking in bookings:
+            booking['start_time'] = format_time(booking['start_time'])
+            booking['end_time'] = format_time(booking['end_time'])
+            booking['booking_date'] = booking['booking_date'].strftime("%Y-%m-%d")
+
+        return jsonify({
+            "count": len(bookings),
+            "bookings": bookings
         })
 
     except mysql.connector.Error as e:
