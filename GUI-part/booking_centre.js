@@ -4,18 +4,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 加载时间段配置
     let timeSlots = [
-    "08:00-08:45",
-    "08:55-09:40",
-    "10:00-10:45",
-    "10:55-11:40",
-    "14:00-14:45",
-    "14:55-15:40",
-    "16:00-16:45",
-    "16:55-17:40",
-    "19:00-19:45",
-    "19:55-20:40"
-]
-
+        "08:00-08:45",
+        "08:55-09:40",
+        "10:00-10:45",
+        "10:55-11:40",
+        "14:00-14:45",
+        "14:55-15:40",
+        "16:00-16:45",
+        "16:55-17:40",
+        "19:00-19:45",
+        "19:55-20:40"
+    ];
 
     // DOM元素引用
     const elements = {
@@ -30,15 +29,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         closeModal: document.querySelector('.close'),
         availableTimesContainer: document.getElementById('availableTimes'),
         confirmBookingButton: document.getElementById('confirmBooking')
-    };
-
-    // 防抖函数
-    const debounce = (func, timeout = 300) => {
-        let timer;
-        return (...args) => {
-            clearTimeout(timer);
-            timer = setTimeout(() => func.apply(this, args), timeout);
-        };
     };
 
     // 初始化时间选择器
@@ -105,33 +95,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 渲染教室列表
+    // 渲染教室列表（修正版）
     function renderClassrooms() {
         elements.classroomList.innerHTML = classrooms.map(classroom => `
-            <div class="classroom-card" data-classroom="${classroom.name}">
-                <h3>${classroom.name}</h3>
-                <div class="details">
-                    <p>Capacity: ${classroom.capacity} people</p>
-                    <p>Equipment: ${classroom.equipment.join(', ')}</p>
-                    <p>Available time slots:</p>
-                    <ul>
-                        ${classroom.availableTimes.map(t => `
-                            <li class="${t.booked ? 'booked-slot' : ''}">
-                                ${t.time} 
-                                ${t.booked ? '<span class="booked-marker">⛔️</span>' : ''}
-                            </li>
-                        `).join('')}
-                    </ul>
-                </div>
-                <button>
-                    Book Now
-                </button>
+        <div class="classroom-card" data-classroom="${classroom.name}">
+            <h3>${classroom.name}</h3>
+            <div class="details">
+                <p>Capacity: ${classroom.capacity} people</p>
+                <p>Equipment: ${classroom.equipment.join(', ')}</p>
+                <p>Available time slots:</p>
+                <ul>
+                    ${classroom.availableTimes.map(t => `
+                        <li class="${t.booked ? 'booked-slot' : ''}">
+                            ${t.time} 
+                            ${t.booked ? '<span class="booked-marker">⛔️</span>' : ''}
+                        </li>
+                    `).join('')}
+                </ul>
             </div>
-        `).join('');
+            <button>
+                Book Now
+            </button>
+        </div>
+    `).join('');
 
         // 绑定事件监听器
         document.querySelectorAll('.classroom-card button').forEach(button => {
-            button.addEventListener('click', function() {
+            button.addEventListener('click', function () {
                 const classroomName = this.closest('.classroom-card').dataset.classroom;
                 const classroom = classrooms.find(c => c.name === classroomName);
                 showBookingModal(classroom);
@@ -141,6 +131,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 显示预定弹窗
     function showBookingModal(classroom) {
+        document.querySelectorAll('.classroom-card').forEach(card => {
+            card.dataset.active = "false";
+        });
+        document.querySelector(`.classroom-card[data-classroom="${classroom.name}"]`).dataset.active = "true";
+
         elements.availableTimesContainer.innerHTML = classroom.availableTimes.map(timeSlot => `
             <div class="${timeSlot.booked ? 'time-slot-booked' : ''}">
                 <input 
@@ -163,19 +158,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 初始化事件监听
     function initEventListeners() {
-        const updateHandler = debounce(fetchClassrooms);
         ['input', 'change'].forEach(eventType => {
-            elements.searchInput.addEventListener(eventType, updateHandler);
-            elements.capacityFilter.addEventListener(eventType, updateHandler);
-            elements.startSelect.addEventListener(eventType, updateHandler);
-            elements.endSelect.addEventListener(eventType, updateHandler);
-            elements.datePicker.addEventListener(eventType, updateHandler);
-            elements.equipmentFilter.addEventListener(eventType, updateHandler);
+            elements.searchInput.addEventListener(eventType, fetchClassrooms);
+            elements.capacityFilter.addEventListener(eventType, fetchClassrooms);
+            elements.startSelect.addEventListener(eventType, fetchClassrooms);
+            elements.endSelect.addEventListener(eventType, fetchClassrooms);
+            elements.datePicker.addEventListener(eventType, fetchClassrooms);
+            elements.equipmentFilter.addEventListener(eventType, fetchClassrooms);
         });
 
+        // 关闭 Modal 的事件监听
         elements.closeModal.onclick = () => elements.modal.style.display = 'none';
-        window.onclick = event => event.target == elements.modal && (elements.modal.style.display = 'none');
+
+        // 防止点击日期选择器时关闭 modal
+        elements.datePicker.addEventListener('click', (event) => {
+            event.stopPropagation();  // 阻止点击事件传播到 window
+        });
+
+        // 关闭 Modal 的事件监听：只有点击 modal 背景才关闭
+        window.onclick = event => {
+            if (event.target == elements.modal) {
+                elements.modal.style.display = 'none';
+            }
+        };
     }
+
 
     // 初始化流程
     try {
