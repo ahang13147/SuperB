@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // 初始化事件监听
-    function initEventListeners() {
+     function initEventListeners() {
         ['input', 'change'].forEach(eventType => {
             elements.searchInput.addEventListener(eventType, fetchClassrooms);
             elements.capacityFilter.addEventListener(eventType, fetchClassrooms);
