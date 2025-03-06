@@ -67,12 +67,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const reservation = JSON.parse(modal.dataset.reservation);
 
         try {
-            const response = await fetch('/api/cancel', {
+            const response = await fetch('http://127.0.0.1:5000/delete/bookings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     booking_id: reservation.booking_id, // 关键字段
-                    status: 'canceled'
+                    start_time:reservation.start_time,
+                    end_time:reservation.end_time,
+                    booking_date: reservation.booking_date,
+                    status: 'canceled',
                 })
             });
 
