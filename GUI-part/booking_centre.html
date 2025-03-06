@@ -1,8 +1,8 @@
 <!-- booking_centre.html -->
 <!--
 author: Guanhang Zhang & Jiawei You
-Version 2.0.1
-this version fixing backend connection
+Version 2.0.2
+this version connect the search method of the flask
 
 -->
 
@@ -54,6 +54,13 @@ this version fixing backend connection
 
                 <!-- 搜索和过滤区域 -->
                 <div class="filters">
+                    <!-- 在 filters div 中添加 -->
+                    <input type="date" id="datePicker">
+                    <select id="equipmentFilter">
+                        <option value="">All Equipment</option>
+                        <option value="Projector">Projector</option>
+                        <option value="Whiteboard">Whiteboard</option>
+                    </select>
                     <input type="text" id="searchKeyword" placeholder="Search classroom name...">
                     <select id="capacityFilter">
                         <option value="0">All capacity</option>
