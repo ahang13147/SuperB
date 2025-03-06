@@ -217,17 +217,6 @@ for room, schedule in classroom_schedule.items():
         for time_idx, time in enumerate(times):
             room_2d_array[room][day_idx][time_idx] = time
 
-# ============================ 输出整合后的教室使用情况 ============================
-print("\n整合后的教室使用情况：")
-for room, schedule in room_2d_array.items():
-    print(f"教室 {room}:")
-    for day_idx, times in enumerate(schedule):
-        day_name = f"星期{day_idx + 1}:"
-        print(f"{day_name} {''.join(times)}")
-
-print(room_2d_array)
-
-
 # 处理函数
 def split_time_slots(data):
     new_data = {}
@@ -262,11 +251,18 @@ def split_time_slots(data):
 
 # 使用该函数处理原始数据
 new_room_2d_array = split_time_slots(room_2d_array)
+print(new_room_2d_array)
+# 打印结果查看并显示房间号、星期几及具体时间段
+days_of_week = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
 
-# 打印结果查看并显示每个元素的类型
 for room, schedule in new_room_2d_array.items():
-    print(f"Room {room}:")
-    for day in schedule:
-        for item in day:
-            print(f"Element: {item}, Type: {type(item)}")
+    print(f"\nRoom {room}:")
+    for day_idx, day in enumerate(schedule):
+        print(f"  {days_of_week[day_idx]}:")
+        for time_idx, time in enumerate(day):
+            if time:
+                print(f"    时段 {time_idx + 1}: {time}")
+            else:
+                print(f"    时段 {time_idx + 1}: 空")
+
 

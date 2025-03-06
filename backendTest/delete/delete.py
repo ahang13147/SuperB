@@ -42,15 +42,43 @@ def delete_record(query, params):
 def build_delete_query(table, conditions):
     query = f"DELETE FROM {table} WHERE "
     query_conditions = []
-
-    # 遍历所有条件字段，动态生成条件
     params = []
-    for field, value in conditions.items():
-        if value is not None:
-            query_conditions.append(f"{field} = %s")
-            params.append(value)
-        else:
-            query_conditions.append(f"{field} IS NULL")
+
+    # 为Bookings表格的删除构建查询
+    if table == "Bookings":
+        # 获取 room_id
+        room_name = conditions.get("room_name")
+        if room_name:
+            query_conditions.append("room_id = (SELECT room_id FROM Rooms WHERE room_name = %s)")
+            params.append(room_name)
+
+        # 添加时间和日期条件
+        start_time = conditions.get("start_time")
+        end_time = conditions.get("end_time")
+        booking_date = conditions.get("booking_date")
+        status = conditions.get("status")
+
+        if start_time:
+            query_conditions.append("start_time = %s")
+            params.append(start_time)
+        if end_time:
+            query_conditions.append("end_time = %s")
+            params.append(end_time)
+        if booking_date:
+            query_conditions.append("booking_date = %s")
+            params.append(booking_date)
+        if status:
+            query_conditions.append("status = %s")
+            params.append(status)
+
+    else:
+        # 对于其他表的删除，按照通用条件来构建
+        for field, value in conditions.items():
+            if value is not None:
+                query_conditions.append(f"{field} = %s")
+                params.append(value)
+            else:
+                query_conditions.append(f"{field} IS NULL")
 
     query += " AND ".join(query_conditions)
     return query, params
