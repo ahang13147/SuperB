@@ -85,17 +85,16 @@ fetch('http://localhost:5000/search-rooms', {
 
     try:
         conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor(dictionary=True, buffered=True)  # 添加buffered=True
 
         # 构建基础查询
         query = """
-           SELECT 
-    r.room_id, r.room_name, r.capacity, r.equipment, r.location,
-    ra.available_date, ra.available_begin, ra.available_end,ra.availability
-FROM Rooms r
-JOIN Room_availability ra ON r.room_id = ra.room_id
-WHERE ra.availability IN (0, 2);
-
+            SELECT 
+                r.room_id, r.room_name, r.capacity, r.equipment, r.location,
+                ra.available_date, ra.available_begin, ra.available_end, ra.availability
+            FROM Rooms r
+            JOIN Room_availability ra ON r.room_id = ra.room_id
+            WHERE ra.availability IN (0, 2)
         """
         query_params = []
 
@@ -109,7 +108,6 @@ WHERE ra.availability IN (0, 2);
             query_params.append(f"%{room_name}%")
 
         if date:
-            # 确保数据库中的 available_date 被转换为只含日期的格式
             formatted_date = datetime.strptime(date, "%Y-%m-%d").date()
             query += " AND DATE(ra.available_date) = %s"
             query_params.append(formatted_date)
@@ -121,12 +119,12 @@ WHERE ra.availability IN (0, 2);
         if end_time:
             query += " AND ra.available_end <= %s"
             query_params.append(f"{end_time}:00")
-        # 新增设备条件
+
         if equipment:
             query += " AND r.equipment LIKE %s"
             query_params.append(f"%{equipment}%")
 
-            # 调试输出
+        # 调试输出SQL
         print("[调试] 最终SQL:", query)
         print("[调试] 参数:", query_params)
 
