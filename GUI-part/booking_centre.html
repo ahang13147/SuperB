@@ -1,13 +1,15 @@
+@@ -1,85 +1,92 @@
 <!-- booking_centre.html -->
 <!--
-author: Guanhang Zhang & Jiawei You
-Version 2.0.2
-this version connect the search method of the flask
+author: Guanhang Zhang & Jiawei You & Siyan Guo
+this version fix the bug of the calender
+Version 2.0.3
 
 -->
 
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,6 +18,7 @@ this version connect the search method of the flask
     <link rel="stylesheet" href="sidebarAndNotice.css"> <!-- 引入侧边栏的CSS文件 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
+
 <body>
 
     <div id="bookingModal" class="modal">
@@ -56,11 +59,13 @@ this version connect the search method of the flask
                 <div class="filters">
                     <!-- 在 filters div 中添加 -->
                     <input type="date" id="datePicker">
+
                     <select id="equipmentFilter">
                         <option value="">All Equipment</option>
                         <option value="Projector">Projector</option>
                         <option value="Whiteboard">Whiteboard</option>
                     </select>
+
                     <input type="text" id="searchKeyword" placeholder="Search classroom name...">
                     <select id="capacityFilter">
                         <option value="0">All capacity</option>
@@ -88,4 +93,5 @@ this version connect the search method of the flask
     <script src="booking_centre.js"></script>
     <script src="sidebarAndNotice.js"></script>
 </body>
+
 </html>
