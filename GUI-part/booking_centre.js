@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         capacityFilter: document.getElementById('capacityFilter'),
         startSelect: document.getElementById('startTime'),
         endSelect: document.getElementById('endTime'),
+        datePicker: document.getElementById('datePicker'), // 确保HTML中存在此ID
+        equipmentFilter: document.getElementById('equipmentFilter'), // 确保HTML中存在此ID
         modal: document.getElementById('bookingModal'),
         closeModal: document.querySelector('.close'),
         availableTimesContainer: document.getElementById('availableTimes'),
@@ -42,9 +44,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.endSelect.innerHTML = '<option value="">Select end time</option>';
 
         timeSlots.forEach(slot => {
-            const [start] = slot.split('-');
-            elements.startSelect.innerHTML += `<option value="${slot}">${start}</option>`;
-            elements.endSelect.innerHTML += `<option value="${slot}">${slot.split('-')[1]}</option>`;
+            const [start, end] = slot.split('-');
+            elements.startSelect.innerHTML += `<option value="${start}">${start}</option>`;
+            elements.endSelect.innerHTML += `<option value="${end}">${end}</option>`;
         });
     }
 
@@ -53,8 +55,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const requestData = {
             capacity: parseInt(elements.capacityFilter.value) || undefined,
             room_name: elements.searchInput.value.trim() || undefined,
-            start_time: elements.startSelect.value ? elements.startSelect.value.split('-')[0] : undefined,
-            end_time: elements.endSelect.value ? elements.endSelect.value.split('-')[1] : undefined
+            date: elements.datePicker?.value || undefined,
+            start_time: elements.startSelect.value || undefined, // 直接使用HH:MM格式
+            end_time: elements.endSelect.value || undefined,     // 直接使用HH:MM格式
+            equipment: elements.equipmentFilter?.value || undefined
         };
 
         // 清除undefined值
@@ -67,7 +71,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                 body: JSON.stringify(requestData)
             });
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-            classrooms = await response.json();
+
+            const responseData = await response.json();
+            console.log('Response data:', responseData);
+
+            // 合并同一教室的多个时间段
+            const classroomMap = new Map();
+            responseData.results.forEach(room => {
+                if (!classroomMap.has(room.room_id)) {
+                    classroomMap.set(room.room_id, {
+                        id: room.room_id,
+                        name: room.room_name,
+                        capacity: room.capacity,
+                        equipment: room.equipment ? room.equipment.split(', ') : [],
+                        availableTimes: []
+                    });
+                }
+                const classroom = classroomMap.get(room.room_id);
+                classroom.availableTimes.push({
+                    time: `${room.available_begin}-${room.available_end}`,
+                    booked: false // 根据实际业务逻辑判断是否被预订
+                });
+            });
+
+            classrooms = Array.from(classroomMap.values());
             renderClassrooms();
         } catch (error) {
             console.error('Failed to fetch classrooms:', error);
@@ -82,6 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <h3>${classroom.name}</h3>
                 <div class="details">
                     <p>Capacity: ${classroom.capacity} people</p>
+                    <p>Equipment: ${classroom.equipment.join(', ')}</p>
                     <p>Available time slots:</p>
                     <ul>
                         ${classroom.availableTimes.map(t => `
@@ -92,11 +120,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         `).join('')}
                     </ul>
                 </div>
-                <span class="status ${classroom.isBooked ? 'booked' : 'available'}">
-                    ${classroom.isBooked ? 'Booked' : 'Available'}
-                </span>
-                <button ${classroom.isBooked ? 'disabled' : ''}>
-                    ${classroom.isBooked ? 'Booked' : 'Book Now'}
+                <button>
+                    Book Now
                 </button>
             </div>
         `).join('');
@@ -113,11 +138,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 显示预定弹窗
     function showBookingModal(classroom) {
-        document.querySelectorAll('.classroom-card').forEach(card => {
-            card.dataset.active = "false";
-        });
-        document.querySelector(`.classroom-card[data-classroom="${classroom.name}"]`).dataset.active = "true";
-
         elements.availableTimesContainer.innerHTML = classroom.availableTimes.map(timeSlot => `
             <div class="${timeSlot.booked ? 'time-slot-booked' : ''}">
                 <input 
@@ -146,6 +166,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.capacityFilter.addEventListener(eventType, updateHandler);
             elements.startSelect.addEventListener(eventType, updateHandler);
             elements.endSelect.addEventListener(eventType, updateHandler);
+            elements.datePicker.addEventListener(eventType, updateHandler);
+            elements.equipmentFilter.addEventListener(eventType, updateHandler);
         });
 
         elements.closeModal.onclick = () => elements.modal.style.display = 'none';
@@ -156,7 +178,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         initTimeSelectors();
         initEventListeners();
-        await fetchClassrooms(); // 初始加载所有教室
+        await fetchClassrooms();
         console.log('System initialization complete');
     } catch (error) {
         console.error('Initialization error:', error);
