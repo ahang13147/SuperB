@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,12 +13,14 @@
             background-color: #f4f7f6;
             color: #333;
         }
+
         h1 {
             text-align: center;
             color: #2c3e50;
             margin-bottom: 20px;
             font-size: 2.5em;
         }
+
         .room-list {
             max-width: 800px;
             margin: 0 auto;
@@ -26,6 +29,7 @@
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         .room-item {
             display: flex;
             justify-content: space-between;
@@ -34,20 +38,25 @@
             border-bottom: 1px solid #eee;
             transition: background-color 0.3s ease;
         }
+
         .room-item:hover {
             background-color: #f9f9f9;
         }
+
         .room-item:last-child {
             border-bottom: none;
         }
+
         .room-info {
             flex-grow: 1;
         }
+
         .room-info label {
             font-weight: bold;
             margin-right: 10px;
             color: #34495e;
         }
+
         .room-actions button {
             margin-left: 10px;
             padding: 8px 16px;
@@ -56,20 +65,25 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
+
         .room-actions .edit-btn {
             background-color: #3498db;
             color: white;
         }
+
         .room-actions .edit-btn:hover {
             background-color: #2980b9;
         }
+
         .room-actions .delete-btn {
             background-color: #e74c3c;
             color: white;
         }
+
         .room-actions .delete-btn:hover {
             background-color: #c0392b;
         }
+
         .add-room-form {
             max-width: 800px;
             margin: 20px auto;
@@ -78,11 +92,13 @@
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         .add-room-form h2 {
             color: #2c3e50;
             margin-bottom: 15px;
             font-size: 1.8em;
         }
+
         .add-room-form input {
             width: calc(100% - 22px);
             padding: 10px;
@@ -92,10 +108,12 @@
             font-size: 1em;
             transition: border-color 0.3s ease;
         }
+
         .add-room-form input:focus {
             border-color: #3498db;
             outline: none;
         }
+
         .add-room-form button {
             background-color: #2ecc71;
             color: white;
@@ -106,9 +124,11 @@
             font-size: 1em;
             transition: background-color 0.3s ease;
         }
+
         .add-room-form button:hover {
             background-color: #27ae60;
         }
+
         .modal {
             display: none;
             position: fixed;
@@ -120,6 +140,7 @@
             justify-content: center;
             align-items: center;
         }
+
         .modal-content {
             background-color: white;
             padding: 25px;
@@ -127,11 +148,13 @@
             width: 350px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
+
         .modal-content h2 {
             color: #2c3e50;
             margin-bottom: 20px;
             font-size: 1.8em;
         }
+
         .modal-content input {
             width: calc(100% - 22px);
             padding: 10px;
@@ -141,10 +164,12 @@
             font-size: 1em;
             transition: border-color 0.3s ease;
         }
+
         .modal-content input:focus {
             border-color: #3498db;
             outline: none;
         }
+
         .modal-content button {
             background-color: #3498db;
             color: white;
@@ -155,31 +180,38 @@
             font-size: 1em;
             transition: background-color 0.3s ease;
         }
+
         .modal-content button.cancel-btn {
             background-color: #e74c3c;
             margin-left: 10px;
         }
+
         .modal-content button:hover {
             background-color: #2980b9;
         }
+
         .modal-content button.cancel-btn:hover {
             background-color: #c0392b;
         }
+
         @media (max-width: 600px) {
             .room-item {
                 flex-direction: column;
                 align-items: flex-start;
             }
+
             .room-actions {
                 margin-top: 10px;
             }
         }
     </style>
 </head>
+
 <body>
 
     <!DOCTYPE html>
     <html lang="en">
+
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -188,146 +220,163 @@
             /* 样式部分保持不变 */
         </style>
     </head>
+
     <body>
-    
-    <h1>Room Management</h1>
-    
-    <div class="room-list">
-        <!-- 示例房间 -->
-        <div class="room-item" data-room-no="1">
-            <div class="room-info">
-                <div><label>Room No:</label> 1</div>
-                <div><label>Name:</label> A102</div>
-                <div><label>Location:</label> Building A, 2nd Floor</div>
-                <div><label>Equipment:</label> Projector, Whiteboard</div>
-            </div>
-            <div class="room-actions">
-                <button class="edit-btn" onclick="openEditModal(1)">Edit</button>
-                <button class="delete-btn" onclick="deleteRoom(1)">Delete</button>
+
+        <h1>Room Management</h1>
+
+        <div class="room-list">
+            <!-- 示例房间 -->
+            <div class="room-item" data-room-no="1">
+                <div class="room-info">
+                    <div><label>Room No:</label> 1</div>
+                    <div><label>Name:</label> A102</div>
+                    <div><label>Location:</label> Building A, 2nd Floor</div>
+                    <div><label>Equipment:</label> Projector, Whiteboard</div>
+                </div>
+                <div class="room-actions">
+                    <button class="edit-btn" onclick="openEditModal(1)">Edit</button>
+                    <button class="delete-btn" onclick="deleteRoom(1)">Delete</button>
+                </div>
             </div>
         </div>
-    </div>
-    
-    <!-- 添加房间的表单 -->
-    <div class="add-room-form">
-        <h2>Add New Room</h2>
-        <input type="text" id="roomNo" placeholder="Room No">
-        <input type="text" id="roomName" placeholder="Room Name">
-        <input type="text" id="location" placeholder="Location">
-        <input type="text" id="equipment" placeholder="Equipment">
-        <button onclick="addRoom()">Add Room</button>
-    </div>
-    
-    <!-- 编辑房间的模态框 -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <h2>Edit Room</h2>
-            <input type="text" id="editRoomNo" placeholder="Room No" disabled>
-            <input type="text" id="editRoomName" placeholder="Room Name">
-            <input type="text" id="editLocation" placeholder="Location">
-            <input type="text" id="editEquipment" placeholder="Equipment">
-            <button onclick="saveRoom()">Save</button>
-            <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+
+        <!-- 添加房间的表单 -->
+        <!-- 修改后的添加房间表单 -->
+        <div class="add-room-form">
+            <h2>Add New Room</h2>
+            <input type="text" id="roomName" placeholder="Room Name" required>
+            <input type="number" id="capacity" placeholder="Capacity" required>
+            <input type="text" id="location" placeholder="Location" required>
+            <input type="text" id="equipment" placeholder="Equipment" required>
+            <button onclick="addRoom()">Add Room</button>
         </div>
-    </div>
-    
-    <script>
-        let currentEditingRoomNo = null;
-    
-        // 打开编辑模态框
-        function openEditModal(roomNo) {
-            const roomItem = document.querySelector(`.room-item[data-room-no="${roomNo}"]`);
-            const roomInfo = roomItem.querySelector('.room-info');
-    
-            // 获取房间信息
-            const roomNoText = roomInfo.querySelector('div:nth-child(1)').innerText.replace('Room No:', '').trim();
-            const roomNameText = roomInfo.querySelector('div:nth-child(2)').innerText.replace('Name:', '').trim();
-            const locationText = roomInfo.querySelector('div:nth-child(3)').innerText.replace('Location:', '').trim();
-            const equipmentText = roomInfo.querySelector('div:nth-child(4)').innerText.replace('Equipment:', '').trim();
-    
-            // 填充模态框中的表单
-            document.getElementById('editRoomNo').value = roomNoText;
-            document.getElementById('editRoomName').value = roomNameText;
-            document.getElementById('editLocation').value = locationText;
-            document.getElementById('editEquipment').value = equipmentText;
-    
-            // 记录当前编辑的房间编号
-            currentEditingRoomNo = roomNo;
-    
-            // 显示模态框
-            document.getElementById('editModal').style.display = 'flex';
-        }
-    
-        // 关闭编辑模态框
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-        }
-    
-        // 保存房间信息
-        function saveRoom() {
-            const roomNo = currentEditingRoomNo;
-            const roomName = document.getElementById('editRoomName').value;
-            const location = document.getElementById('editLocation').value;
-            const equipment = document.getElementById('editEquipment').value;
-    
-            if (roomNo && roomName && location && equipment) {
-                // 更新页面上的房间信息
+
+        <!-- 编辑房间的模态框 -->
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <h2>Edit Room</h2>
+                <input type="text" id="editRoomNo" placeholder="Room No" disabled>
+                <input type="text" id="editRoomName" placeholder="Room Name">
+                <input type="text" id="editLocation" placeholder="Location">
+                <input type="text" id="editEquipment" placeholder="Equipment">
+                <button onclick="saveRoom()">Save</button>
+                <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+            </div>
+        </div>
+
+        <script>
+            let currentEditingRoomNo = null;
+
+            // 打开编辑模态框
+            function openEditModal(roomNo) {
                 const roomItem = document.querySelector(`.room-item[data-room-no="${roomNo}"]`);
-                roomItem.querySelector('.room-info').innerHTML = `
-                    <div><label>Room No:</label> ${roomNo}</div>
-                    <div><label>Name:</label> ${roomName}</div>
-                    <div><label>Location:</label> ${location}</div>
-                    <div><label>Equipment:</label> ${equipment}</div>
-                `;
-    
-                alert(`Room ${roomNo} updated with Name: ${roomName}, Location: ${location}, Equipment: ${equipment}`);
-                closeEditModal();
-            } else {
-                alert("Please fill in all fields.");
+                const roomInfo = roomItem.querySelector('.room-info');
+
+                // 获取房间信息
+                const roomNoText = roomInfo.querySelector('div:nth-child(1)').innerText.replace('Room No:', '').trim();
+                const roomNameText = roomInfo.querySelector('div:nth-child(2)').innerText.replace('Name:', '').trim();
+                const locationText = roomInfo.querySelector('div:nth-child(3)').innerText.replace('Location:', '').trim();
+                const equipmentText = roomInfo.querySelector('div:nth-child(4)').innerText.replace('Equipment:', '').trim();
+
+                // 填充模态框中的表单
+                document.getElementById('editRoomNo').value = roomNoText;
+                document.getElementById('editRoomName').value = roomNameText;
+                document.getElementById('editLocation').value = locationText;
+                document.getElementById('editEquipment').value = equipmentText;
+
+                // 记录当前编辑的房间编号
+                currentEditingRoomNo = roomNo;
+
+                // 显示模态框
+                document.getElementById('editModal').style.display = 'flex';
             }
-        }
-    
-        // 删除房间
-        function deleteRoom(roomNo) {
-            if (confirm("Are you sure you want to delete room " + roomNo + "?")) {
-                const roomItem = document.querySelector(`.room-item[data-room-no="${roomNo}"]`);
-                roomItem.remove();
-                alert("Room " + roomNo + " deleted.");
+
+            // 关闭编辑模态框
+            function closeEditModal() {
+                document.getElementById('editModal').style.display = 'none';
             }
-        }
-    
-        // 添加新房间
-        function addRoom() {
-            const roomNo = document.getElementById("roomNo").value;
-            const roomName = document.getElementById("roomName").value;
-            const location = document.getElementById("location").value;
-            const equipment = document.getElementById("equipment").value;
-    
-            if (roomNo && roomName && location && equipment) {
-                const roomList = document.querySelector('.room-list');
-                const newRoomItem = document.createElement('div');
-                newRoomItem.classList.add('room-item');
-                newRoomItem.setAttribute('data-room-no', roomNo);
-                newRoomItem.innerHTML = `
-                    <div class="room-info">
-                        <div><label>Room No:</label> ${roomNo}</div>
-                        <div><label>Name:</label> ${roomName}</div>
-                        <div><label>Location:</label> ${location}</div>
-                        <div><label>Equipment:</label> ${equipment}</div>
-                    </div>
-                    <div class="room-actions">
-                        <button class="edit-btn" onclick="openEditModal(${roomNo})">Edit</button>
-                        <button class="delete-btn" onclick="deleteRoom(${roomNo})">Delete</button>
-                    </div>
-                `;
-                roomList.appendChild(newRoomItem);
-    
-                alert("Added new room: " + roomNo + ", " + roomName + ", Location: " + location + ", Equipment: " + equipment);
-            } else {
-                alert("Please fill in all fields.");
+
+            // 修改后的addRoom函数
+            function addRoom() {
+                const roomName = document.getElementById("roomName").value;
+                const capacity = document.getElementById("capacity").value;
+                const location = document.getElementById("location").value;
+                const equipment = document.getElementById("equipment").value;
+
+                if (!roomName || !capacity || !location || !equipment) {
+                    alert("Please fill in all fields.");
+                    return;
+                }
+
+                fetch('http://localhost:5000/insert_room', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        room_name: roomName,
+                        capacity: parseInt(capacity),
+                        equipment: equipment,
+                        location: location
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                                // 清空输入框
+                        roomName.value = '';
+                        capacity.value = '';
+                        location.value = '';
+                        equipment.value = '';
+                        // 调试输出
+                        console.log("原始响应数据:", data);
+
+                        // 适配不同响应格式
+                        const isSuccess = data.success === true ||
+                            (data.message && data.message.toLowerCase().includes("success"));
+
+                        if (isSuccess) {
+                            // 创建新的房间项
+                            const roomList = document.querySelector('.room-list');
+                            const newRoomItem = document.createElement('div');
+                            newRoomItem.className = 'room-item';
+                            newRoomItem.dataset.roomId = data.room_id || Date.now(); // 临时ID
+
+                            newRoomItem.innerHTML = `
+                        <div class="room-info">
+                            <div><label>Room Name:</label> ${roomName}</div>
+                            <div><label>Capacity:</label> ${capacity}</div>
+                            <div><label>Location:</label> ${location}</div>
+                            <div><label>Equipment:</label> ${equipment}</div>
+                        </div>
+                        <div class="room-actions">
+                            <button class="edit-btn" onclick="openEditModal(${data.room_id || 'temp'})">Edit</button>
+                            <button class="delete-btn" onclick="deleteRoom(${data.room_id || 'temp'})">Delete</button>
+                        </div>
+                    `;
+
+                            roomList.appendChild(newRoomItem);
+                            alert(data.message || "Room added successfully!");
+                        } else {
+                            alert(data.message || "Operation failed");
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert("Request failed: " + error.message);
+                    });
             }
-        }
-    </script>
-    
+
+
+            // 删除房间
+            function deleteRoom(roomNo) {
+                if (confirm("Are you sure you want to delete room " + roomNo + "?")) {
+                    const roomItem = document.querySelector(`.room-item[data-room-no="${roomNo}"]`);
+                    roomItem.remove();
+                    alert("Room " + roomNo + " deleted.");
+                }
+            }
+
+        </script>
+
     </body>
+
     </html>
