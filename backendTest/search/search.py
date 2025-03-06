@@ -78,6 +78,7 @@ def search_rooms():
     end_time = params.get('end_time')
     equipment = params.get('equipment')
 
+
     # 参数验证
     if start_time and not validate_time(start_time):
         return jsonify({"error": "Invalid start_time format (HH:MM)"}), 400
