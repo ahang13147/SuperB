@@ -2,9 +2,10 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import re
-from datetime import datetime
+import time
+import mysql.connector
 
-# ============================ Initialize Timetable ============================
+# Initialize timetable
 timetable = {
     "1-2": [""] * 7,
     "3-4": [""] * 7,
@@ -15,124 +16,62 @@ timetable = {
     "Notes": [""] * 7
 }
 
-class_usage = {}
+# Connect to the MySQL database
+db = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="1234",
+    database="booking_system_db"
+)
+cursor = db.cursor()
 
 
-# ============================ Helper Functions ============================
-def extract_classrooms(course_text):
-    classroom_pattern = re.compile(r'外语网络楼(\d{3})')
-    classrooms = classroom_pattern.findall(course_text)
-    return classrooms
+# Function to extract room numbers from the output (e.g., 外语网络楼635)
+def extract_room_number(room_name):
+    match = re.search(r'外语网络楼(\d+)', room_name)
+    if match:
+        return int(match.group(1))  # Return the numeric part as an integer
+    return None
 
 
-def process_schedule():
-    session = requests.Session()
-    url_main = "http://csujwc.its.csu.edu.cn/jiaowu/pkgl/llsykb/llsykb_find_xx04.jsp?init=1&isview=1&xnxq01id=null"
-    headers = {"User-Agent": "Mozilla/5.0", "Referer": url_main}
-    session.get(url_main, headers=headers)
+# Sample data: Classroom schedule
+classroom_schedule = {
+    "外语网络楼635": "周2[10:00-10:45][10:55-11:40],周3[14:00-14:45][14:55-15:40][16:00-16:45][16:55-17:40],周4[10:00-10:45][10:55-11:40][19:00-19:45][19:55-20:40]",
 
-    academic_years = ["2022", "2023", "2024"]
-    semester_id = "2024-2025-2"
+    # Add more rooms and their schedule as needed
+}
 
-    # API Endpoints
-    url_major = "http://csujwc.its.csu.edu.cn/KbctjcAction.do?method=queryzy"
-    url_class = "http://csujwc.its.csu.edu.cn/KbctjcAction.do?method=querybj"
+# Loop through the room schedule and insert room availability
+for room_name, schedule in classroom_schedule.items():
+    room_id = extract_room_number(room_name)  # Get room_id from room_name
 
-    # Mapping for class periods to actual times
-    class_periods = {
-        "1-2": [("[08:00-08:45]", "[08:55-09:40]")],
-        "3-4": [("[10:00-10:45]", "[10:55-11:40]")],
-        "5-6": [("[14:00-14:45]", "[14:55-15:40]")],
-        "7-8": [("[16:00-16:45]", "[16:55-17:40]")],
-        "9-10": [("[19:00-19:45]", "[19:55-20:40]")],
-        "11-12": [("[21:00-21:45]", "[21:55-22:40]")]
-    }
+    if room_id is None:
+        continue  # Skip if room_id extraction failed
 
-    classroom_schedule = {}
+    # Split the schedule by days (e.g., "周2[10:00-10:45][10:55-11:40]" => ["10:00-10:45", "10:55-11:40"])
+    days_schedule = schedule.split(',')
 
-    for year in academic_years:
-        major_data = {"yxbh": "tc9qn3Xixg", "rxnf": year}
-        response_major = session.post(url_major, data=major_data, headers=headers)
+    for day_schedule in days_schedule:
+        # Extract the day and time ranges
+        day_match = re.match(r'周(\d)\[(.*?)\]', day_schedule)
 
-        if response_major.status_code != 200 or not response_major.text.strip():
-            continue
+        if day_match:
+            day = int(day_match.group(1))  # Get the day of the week (1-7)
+            time_ranges = day_match.group(2).split('][')  # Extract multiple time ranges
 
-        fixed_json_major = re.sub(r"([{,])\s*([a-zA-Z0-9_]+)\s*:", r'\1"\2":', response_major.text)
-        fixed_json_major = re.sub(r":\s*'([^']*)'", r':"\1"', fixed_json_major)
+            for time_range in time_ranges:
+                # Extract start time and end time
+                start_time, end_time = time_range.split('-')
 
-        try:
-            major_list = json.loads(fixed_json_major)
-        except json.JSONDecodeError:
-            continue
+                # Insert room availability into the Room_availability table
+                cursor.execute("""
+                    INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, is_available)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (room_id, start_time, end_time, f"2025-03-06",
+                      True))  # Set the date as required, here assumed as "2025-03-06"
 
-        for major in major_list:
-            major_id = major["jx01id"]
-            class_data = {"yxbh": "tc9qn3Xixg", "rxnf": year, "zy": major_id, "xnxq01id": semester_id}
-            response_class = session.post(url_class, data=class_data, headers=headers)
+    db.commit()  # Commit the transaction
 
-            if response_class.status_code != 200 or not response_class.text.strip():
-                continue
-
-            fixed_json_class = re.sub(r"([{,])\s*([a-zA-Z0-9_]+)\s*:", r'\1"\2":', response_class.text)
-            fixed_json_class = re.sub(r":\s*'([^']*)'", r':"\1"', fixed_json_class)
-
-            try:
-                class_list = json.loads(fixed_json_class)
-            except json.JSONDecodeError:
-                continue
-
-            for class_info in class_list:
-                class_id = class_info["xx04id"]
-                schedule_url = "http://csujwc.its.csu.edu.cn/jiaowu/pkgl/llsykb/llsykb_kb.jsp"
-                schedule_data = {
-                    "type": "xx04", "isview": "1", "xx04id": class_id,
-                    "yxbh": "tc9qn3Xixg", "rxnf": year, "zy": major_id,
-                    "xnxq01id": semester_id
-                }
-
-                response_schedule = session.post(schedule_url, data=schedule_data, headers=headers)
-
-                if response_schedule.status_code != 200 or not response_schedule.text.strip():
-                    continue
-
-                soup = BeautifulSoup(response_schedule.text, "html.parser")
-                table = soup.find("table")
-
-                if table:
-                    rows = table.find_all("tr")[1:]
-                    for row_idx, row in enumerate(rows):
-                        cols = row.find_all("td")
-
-                        if len(cols) < 2:
-                            continue
-
-                        time_period = list(timetable.keys())[row_idx]
-                        for col_idx in range(1, 8):  # For Sunday to Saturday
-                            if col_idx >= len(cols):
-                                continue
-
-                            room_text = cols[col_idx].text.strip()
-                            if not room_text:
-                                continue
-
-                            rooms = extract_classrooms(room_text)
-                            if rooms:
-                                for room in rooms:
-                                    if room not in classroom_schedule:
-                                        classroom_schedule[room] = []
-                                    time_slot = class_periods.get(time_period)
-                                    classroom_schedule[room].append((f"周{col_idx}", time_slot[0][0]))
-
-    return classroom_schedule
-
-
-# 主函数：直接调用并输出调试数据
-if __name__ == "__main__":
-    classroom_schedule = process_schedule()
-
-    # 打印调试数据
-    print("\n调试输出：教室排课信息")
-    for room, schedule in classroom_schedule.items():
-        print(f"教室 {room}:")
-        for day_schedule in schedule:
-            print(f"  {day_schedule[0]}: {day_schedule[1]}")
+# Close the database connection
+cursor.close()
+db.close()
