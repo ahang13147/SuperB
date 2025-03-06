@@ -10,19 +10,19 @@ VALUES
 
 INSERT INTO Rooms (room_name, capacity, equipment, location)
 VALUES
-('Room A', 20, 'Projector, Whiteboard', 'Building 1, Floor 2'),
-('Room B', 30, 'Projector, Computer', 'Building 1, Floor 3'),
-('Room C', 10, 'Whiteboard', 'Building 2, Floor 1');
+('635', 20, 'Projector, Whiteboard', 'Building 1, Floor 2'),
+('119', 30, 'Projector, Computer', 'Building 1, Floor 3'),
+('117', 10, 'Whiteboard', 'Building 2, Floor 1');
 
 
-INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, is_available)
+INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, availability)
 VALUES
-(1, '08:00', '10:00', '2025-03-06', TRUE),
-(2, '10:00', '12:00', '2025-03-06', TRUE),
-(3, '13:00', '15:00', '2025-03-06', FALSE),
-(1, '08:00', '10:00', '2025-03-07', TRUE),
-(2, '10:00', '12:00', '2025-03-07', TRUE),
-(3, '13:00', '15:00', '2025-03-07', TRUE);
+(1, '08:00', '10:00', '2025-03-06', 0),
+(2, '10:00', '12:00', '2025-03-06', 0),
+(3, '13:00', '15:00', '2025-03-06', 1),
+(4, '08:00', '10:00', '2025-03-07', 1),
+(5, '10:00', '12:00', '2025-03-07', 2),
+(6, '13:00', '15:00', '2025-03-07', 2);
 
 
 INSERT INTO Bookings (user_id, room_id, start_time, end_time, booking_date, status)
