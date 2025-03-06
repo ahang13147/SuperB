@@ -43,15 +43,32 @@ def format_time(timedelta_obj):
 def search_rooms():
     """
     请求参数示例：
-    {
+    const requestData = {
         "capacity": 20,          // 可选，>= 值
         "room_name": "会议室",    // 可选，模糊匹配
         "date": "2025-03-05",    // 可选，精确匹配
         "start_time": "08:00",   // 可选，HH:MM 格式
         "end_time": "12:00"      // 可选，HH:MM 格式
+        "equipment": "projector" //可选
     }
     所有参数均为可选，可以任意组合
+    // 发送POST请求
+    fetch('http://localhost:5000/search-rooms', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'  // 设置请求头为JSON
+        },
+        body: JSON.stringify(requestData)  // 将请求体转为JSON字符串
+    })
+    .then(response => response.json())  // 解析返回的JSON数据
+    .then(data => {
+        console.log('Response:', data);  // 打印返回的数据
+    })
+    .catch(error => {
+        console.error('Error:', error);  // 错误处理
+    });
     """
+
     # 获取参数
     params = request.json or {}
     capacity = params.get('capacity')
