@@ -172,7 +172,7 @@ def get_all_bookings():
         # 查询所有booking的基本信息
         query = """
             SELECT 
-                b.booking_id, b.user_id, b.room_id, b.booking_date, b.start_time, b.end_time,
+                b.booking_id, b.user_id, b.room_id, b.booking_date, b.start_time, b.end_time,b.status,
                 r.room_name, r.location, r.capacity, r.equipment
             FROM Bookings b
             JOIN Rooms r ON b.room_id = r.room_id
