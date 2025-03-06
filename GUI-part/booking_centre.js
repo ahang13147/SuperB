@@ -3,16 +3,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('The document is loaded and initialization begins...');
 
     // 加载时间段配置
-    let timeSlots;
-    try {
-        const response = await fetch('time_slots.json');
-        if (!response.ok) throw new Error(`HTTP error! Status code: ${response.status}`);
-        timeSlots = await response.json();
-    } catch (error) {
-        console.error('Failed to load time slots:', error);
-        alert('Unable to load time slots configuration');
-        return;
-    }
+    let timeSlots = [
+    "08:00-08:45",
+    "08:55-09:40",
+    "10:00-10:45",
+    "10:55-11:40",
+    "14:00-14:45",
+    "14:55-15:40",
+    "16:00-16:45",
+    "16:55-17:40",
+    "19:00-19:45",
+    "19:55-20:40"
+]
+
 
     // DOM元素引用
     const elements = {
