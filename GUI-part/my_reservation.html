@@ -2,13 +2,199 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <script src="my_reservations.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="my_reservation.css">
     <link rel="stylesheet" href="sidebarAndNotice.css"> <!-- 引入侧边栏的CSS文件 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <title>My Reservations</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
+        }
 
+        header {
+            width: 100%;
+            max-width: 1200px;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        /* 其他原有样式保持不变... */
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            background-color: #f5f6fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            max-width: 1200px;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .reservations-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .reservation-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+
+        .reservation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .reservation-info {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            color: #333;
+        }
+
+        .reservation-info label {
+            font-weight: 600;
+            min-width: 100px;
+            color: var(--primary-color);
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: var(--success-color);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+        }
+
+        .cancel-btn {
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .cancel-btn:hover {
+            background-color: #c0392b;
+        }
+
+        /* 弹窗样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            animation: modalShow 0.3s;
+        }
+
+        @keyframes modalShow {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        .reason-input {
+            width: 100%;
+            height: 100px;
+            margin: 15px 0;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            resize: vertical;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .confirm-btn {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .confirm-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .close-btn {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .close-btn:hover {
+            background-color: #7f8c8d;
+        }
+    </style>
 </head>
 <body>
     <div class="main-container">
@@ -42,48 +228,97 @@
             <!-- 原有内容容器 -->
             <div class="reservations-container">
                 <!-- 预约卡片 1 -->
-<div class="reservation-card" data-reservation-id="1">
-    <div class="status-indicator">Confirmed</div>
-    <div class="reservation-info">
-        <label>Date:</label>
-        <span data-date="2023-10-25">2023-10-25</span>
-    </div>
-    <div class="reservation-info">
-        <label>Time:</label>
-        <span data-time="10:00 - 12:00">10:00 - 12:00</span>
-    </div>
-    <div class="reservation-info">
-        <label>Room:</label>
-        <span data-room="101 (Building A)">101 (Building A)</span>
-    </div>
-                        <div class="reservation-info">
+                <div class="reservation-card" data-reservation-id="1">
+                    <div class="status-indicator">Confirmed</div>
+                    <div class="reservation-info">
+                        <label>Date:</label>
+                        <span>2023-10-25</span>
+                    </div>
+                    <div class="reservation-info">
+                        <label>Time:</label>
+                        <span>10:00 - 12:00</span>
+                    </div>
+                    <div class="reservation-info">
+                        <label>Room:</label>
+                        <span>101 (Building A)</span>
+                    </div>
+                    <div class="reservation-info">
                         <label>Capacity:</label>
                         <span>30 seats</span>
                     </div>
                     <button class="cancel-btn">Cancel Reservation</button>
-    <!-- ...其他内容保持不变... -->
-</div>
+                </div>
 
-
-
+                <!-- 预约卡片 2 -->
+                <div class="reservation-card" data-reservation-id="2">
+                    <div class="status-indicator">Confirmed</div>
+                    <div class="reservation-info">
+                        <label>Date:</label>
+                        <span>2023-10-26</span>
+                    </div>
+                    <div class="reservation-info">
+                        <label>Time:</label>
+                        <span>14:00 - 16:00</span>
+                    </div>
+                    <div class="reservation-info">
+                        <label>Room:</label>
+                        <span>202 (Building B)</span>
+                    </div>
+                    <div class="reservation-info">
+                        <label>Capacity:</label>
+                        <span>50 seats</span>
+                    </div>
+                    <button class="cancel-btn">Cancel Reservation</button>
+                </div>
             </div>
         </div>
     </div>
 
-<!-- 修改弹窗内容 -->
-<div class="modal" id="cancelModal">
-    <div class="modal-content">
-        <h3>Confirm Cancellation</h3>
-        <p>Are you sure you want to cancel this reservation?</p>
-        <div class="modal-actions">
-            <button class="modal-btn close-btn" id="closeModal">Close</button>
-            <button class="modal-btn confirm-btn" id="confirmCancel">Confirm</button>
+    <!-- 原有弹窗和脚本保持不变 -->
+    <div class="modal" id="cancelModal">
+        <div class="modal-content">
+            <h3>Cancel Reservation</h3>
+            <textarea class="reason-input" placeholder="Please state your reason for cancellation..."></textarea>
+            <div class="modal-actions">
+                <button class="modal-btn close-btn" id="closeModal">Close</button>
+                <button class="modal-btn confirm-btn" id="confirmCancel">Confirm</button>
+            </div>
         </div>
     </div>
-</div>
 
 <script>
+    let currentReservationId = null;
 
+    document.querySelectorAll('.cancel-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const card = e.target.closest('.reservation-card');
+            currentReservationId = card.dataset.reservationId;
+            document.getElementById('cancelModal').style.display = 'flex';
+        });
+    });
+
+    document.getElementById('closeModal').addEventListener('click', () => {
+        document.getElementById('cancelModal').style.display = 'none';
+    });
+
+    document.getElementById('confirmCancel').addEventListener('click', () => {
+        const reason = document.querySelector('.reason-input').value.trim();
+        if (reason) {
+            // 这里可以添加实际的取消逻辑
+            alert(`Reservation ${currentReservationId} cancelled. Reason: ${reason}`);
+            document.getElementById('cancelModal').style.display = 'none';
+            document.querySelector('.reason-input').value = '';
+        } else {
+            alert('Please provide a cancellation reason.');
+        }
+    });
+
+    // 点击外部关闭弹窗
+    window.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal')) {
+            document.getElementById('cancelModal').style.display = 'none';
+        }
+    });
 </script>
 </body>
 </html>
