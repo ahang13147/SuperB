@@ -244,7 +244,11 @@ button:disabled {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
 }
-
+#availableTimes .time-slot.checked {
+    border-color: #3498db !important;
+    background: #e3f2fd !important;
+    box-shadow: 0 4px 6px rgba(52, 152, 219, 0.1);
+}
 .close {
     color: #6c757d;
     font-size: 32px;
