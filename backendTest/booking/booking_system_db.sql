@@ -52,8 +52,9 @@ CREATE TABLE Bookings (
     booking_id INT AUTO_INCREMENT PRIMARY KEY,  -- Booking ID, auto-incremented
     user_id INT NOT NULL,                       -- User ID (Foreign key referencing Users table)
     room_id INT NOT NULL,                       -- Room ID (Foreign key referencing Rooms table)
-    start_time DATETIME NOT NULL,               -- Start time of the booking
-    end_time DATETIME NOT NULL,                 -- End time of the booking
+    start_time TIME NOT NULL,               -- Start time of the booking
+    end_time TIME NOT NULL,
+    start_date DATE,-- End time of the booking
     status ENUM('pending', 'approved', 'canceled', 'rejected') NOT NULL,  -- Booking status
 
     FOREIGN KEY (user_id) REFERENCES Users(user_id),  -- Foreign key referencing Users table
