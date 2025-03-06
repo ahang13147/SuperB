@@ -208,27 +208,93 @@ def get_all_bookings():
             conn.close()
 
 
+@app.route('/update-room/<int:room_id>', methods=['PUT'])
+def update_room(room_id):
+    """
+    更新指定房间的信息。
+    请求体示例：
+    // 发送 PUT 请求更新房间信息
+    const roomId = 1;  // 要更新的房间 ID
+    const url = `http://localhost:5000/update-room/${roomId}`;
+    {
+        "room_name": "New Room Name",
+        "capacity": 25,
+        "equipment": "Projector, Whiteboard",
+        "location": "Building 2, Floor 1"
+    }
+    """
+    print(f"Received PUT request to update room with ID: {room_id}")  # 调试信息
+
+    data = request.json
+    print(f"Request body: {data}")  # 打印请求体
+
+    room_name = data.get('room_name')
+    capacity = data.get('capacity')
+    equipment = data.get('equipment')
+    location = data.get('location')
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 检查房间名称是否已经存在
+        cursor.execute("SELECT * FROM Rooms WHERE room_name = %s AND room_id != %s", (room_name, room_id))
+        existing_room = cursor.fetchone()
+        if existing_room:
+            print(f"Room name '{room_name}' already exists.")  # 调试信息
+            return jsonify({"error": "Room name already exists"}), 400
+
+        # 构建更新的 SQL 语句
+        update_query = """
+            UPDATE Rooms
+            SET room_name = %s, capacity = %s, equipment = %s, location = %s
+            WHERE room_id = %s
+        """
+        update_params = (room_name, capacity, equipment, location, room_id)
+
+        print(f"Executing update query: {update_query} with parameters: {update_params}")  # 调试信息
+
+        # 执行更新
+        cursor.execute(update_query, update_params)
+        conn.commit()
+
+        # 检查是否有记录被更新
+        if cursor.rowcount == 0:
+            print(f"No room found with ID {room_id}.")  # 调试信息
+            return jsonify({"error": "Room not found"}), 404
+
+        # 获取更新后的房间信息
+        cursor.execute("SELECT * FROM Rooms WHERE room_id = %s", (room_id,))
+        updated_room = cursor.fetchone()
+        print(f"Updated room: {updated_room}")  # 打印更新后的房间信息
+
+        return jsonify({
+            "message": "Room updated successfully",
+            "room_id": updated_room[0],
+            "room_name": updated_room[1],
+            "capacity": updated_room[2],
+            "equipment": updated_room[3],
+            "location": updated_room[4]
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")  # 调试信息
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")  # 调试信息
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+
+# if __name__ == '__main__':
+#     app.run(debug=True)
 if __name__ == '__main__':
+    # 添加路由打印
+    print("\nRegistered routes:")
+    for rule in app.url_map.iter_rules():
+        print(f"→ {rule}")
     app.run(debug=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
