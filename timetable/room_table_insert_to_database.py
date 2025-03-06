@@ -66,12 +66,12 @@ def extract_classrooms(course_text):
 # ============================ 课时与时间映射 ============================
 # 将课时与实际时间（每个课时有两个时间段）进行映射
 class_periods = {
-    "1-2": [("08:00-08:45", "08:55-09:40")],
-    "3-4": [("10:00-10:45", "10:55-11:40")],
-    "5-6": [("14:00-14:45", "14:55-15:40")],
-    "7-8": [("16:00-16:45", "16:55-17:40")],
-    "9-10": [("19:00-19:45", "19:55-20:40")],
-    "11-12": [("21:00-21:45", "21:55-22:40")]
+    "1-2": [("[08:00-08:45]", "[08:55-09:40]")],
+    "3-4": [("[10:00-10:45]", "[10:55-11:40]")],
+    "5-6": [("[14:00-14:45]", "[14:55-15:40]")],
+    "7-8": [("[16:00-16:45]", "[16:55-17:40]")],
+    "9-10": [("[19:00-19:45]", "[19:55-20:40]")],
+    "11-12": [("[21:00-21:45]", "[21:55-22:40]")]
 }
 
 # ============================ 获取每个学年的数据 ============================
@@ -217,17 +217,6 @@ for room, schedule in classroom_schedule.items():
         for time_idx, time in enumerate(times):
             room_2d_array[room][day_idx][time_idx] = time
 
-# ============================ 输出整合后的教室使用情况 ============================
-# print("\n整合后的教室使用情况：")
-# for room, schedule in room_2d_array.items():
-#     print(f"教室 {room}:")
-#     for day_idx, times in enumerate(schedule):
-#         day_name = f"星期{day_idx + 1}:"
-#         print(f"{day_name} {''.join(times)}")
-#
-# print(room_2d_array)
-
-
 # 处理函数
 def split_time_slots(data):
     new_data = {}
@@ -263,11 +252,17 @@ def split_time_slots(data):
 # 使用该函数处理原始数据
 new_room_2d_array = split_time_slots(room_2d_array)
 print(new_room_2d_array)
-# 打印结果查看并显示房间号和星期几的时间表
+# 打印结果查看并显示房间号、星期几及具体时间段
 days_of_week = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
 
 for room, schedule in new_room_2d_array.items():
-    print(f"Room {room}:")
+    print(f"\nRoom {room}:")
     for day_idx, day in enumerate(schedule):
-        print(f"  {days_of_week[day_idx]}: {' '.join(day)}")
+        print(f"  {days_of_week[day_idx]}:")
+        for time_idx, time in enumerate(day):
+            if time:
+                print(f"    时段 {time_idx + 1}: {time}")
+            else:
+                print(f"    时段 {time_idx + 1}: 空")
+
 
