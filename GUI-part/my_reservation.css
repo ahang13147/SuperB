@@ -200,3 +200,8 @@
         .close-btn:hover {
             background-color: #7f8c8d;
         }
+
+        /* 根据状态显示不同颜色 */
+.status-indicator[data-status="approved"] { background: var(--success-color); }
+.status-indicator[data-status="canceled"] { background: var(--danger-color); }
+.status-indicator[data-status="pending"] { background: var(--warning-color); }

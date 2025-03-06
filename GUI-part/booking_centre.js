@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 获取教室数据
     async function fetchClassrooms() {
+        console.log(elements.datePicker.value);  // 应该直接输出"2025-03-05"
         const requestData = {
             capacity: parseInt(elements.capacityFilter.value) || undefined,
             room_name: elements.searchInput.value.trim() || undefined,
