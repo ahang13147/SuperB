@@ -44,15 +44,27 @@ def delete_users():
     username = data.get('username')
     email = data.get('email')
     role = data.get('role')
-    # 使用同一数据库连接和事务，先删除依赖记录，再删除用户
+    # 使用同一数据库连接和事务，先删除依赖于该用户的记录，再删除用户记录
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
         if user_id:
-            # 先删除依赖数据：通知、预订、审批（admin_id）和报告（admin_id）
+            # 删除依赖数据：
+            # 1. 删除该用户的通知记录
             cursor.execute("DELETE FROM Notifications WHERE user_id = %s", (user_id,))
+            # 2. 删除该用户预订的记录，其审批记录依赖于预订（先删除审批记录）
+            # 删除审批记录中 booking_id 属于该用户的预订
+            cursor.execute("""
+                DELETE FROM Approvals 
+                WHERE booking_id IN (
+                    SELECT booking_id FROM Bookings WHERE user_id = %s
+                )
+            """, (user_id,))
+            # 删除该用户的预订记录
             cursor.execute("DELETE FROM Bookings WHERE user_id = %s", (user_id,))
+            # 3. 删除审批记录中，该用户作为管理员审批的记录
             cursor.execute("DELETE FROM Approvals WHERE admin_id = %s", (user_id,))
+            # 4. 删除该用户生成的报告
             cursor.execute("DELETE FROM Reports WHERE admin_id = %s", (user_id,))
         # 删除用户记录
         query = """
@@ -135,12 +147,14 @@ def delete_bookings():
     dependent_query = """
     DELETE FROM Approvals 
     WHERE booking_id IN (
-        SELECT booking_id FROM Bookings 
-        WHERE room_id = (SELECT room_id FROM Rooms WHERE room_name = %s)
-          AND start_time = %s
-          AND end_time = %s
-          AND booking_date = %s
-          AND (status = %s OR %s IS NULL)
+        SELECT booking_id FROM (
+            SELECT booking_id FROM Bookings 
+            WHERE room_id = (SELECT room_id FROM Rooms WHERE room_name = %s)
+              AND start_time = %s
+              AND end_time = %s
+              AND booking_date = %s
+              AND (status = %s OR %s IS NULL)
+        ) AS t
     )
     """
     dependent_params = (room_name, start_time, end_time, booking_date, status_val, status_val)
