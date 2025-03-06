@@ -89,12 +89,13 @@ fetch('http://localhost:5000/search-rooms', {
 
         # 构建基础查询
         query = """
-            SELECT 
-                r.room_id, r.room_name, r.capacity, r.equipment, r.location,
-                ra.available_date, ra.available_begin, ra.available_end
-            FROM Rooms r
-            JOIN Room_availability ra ON r.room_id = ra.room_id
-            WHERE 1=1
+           SELECT 
+    r.room_id, r.room_name, r.capacity, r.equipment, r.location,
+    ra.available_date, ra.available_begin, ra.available_end,ra.availability
+FROM Rooms r
+JOIN Room_availability ra ON r.room_id = ra.room_id
+WHERE ra.availability IN (0, 2);
+
         """
         query_params = []
 
@@ -209,3 +210,25 @@ def get_all_bookings():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
