@@ -12,12 +12,21 @@
             const username = document.getElementById('username').value;
             const email = document.getElementById('email').value;
             const role = document.getElementById('role').value;
+            const room_name = document.getElementById('room_name').value;
+            const start_time = document.getElementById('start_time').value;
+            const end_time = document.getElementById('end_time').value;
+            const booking_date = document.getElementById('booking_date').value;
 
             const conditions = {};
+
             if (user_id) conditions.user_id = user_id;
             if (username) conditions.username = username;
             if (email) conditions.email = email;
             if (role) conditions.role = role;
+            if (room_name) conditions.room_name = room_name;
+            if (start_time) conditions.start_time = start_time;
+            if (end_time) conditions.end_time = end_time;
+            if (booking_date) conditions.booking_date = booking_date;
 
             fetch('http://127.0.0.1:5000/delete', {
                 method: 'POST',
@@ -44,7 +53,7 @@
     <h1>Test Delete Records</h1>
     <form onsubmit="handleSubmit(event)">
         <label for="table">Select Table:</label>
-        <select id="table">
+        <select id="table" onchange="toggleFields()">
             <option value="Users">Users</option>
             <option value="Rooms">Rooms</option>
             <option value="Bookings">Bookings</option>
@@ -54,21 +63,54 @@
         </select>
         <br><br>
 
-        <!-- User Table Fields -->
-        <label for="user_id">User ID:</label>
-        <input type="text" id="user_id" placeholder="User ID"><br><br>
+        <!-- Common Fields for All Tables -->
+        <div id="common-fields">
+            <label for="user_id">User ID:</label>
+            <input type="text" id="user_id" placeholder="User ID"><br><br>
 
-        <label for="username">Username:</label>
-        <input type="text" id="username" placeholder="Username"><br><br>
+            <label for="username">Username:</label>
+            <input type="text" id="username" placeholder="Username"><br><br>
 
-        <label for="email">Email:</label>
-        <input type="text" id="email" placeholder="Email"><br><br>
+            <label for="email">Email:</label>
+            <input type="text" id="email" placeholder="Email"><br><br>
 
-        <label for="role">Role:</label>
-        <input type="text" id="role" placeholder="Role"><br><br>
+            <label for="role">Role:</label>
+            <input type="text" id="role" placeholder="Role"><br><br>
+        </div>
+
+        <!-- Fields for Bookings Table -->
+        <div id="booking-fields" style="display: none;">
+            <label for="room_name">Room Name:</label>
+            <input type="text" id="room_name" placeholder="Room Name"><br><br>
+
+            <label for="start_time">Start Time:</label>
+            <input type="time" id="start_time"><br><br>
+
+            <label for="end_time">End Time:</label>
+            <input type="time" id="end_time"><br><br>
+
+            <label for="booking_date">Booking Date:</label>
+            <input type="date" id="booking_date"><br><br>
+        </div>
 
         <input type="submit" value="Delete Record">
     </form>
+
+    <script>
+        function toggleFields() {
+            const table = document.getElementById('table').value;
+            const bookingFields = document.getElementById('booking-fields');
+            const commonFields = document.getElementById('common-fields');
+
+            if (table === 'Bookings') {
+                bookingFields.style.display = 'block';
+                commonFields.style.display = 'block';
+            } else {
+                bookingFields.style.display = 'none';
+                commonFields.style.display = 'block';
+            }
+        }
+    </script>
 
 </body>
 </html>
