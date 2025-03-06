@@ -232,12 +232,9 @@ def split_time_slots(data):
                     time_slots = item.split('][')
                     if len(time_slots) > 1:
                         for slot in time_slots:
-                            # 修正时间段格式
-                            if not slot.startswith('['):
-                                slot = '[' + slot
-                            if not slot.endswith(']'):
-                                slot = slot + ']'
-                            new_day.append(slot)
+                            # 去除 slot 中的所有 [ 和 ] 符号
+                            clean_slot = slot.replace("[", "").replace("]", "")
+                            new_day.append(clean_slot)
                     else:
                         new_day.append(item)
                 else:
@@ -253,7 +250,7 @@ def split_time_slots(data):
 new_room_2d_array = split_time_slots(room_2d_array)
 print(new_room_2d_array)
 # 打印结果查看并显示房间号、星期几及具体时间段
-days_of_week = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
+days_of_week = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
 for room, schedule in new_room_2d_array.items():
     print(f"\nRoom {room}:")
@@ -261,8 +258,103 @@ for room, schedule in new_room_2d_array.items():
         print(f"  {days_of_week[day_idx]}:")
         for time_idx, time in enumerate(day):
             if time:
-                print(f"    时段 {time_idx + 1}: {time}")
+                print(f"{time}")
+
+
+
+from datetime import datetime, timedelta
+
+# ============================ 计算本周每一天的日期 ============================
+def get_week_dates():
+    today = datetime.today()
+    start_of_week = today - timedelta(days=today.weekday())  # 找到周一的日期
+    week_dates = [(start_of_week + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7)]
+    return week_dates
+
+week_dates = get_week_dates()  # 获取当前周的日期列表
+
+# ============================ 处理 new_room_2d_array ============================
+formatted_schedule = []  # 存储最终的格式化数据
+
+for room, schedule in new_room_2d_array.items():
+    for day_idx, day in enumerate(schedule):  # day_idx 用于确定星期几
+        for time_slot in day:
+            if time_slot:  # 只处理非空时间段
+                start_time, end_time = time_slot.split("-")  # 拆分开始时间和结束时间
+                formatted_schedule.append([room, week_dates[day_idx], start_time, end_time])
+
+# ============================ 输出最终的时间表 ============================
+for entry in formatted_schedule:
+    print(entry)
+
+import mysql.connector
+
+# 数据库连接配置
+db_config = {
+    "host": "localhost",
+    "user": "root",
+    "password": "1234",  # 替换为你的数据库密码
+    "database": "booking_system_db"
+}
+
+# 获取数据库连接
+def get_db_connection():
+    return mysql.connector.connect(**db_config)
+
+# 处理 formatted_schedule 并更新 Room_availability
+def update_room_availability(formatted_schedule):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        for entry in formatted_schedule:
+            room_name, available_date, available_begin, available_end = entry  # 解包数据
+
+            # 1. 获取 room_id
+            cursor.execute("SELECT room_id FROM Rooms WHERE room_name = %s", (room_name,))
+            room_result = cursor.fetchone()
+
+            if not room_result:
+                print(f"房间 {room_name} 不存在，跳过...")
+                continue  # 跳过当前房间
+
+            room_id = room_result[0]  # 获取 room_id
+
+            # 2. 检查是否已有相同的 availability 记录
+            cursor.execute("""
+                SELECT availability_id FROM Room_availability
+                WHERE room_id = %s AND available_date = %s 
+                AND available_begin = %s AND available_end = %s
+            """, (room_id, available_date, available_begin, available_end))
+
+            existing_availability = cursor.fetchone()
+
+            if existing_availability:
+                # 如果记录存在，更新 availability = 1
+                cursor.execute("""
+                    UPDATE Room_availability 
+                    SET availability = 1
+                    WHERE availability_id = %s
+                """, (existing_availability[0],))
+                print(f"更新 Room_availability: 房间 {room_name}, 日期 {available_date}, 时间 {available_begin}-{available_end}")
             else:
-                print(f"    时段 {time_idx + 1}: 空")
+                # 如果记录不存在，插入新记录
+                cursor.execute("""
+                    INSERT INTO Room_availability (room_id, available_date, available_begin, available_end, availability)
+                    VALUES (%s, %s, %s, %s, 1)
+                """, (room_id, available_date, available_begin, available_end))
+                print(f"新增 Room_availability: 房间 {room_name}, 日期 {available_date}, 时间 {available_begin}-{available_end}")
+
+        # 提交更改
+        conn.commit()
+
+    except mysql.connector.Error as err:
+        print(f"数据库错误: {err}")
+        conn.rollback()
+    finally:
+        cursor.close()
+        conn.close()
 
 
+# 执行更新
+update_room_availability(formatted_schedule)
