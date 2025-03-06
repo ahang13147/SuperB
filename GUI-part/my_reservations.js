@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p><span data-booking-date="${reservation.booking_date}">📅 ${reservation.booking_date}</span></p>
                     <p><span data-time-range="${reservation.start_time}-${reservation.end_time}">⏰ ${reservation.start_time} - ${reservation.end_time}</span></p>
                 </div>
-                ${reservation.status === 'approved' ?
+                ${['approved', 'pending'].includes(reservation.status) ?
                     `<button class="cancel-btn">Cancel Reservation</button>` :
                     `<button class="cancel-btn" disabled>Canceled</button>`}
             </div>
