@@ -3,17 +3,35 @@ from bs4 import BeautifulSoup
 import json
 import re
 import time
+import mysql.connector
+from datetime import datetime, timedelta
+from flask import Flask, jsonify
 
-"""
-此脚本用于从中南大学的丹麦国际学院（Dundee International College）获取所有课程的教室时间表
-该脚本只提取教室的名称，并将其整合到一个结构化的时间表格式中。
+app = Flask(__name__)
 
-作者：Zibang Nie, Xin Yu, Siyan Guo
-版本：2025-03-04
-"""
+# ============================ 数据库连接配置 ============================
+db_config = {
+    "host": "localhost",
+    "user": "root",
+    "password": "1234",  # 替换为你的数据库密码
+    "database": "booking_system_db"
+}
 
-# ============================ 初始化时间表 ============================
-# 7列分别代表：星期日（索引0）到星期六（索引6）
+
+def get_db_connection():
+    return mysql.connector.connect(**db_config)
+
+
+# ============================ 工具函数 ============================
+def get_week_dates():
+    """计算本周每一天的日期（周一到周日）"""
+    today = datetime.today()
+    start_of_week = today - timedelta(days=today.weekday())
+    return [(start_of_week + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7)]
+
+
+# ============================ 全局变量 ============================
+# 初始化时间表：7列代表星期日（索引0）到星期六（索引6）
 timetable = {
     "1-2": [""] * 7,
     "3-4": [""] * 7,
@@ -24,47 +42,7 @@ timetable = {
     "Notes": [""] * 7
 }
 
-# ============================ 课程安排 ================================
-# 使用字典来存储每个教室的使用信息
-class_usage = {}
-
-# ============================ 启动会话并获取Cookie ============================
-session = requests.Session()
-
-# 访问主页面以获取会话的cookie
-url_main = "http://csujwc.its.csu.edu.cn/jiaowu/pkgl/llsykb/llsykb_find_xx04.jsp?init=1&isview=1&xnxq01id=null"
-headers = {
-    "User-Agent": "Mozilla/5.0",
-    "Referer": url_main
-}
-session.get(url_main, headers=headers)
-
-# ============================ 定义学年和学期 ============================
-academic_years = ["2022", "2023", "2024"]  # 定义要抓取的学年
-semester_id = "2024-2025-2"  # 当前学期
-
-# 获取专业和班级的API地址
-url_major = "http://csujwc.its.csu.edu.cn/KbctjcAction.do?method=queryzy"
-url_class = "http://csujwc.its.csu.edu.cn/KbctjcAction.do?method=querybj"
-
-# ============================ 正则表达式提取教室名称 ============================
-# 匹配“外语网络楼”后跟着三位数字的教室名称
-classroom_pattern = re.compile(r'外语网络楼(\d{3})')
-
-# ============================ 提取教室名称的函数 ============================
-def extract_classrooms(course_text):
-    """
-    从课程文本中提取有效的教室名称。
-
-    :param course_text: 课程的原始文本
-    :return: 提取到的教室名称列表
-    """
-    classrooms = classroom_pattern.findall(course_text)  # 使用正则提取教室名称
-    return classrooms
-
-
-# ============================ 课时与时间映射 ============================
-# 将课时与实际时间（每个课时有两个时间段）进行映射
+# 课时与时间映射（不做任何改动）
 class_periods = {
     "1-2": [("[08:00-08:45]", "[08:55-09:40]")],
     "3-4": [("[10:00-10:45]", "[10:55-11:40]")],
@@ -74,165 +52,159 @@ class_periods = {
     "11-12": [("[21:00-21:45]", "[21:55-22:40]")]
 }
 
-# ============================ 获取每个学年的数据 ============================
-for year in academic_years:
-    print(f"\n正在获取 {year} 学年的专业数据...")
+# 正则表达式，用于提取教室名称（例如：外语网络楼635）
+classroom_pattern = re.compile(r'外语网络楼(\d{3})')
 
-    # 获取专业列表
-    major_data = {"yxbh": "tc9qn3Xixg", "rxnf": year}
-    response_major = session.post(url_major, data=major_data, headers=headers)
 
-    if response_major.status_code != 200 or not response_major.text.strip():
-        continue
+def extract_classrooms(course_text):
+    """从课程文本中提取教室名称"""
+    return classroom_pattern.findall(course_text)
 
-    fixed_json_major = re.sub(r"([{,])\s*([a-zA-Z0-9_]+)\s*:", r'\1"\2":', response_major.text)
-    fixed_json_major = re.sub(r":\s*'([^']*)'", r':"\1"', fixed_json_major)
 
-    try:
-        major_list = json.loads(fixed_json_major)  # 将返回的专业数据转为JSON格式
-    except json.JSONDecodeError:
-        continue
+# ============================ 爬取数据部分 (保持原样) ============================
+def crawl_data():
+    """
+    爬取各学年的专业、班级和课程表数据，
+    并构建 class_usage 字典：键为教室号（int），值为该教室对应的时间段列表（如 "周2 1-2"）。
+    """
+    global timetable  # 使用全局 timetable
+    class_usage = {}
+    session = requests.Session()
+    url_main = "http://csujwc.its.csu.edu.cn/jiaowu/pkgl/llsykb/llsykb_find_xx04.jsp?init=1&isview=1&xnxq01id=null"
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Referer": url_main
+    }
+    session.get(url_main, headers=headers)
 
-    # 遍历每个专业
-    for major in major_list:
-        major_id = major["jx01id"]
-        major_name = major["zymc"]
+    academic_years = ["2022", "2023", "2024"]
+    semester_id = "2024-2025-2"
+    url_major = "http://csujwc.its.csu.edu.cn/KbctjcAction.do?method=queryzy"
+    url_class = "http://csujwc.its.csu.edu.cn/KbctjcAction.do?method=querybj"
 
-        # 获取班级数据
-        class_data = {"yxbh": "tc9qn3Xixg", "rxnf": year, "zy": major_id, "xnxq01id": semester_id}
-        response_class = session.post(url_class, data=class_data, headers=headers)
-
-        if response_class.status_code != 200 or not response_class.text.strip():
+    for year in academic_years:
+        print(f"\n正在获取 {year} 学年的专业数据...")
+        major_data = {"yxbh": "tc9qn3Xixg", "rxnf": year}
+        response_major = session.post(url_major, data=major_data, headers=headers)
+        if response_major.status_code != 200 or not response_major.text.strip():
             continue
-
-        fixed_json_class = re.sub(r"([{,])\s*([a-zA-Z0-9_]+)\s*:", r'\1"\2":', response_class.text)
-        fixed_json_class = re.sub(r":\s*'([^']*)'", r':"\1"', fixed_json_class)
-
+        fixed_json_major = re.sub(r"([{,])\s*([a-zA-Z0-9_]+)\s*:", r'\1"\2":', response_major.text)
+        fixed_json_major = re.sub(r":\s*'([^']*)'", r':"\1"', fixed_json_major)
         try:
-            class_list = json.loads(fixed_json_class)  # 将返回的班级数据转为JSON格式
+            major_list = json.loads(fixed_json_major)
         except json.JSONDecodeError:
             continue
 
-        # 遍历每个班级
-        for class_info in class_list:
-            class_id = class_info["xx04id"]
-            class_name = class_info["bj"]
-
-            # 获取该班级的时间表
-            schedule_url = "http://csujwc.its.csu.edu.cn/jiaowu/pkgl/llsykb/llsykb_kb.jsp"
-            schedule_data = {
-                "type": "xx04",
-                "isview": "1",
-                "xx04id": class_id,
-                "yxbh": "tc9qn3Xixg",
-                "rxnf": year,
-                "zy": major_id,
-                "bjbh": class_name,
-                "zc": "1",
-                "xnxq01id": semester_id,
-                "xx04mc": "",
-                "sfFD": "1"
-            }
-
-            response_schedule = session.post(schedule_url, data=schedule_data, headers=headers)
-
-            if response_schedule.status_code != 200 or not response_schedule.text.strip():
+        for major in major_list:
+            major_id = major["jx01id"]
+            # 获取班级数据
+            class_data = {"yxbh": "tc9qn3Xixg", "rxnf": year, "zy": major_id, "xnxq01id": semester_id}
+            response_class = session.post(url_class, data=class_data, headers=headers)
+            if response_class.status_code != 200 or not response_class.text.strip():
+                continue
+            fixed_json_class = re.sub(r"([{,])\s*([a-zA-Z0-9_]+)\s*:", r'\1"\2":', response_class.text)
+            fixed_json_class = re.sub(r":\s*'([^']*)'", r':"\1"', fixed_json_class)
+            try:
+                class_list = json.loads(fixed_json_class)
+            except json.JSONDecodeError:
                 continue
 
-            # 使用BeautifulSoup解析HTML内容
-            soup = BeautifulSoup(response_schedule.text, "html.parser")
-            table = soup.find("table")
-
-            if table:
-                rows = table.find_all("tr")[1:]  # 跳过表头
-                # 遍历每一行课程安排
-                for row_idx, row in enumerate(rows):
-                    cols = row.find_all("td")
-
-                    if len(cols) < 2:
-                        continue
-
-                    # 根据行索引获取对应的课时
-                    time_period = list(timetable.keys())[row_idx]
-
-                    # 遍历每一天（星期日到星期六）
-                    for col_idx in range(1, 8):
-                        if col_idx >= len(cols):
+            for class_info in class_list:
+                class_id = class_info["xx04id"]
+                class_name = class_info["bj"]
+                schedule_url = "http://csujwc.its.csu.edu.cn/jiaowu/pkgl/llsykb/llsykb_kb.jsp"
+                schedule_data = {
+                    "type": "xx04",
+                    "isview": "1",
+                    "xx04id": class_id,
+                    "yxbh": "tc9qn3Xixg",
+                    "rxnf": year,
+                    "zy": major_id,
+                    "bjbh": class_name,
+                    "zc": "1",
+                    "xnxq01id": semester_id,
+                    "xx04mc": "",
+                    "sfFD": "1"
+                }
+                response_schedule = session.post(schedule_url, data=schedule_data, headers=headers)
+                if response_schedule.status_code != 200 or not response_schedule.text.strip():
+                    continue
+                soup = BeautifulSoup(response_schedule.text, "html.parser")
+                table = soup.find("table")
+                if table:
+                    rows = table.find_all("tr")[1:]
+                    for row_idx, row in enumerate(rows):
+                        cols = row.find_all("td")
+                        if len(cols) < 2:
                             continue
+                        time_period = list(timetable.keys())[row_idx]
+                        for col_idx in range(1, 8):
+                            if col_idx >= len(cols):
+                                continue
+                            room_text = cols[col_idx].text.strip()
+                            if not room_text:
+                                continue
+                            rooms = extract_classrooms(room_text)
+                            if rooms:
+                                if timetable[time_period][col_idx - 1]:
+                                    timetable[time_period][col_idx - 1] += ", " + ", ".join(rooms)
+                                else:
+                                    timetable[time_period][col_idx - 1] = ", ".join(rooms)
+                                for room in rooms:
+                                    if room not in class_usage:
+                                        class_usage[room] = []
+                                    class_usage[room].append(f"周{col_idx} {time_period}")
+    return class_usage
 
-                        room_text = cols[col_idx].text.strip()
-                        if not room_text:
-                            continue
 
-                        # 提取教室信息
-                        rooms = extract_classrooms(room_text)
-                        if rooms:
-                            # 如果该时间段已经有教室，附加新的教室名称
-                            if timetable[time_period][col_idx - 1]:
-                                timetable[time_period][col_idx - 1] += ", " + ", ".join(rooms)
-                            else:
-                                timetable[time_period][col_idx - 1] = ", ".join(rooms)
+# ============================ 整合数据 ============================
+def integrate_schedule(class_usage):
+    """
+    根据 class_usage 和 class_periods 构造二维数组 room_2d_array
+    room_2d_array 的结构：
+      键为房间号 (int)，值为一个 7 行的二维数组，
+      每一行对应一周内某天的时间段安排。
+    """
+    # 整合教室使用情况，构造 classroom_schedule
+    classroom_schedule = {}
+    for room, times in class_usage.items():
+        time_slots = sorted(set(times))
+        days_schedule = {i: [] for i in range(7)}
+        for time in time_slots:
+            day, period = time.split(" ")
+            day_number = int(day[1]) - 1
+            time_ranges = class_periods.get(period, [("Unknown Time", "Unknown Time")])
+            for time_range in time_ranges:
+                start_time, end_time = time_range
+                days_schedule[day_number].append(f"{start_time}{end_time}")
+        formatted_schedule = {}
+        for day_idx in range(7):
+            if days_schedule[day_idx]:
+                formatted_schedule[day_idx] = sorted(days_schedule[day_idx])
+        classroom_schedule[int(room)] = formatted_schedule
 
-                            # 将教室和时间段存储到 class_usage 中
-                            for room in rooms:
-                                if room not in class_usage:
-                                    class_usage[room] = []
-                                class_usage[room].append(f"周{col_idx} {time_period}")
+    # 存储数据到二维数组 room_2d_array
+    room_2d_array = {}
+    for room, schedule in classroom_schedule.items():
+        room_2d_array[room] = [[""] * len(class_periods) for _ in range(7)]
+        for day_idx, times in schedule.items():
+            for time_idx, time in enumerate(times):
+                room_2d_array[room][day_idx][time_idx] = time
+    return room_2d_array
 
-# ============================ 整合教室使用情况 ============================
-classroom_schedule = {}
-for room, times in class_usage.items():
-    # 去重并排序时间段
-    time_slots = sorted(set(times))
-    days_schedule = {i: [] for i in range(7)}  # 0-6，代表7天（0=周一，6=周日）
 
-    # 为每个教室和时间段添加对应的时间范围
-    for time in time_slots:
-        day, period = time.split(" ")
-        day_number = int(day[1]) - 1  # 将“周1”转换为0，“周2”转换为1
-        time_ranges = class_periods.get(period, [("Unknown Time", "Unknown Time")])
-
-        # 添加每个时间段到对应的日程安排
-        for time_range in time_ranges:
-            start_time, end_time = time_range
-            days_schedule[day_number].append(f"{start_time}{end_time}")
-
-    # 格式化每个教室的时间表
-    formatted_schedule = {}
-    for day_idx in range(7):
-        if days_schedule[day_idx]:
-            formatted_schedule[day_idx] = sorted(days_schedule[day_idx])  # 对每一天的时间段进行排序
-
-    classroom_schedule[int(room)] = formatted_schedule
-
-# ============================ 存储数据到二维数组 ============================
-room_2d_array = {}
-
-# 将每个教室的时间表存储到二维数组
-for room, schedule in classroom_schedule.items():
-    room_2d_array[room] = [[""] * len(class_periods) for _ in range(7)]  # 7天，每天对应多个时间段
-
-    # 将每个时间段的安排存储到对应的时间表中
-    for day_idx, times in schedule.items():
-        for time_idx, time in enumerate(times):
-            room_2d_array[room][day_idx][time_idx] = time
-
-# 处理函数
 def split_time_slots(data):
+    """将存储的字符串数据拆分为单个时间段（去除所有中括号）"""
     new_data = {}
-
     for room, schedule in data.items():
         new_schedule = []
-
         for day in schedule:
             new_day = []
             for item in day:
                 if item:
-                    # 如果有多个时间段（用中括号分隔），拆开并添加到新列表
                     time_slots = item.split('][')
                     if len(time_slots) > 1:
                         for slot in time_slots:
-                            # 去除 slot 中的所有 [ 和 ] 符号
                             clean_slot = slot.replace("[", "").replace("]", "")
                             new_day.append(clean_slot)
                     else:
@@ -240,114 +212,62 @@ def split_time_slots(data):
                 else:
                     new_day.append('')
             new_schedule.append(new_day)
-
         new_data[room] = new_schedule
-
     return new_data
 
 
-# 使用该函数处理原始数据
-new_room_2d_array = split_time_slots(room_2d_array)
-print(new_room_2d_array)
-# 打印结果查看并显示房间号、星期几及具体时间段
-days_of_week = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+# ============================ 格式化数据 ============================
+def format_schedule_data(new_room_2d_array):
+    """
+    根据 new_room_2d_array 和本周日期，生成标准格式的 formatted_schedule：
+    每一项为 [房间号, 日期, 开始时间, 结束时间]
+    """
+    week_dates = get_week_dates()
+    formatted_schedule = []
+    for room, schedule in new_room_2d_array.items():
+        for day_idx, day in enumerate(schedule):
+            for time_slot in day:
+                if time_slot:
+                    start_time, end_time = time_slot.split("-")
+                    formatted_schedule.append([room, week_dates[day_idx], start_time, end_time])
+    return formatted_schedule
 
-for room, schedule in new_room_2d_array.items():
-    print(f"\nRoom {room}:")
-    for day_idx, day in enumerate(schedule):
-        print(f"  {days_of_week[day_idx]}:")
-        for time_idx, time in enumerate(day):
-            if time:
-                print(f"{time}")
 
-
-
-from datetime import datetime, timedelta
-
-# ============================ 计算本周每一天的日期 ============================
-def get_week_dates():
-    today = datetime.today()
-    start_of_week = today - timedelta(days=today.weekday())  # 找到周一的日期
-    week_dates = [(start_of_week + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7)]
-    return week_dates
-
-week_dates = get_week_dates()  # 获取当前周的日期列表
-
-# ============================ 处理 new_room_2d_array ============================
-formatted_schedule = []  # 存储最终的格式化数据
-
-for room, schedule in new_room_2d_array.items():
-    for day_idx, day in enumerate(schedule):  # day_idx 用于确定星期几
-        for time_slot in day:
-            if time_slot:  # 只处理非空时间段
-                start_time, end_time = time_slot.split("-")  # 拆分开始时间和结束时间
-                formatted_schedule.append([room, week_dates[day_idx], start_time, end_time])
-
-# ============================ 输出最终的时间表 ============================
-for entry in formatted_schedule:
-    print(entry)
-
-import mysql.connector
-
-# 数据库连接配置
-db_config = {
-    "host": "localhost",
-    "user": "root",
-    "password": "1234",  # 替换为你的数据库密码
-    "database": "booking_system_db"
-}
-
-# 获取数据库连接
-def get_db_connection():
-    return mysql.connector.connect(**db_config)
-
-# 处理 formatted_schedule 并更新 Room_availability
+# ============================ 更新数据库 ============================
 def update_room_availability(formatted_schedule):
     conn = get_db_connection()
     cursor = conn.cursor()
-
     try:
         for entry in formatted_schedule:
             room_name, available_date, available_begin, available_end = entry  # 解包数据
-
-            # 1. 获取 room_id
             cursor.execute("SELECT room_id FROM Rooms WHERE room_name = %s", (room_name,))
             room_result = cursor.fetchone()
-
             if not room_result:
                 print(f"房间 {room_name} 不存在，跳过...")
-                continue  # 跳过当前房间
-
-            room_id = room_result[0]  # 获取 room_id
-
-            # 2. 检查是否已有相同的 availability 记录
+                continue
+            room_id = room_result[0]
             cursor.execute("""
                 SELECT availability_id FROM Room_availability
                 WHERE room_id = %s AND available_date = %s 
                 AND available_begin = %s AND available_end = %s
             """, (room_id, available_date, available_begin, available_end))
-
             existing_availability = cursor.fetchone()
-
             if existing_availability:
-                # 如果记录存在，更新 availability = 1
                 cursor.execute("""
                     UPDATE Room_availability 
                     SET availability = 1
                     WHERE availability_id = %s
                 """, (existing_availability[0],))
-                print(f"更新 Room_availability: 房间 {room_name}, 日期 {available_date}, 时间 {available_begin}-{available_end}")
+                print(
+                    f"更新 Room_availability: 房间 {room_name}, 日期 {available_date}, 时间 {available_begin}-{available_end}")
             else:
-                # 如果记录不存在，插入新记录
                 cursor.execute("""
                     INSERT INTO Room_availability (room_id, available_date, available_begin, available_end, availability)
                     VALUES (%s, %s, %s, %s, 1)
                 """, (room_id, available_date, available_begin, available_end))
-                print(f"新增 Room_availability: 房间 {room_name}, 日期 {available_date}, 时间 {available_begin}-{available_end}")
-
-        # 提交更改
+                print(
+                    f"新增 Room_availability: 房间 {room_name}, 日期 {available_date}, 时间 {available_begin}-{available_end}")
         conn.commit()
-
     except mysql.connector.Error as err:
         print(f"数据库错误: {err}")
         conn.rollback()
@@ -356,5 +276,33 @@ def update_room_availability(formatted_schedule):
         conn.close()
 
 
-# 执行更新
-update_room_availability(formatted_schedule)
+# ============================ 主调度函数 ============================
+def main_scheduler():
+    # 1. 爬取数据
+    class_usage = crawl_data()
+    # 2. 整合数据到二维数组
+    room_2d_array = integrate_schedule(class_usage)
+    # 3. 拆分时间段，去除中括号
+    new_room_2d_array = split_time_slots(room_2d_array)
+    print(new_room_2d_array)  # 输出检查
+    # 4. 格式化数据，生成标准格式列表
+    formatted_schedule = format_schedule_data(new_room_2d_array)
+    for entry in formatted_schedule:
+        print(entry)
+    # 5. 更新数据库
+    update_room_availability(formatted_schedule)
+    return "爬取并更新数据库成功！"
+
+
+# ============================ Flask API 端点 ============================
+@app.route('/run_scheduler', methods=['GET'])
+def run_scheduler():
+    try:
+        result = main_scheduler()
+        return jsonify({"message": result}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
