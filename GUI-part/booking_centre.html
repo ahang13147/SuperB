@@ -1,8 +1,8 @@
 <!-- booking_centre.html -->
 <!--
-author: Guanhang Zhang & Jiawei You & Siyan Guo
-this version fix all the bugs in 2.0s
-Version 2.1.0
+author: Guanhang Zhang  &Xin Yu
+this version fix the notification,add room management pae
+Version 3.0.2
 
 -->
 
@@ -31,22 +31,26 @@ Version 2.1.0
     <div class="main-container">
         <!-- Sidebar -->
         <div class="sidebar">
-            <div class="nav-item active">
+            <a class="nav-item active" href="booking_centre.html">
                 <i class="fas fa-calendar-alt nav-icon"></i>
                 Booking Center
-            </div>
-            <div class="nav-item">
+            </a>
+            <a class="nav-item" href="my_reservation.html">
                 <i class="fas fa-list-ul nav-icon"></i>
                 My Bookings
-            </div>
-            <div class="nav-item">
+            </a>
+            <a class="nav-item" href="sidebarAndNotice.html">
                 <i class="fas fa-bell nav-icon"></i>
                 Notifications
-            </div>
-            <div class="nav-item">
+            </a>
+            <a class="nav-item" href="#">
                 <i class="fas fa-user-circle nav-icon"></i>
-                Profile
-            </div>
+                Profile (Coming Soon)
+            </a>
+            <a class="nav-item" href="manage room detail.html">
+                <i class="fas fa-user-circle nav-icon"></i>
+                Room Management
+            </a>
         </div>
 
         <!-- Content Area -->
@@ -90,7 +94,7 @@ Version 2.1.0
     </div>
 
     <script src="booking_centre.js"></script>
-    <script src="sidebarAndNotice.js"></script>
+    <script src="common.js"></script>
 </body>
 
 </html>
