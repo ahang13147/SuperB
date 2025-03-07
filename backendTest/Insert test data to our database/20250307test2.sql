@@ -29,14 +29,14 @@ VALUES
 
 
 
-INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, availability)
-VALUES
-(1, '08:00', '10:00', '2025-03-06', 0),
-(2, '10:00', '12:00', '2025-03-06', 0),
-(3, '13:00', '15:00', '2025-03-06', 1),
-(1, '08:00', '10:00', '2025-03-07', 1),
-(2, '10:00', '12:00', '2025-03-07', 2),
-(3, '13:00', '15:00', '2025-03-07', 2);
+-- INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, availability)
+-- VALUES
+-- (1, '08:00', '10:00', '2025-03-06', 0),
+-- (2, '10:00', '12:00', '2025-03-06', 0),
+-- (3, '13:00', '15:00', '2025-03-06', 1),
+-- (1, '08:00', '10:00', '2025-03-07', 1),
+-- (2, '10:00', '12:00', '2025-03-07', 2),
+-- (3, '13:00', '15:00', '2025-03-07', 2);
 
 
 INSERT INTO Bookings (user_id, room_id, start_time, end_time, booking_date, status)
