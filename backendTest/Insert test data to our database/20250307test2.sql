@@ -7,7 +7,6 @@ VALUES
 ('student_user', 'student@example.com', 'hashed_password3', 'student'),
 ('tutor_user', 'tutor@example.com', 'hashed_password4', 'tutor');
 
-
 INSERT INTO Rooms (room_name, capacity, equipment, location)
 VALUES
 ('101', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
