@@ -226,19 +226,7 @@
         <h1>Room Management</h1>
 
         <div class="room-list">
-            <!-- 示例房间 -->
-            <div class="room-item" data-room-no="1">
-                <div class="room-info">
-                    <div><label>Room No:</label> 1</div>
-                    <div><label>Name:</label> A102</div>
-                    <div><label>Location:</label> Building A, 2nd Floor</div>
-                    <div><label>Equipment:</label> Projector, Whiteboard</div>
-                </div>
-                <div class="room-actions">
-                    <button class="edit-btn" onclick="openEditModal(1)">Edit</button>
-                    <button class="delete-btn" onclick="deleteRoom(1)">Delete</button>
-                </div>
-            </div>
+            <!-- 房间列表将由JavaScript动态填充 -->
         </div>
 
         <!-- 添加房间的表单 -->
@@ -256,8 +244,9 @@
         <div id="editModal" class="modal">
             <div class="modal-content">
                 <h2>Edit Room</h2>
-                <input type="text" id="editRoomNo" placeholder="Room No" disabled>
+                <input type="text" id="editRoomId" placeholder="Room ID" disabled>
                 <input type="text" id="editRoomName" placeholder="Room Name">
+                <input type="number" id="editCapacity" placeholder="Capacity">
                 <input type="text" id="editLocation" placeholder="Location">
                 <input type="text" id="editEquipment" placeholder="Equipment">
                 <button onclick="saveRoom()">Save</button>
@@ -267,29 +256,83 @@
 
         <script>
             let currentEditingRoomNo = null;
+            // 页面加载时获取房间数据
+            document.addEventListener('DOMContentLoaded', () => {
+                loadRooms();
+            });
+
+            // 加载房间列表
+            function loadRooms() {
+                fetch('http://localhost:5000/rooms')
+                    .then(response => response.json())
+                    .then(data => {
+                        const roomList = document.querySelector('.room-list');
+                        roomList.innerHTML = '';
+                        data.rooms.forEach(room => {
+                            const roomItem = document.createElement('div');
+                            roomItem.className = 'room-item';
+                            roomItem.setAttribute('data-room-id', room.room_id);
+                            roomItem.innerHTML = `
+                            <div class="room-info">
+                                <div><label>Room ID:</label> ${room.room_id}</div>
+                                <div><label>Name:</label> ${room.room_name}</div>
+                                <div><label>Capacity:</label> ${room.capacity}</div>
+                                <div><label>Location:</label> ${room.location}</div>
+                                <div><label>Equipment:</label> ${room.equipment}</div>
+                            </div>
+                            <div class="room-actions">
+                                <button class="edit-btn" onclick="openEditModal(${room.room_id})">Edit</button>
+                                <button class="delete-btn" onclick="deleteRoom(${room.room_id})">Delete</button>
+                            </div>
+                        `;
+                            roomList.appendChild(roomItem);
+                        });
+                    })
+                    .catch(error => console.error('Error loading rooms:', error));
+            }
 
             // 打开编辑模态框
-            function openEditModal(roomNo) {
-                const roomItem = document.querySelector(`.room-item[data-room-no="${roomNo}"]`);
+            function openEditModal(roomId) {
+                const roomItem = document.querySelector(`[data-room-id="${roomId}"]`);
                 const roomInfo = roomItem.querySelector('.room-info');
 
-                // 获取房间信息
-                const roomNoText = roomInfo.querySelector('div:nth-child(1)').innerText.replace('Room No:', '').trim();
-                const roomNameText = roomInfo.querySelector('div:nth-child(2)').innerText.replace('Name:', '').trim();
-                const locationText = roomInfo.querySelector('div:nth-child(3)').innerText.replace('Location:', '').trim();
-                const equipmentText = roomInfo.querySelector('div:nth-child(4)').innerText.replace('Equipment:', '').trim();
+                document.getElementById('editRoomId').value = roomId;
+                document.getElementById('editRoomName').value =
+                    roomInfo.children[1].innerText.replace('Name:', '').trim();
+                document.getElementById('editCapacity').value =
+                    roomInfo.children[2].innerText.replace('Capacity:', '').trim();
+                document.getElementById('editLocation').value =
+                    roomInfo.children[3].innerText.replace('Location:', '').trim();
+                document.getElementById('editEquipment').value =
+                    roomInfo.children[4].innerText.replace('Equipment:', '').trim();
 
-                // 填充模态框中的表单
-                document.getElementById('editRoomNo').value = roomNoText;
-                document.getElementById('editRoomName').value = roomNameText;
-                document.getElementById('editLocation').value = locationText;
-                document.getElementById('editEquipment').value = equipmentText;
-
-                // 记录当前编辑的房间编号
-                currentEditingRoomNo = roomNo;
-
-                // 显示模态框
+                currentEditingRoomId = roomId;
                 document.getElementById('editModal').style.display = 'flex';
+            }
+
+            // 保存修改
+            function saveRoom() {
+                const updatedData = {
+                    room_name: document.getElementById('editRoomName').value,
+                    capacity: document.getElementById('editCapacity').value,
+                    location: document.getElementById('editLocation').value,
+                    equipment: document.getElementById('editEquipment').value
+                };
+
+                fetch(`http://localhost:5000/update_room/${currentEditingRoomId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedData)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            loadRooms(); // 刷新列表
+                            closeEditModal();
+                            alert('Room updated successfully!');
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
             }
 
             // 关闭编辑模态框
@@ -297,83 +340,53 @@
                 document.getElementById('editModal').style.display = 'none';
             }
 
-            // 修改后的addRoom函数
-            function addRoom() {
-                const roomName = document.getElementById("roomName").value;
-                const capacity = document.getElementById("capacity").value;
-                const location = document.getElementById("location").value;
-                const equipment = document.getElementById("equipment").value;
-
-                if (!roomName || !capacity || !location || !equipment) {
-                    alert("Please fill in all fields.");
-                    return;
+            // 删除房间
+            function deleteRoom(roomId) {
+                if (confirm(`Delete room ${roomId}?`)) {
+                    fetch(`http://localhost:5000/delete_room/${roomId}`, {
+                        method: 'DELETE'
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                loadRooms(); // 刷新列表
+                                alert(`Room ${roomId} deleted`);
+                            }
+                        })
+                        .catch(error => console.error('Error:', error));
                 }
+            }
+
+            // 添加房间
+            function addRoom() {
+                const newRoom = {
+                    room_name: document.getElementById('roomName').value,
+                    capacity: parseInt(document.getElementById('capacity').value),
+                    location: document.getElementById('location').value,
+                    equipment: document.getElementById('equipment').value
+                };
 
                 fetch('http://localhost:5000/insert_room', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        room_name: roomName,
-                        capacity: parseInt(capacity),
-                        equipment: equipment,
-                        location: location
-                    })
+                    body: JSON.stringify(newRoom)
                 })
                     .then(response => response.json())
                     .then(data => {
-                                // 清空输入框
-                        roomName.value = '';
-                        capacity.value = '';
-                        location.value = '';
-                        equipment.value = '';
-                        // 调试输出
-                        console.log("原始响应数据:", data);
-
-                        // 适配不同响应格式
-                        const isSuccess = data.success === true ||
-                            (data.message && data.message.toLowerCase().includes("success"));
-
-                        if (isSuccess) {
-                            // 创建新的房间项
-                            const roomList = document.querySelector('.room-list');
-                            const newRoomItem = document.createElement('div');
-                            newRoomItem.className = 'room-item';
-                            newRoomItem.dataset.roomId = data.room_id || Date.now(); // 临时ID
-
-                            newRoomItem.innerHTML = `
-                        <div class="room-info">
-                            <div><label>Room Name:</label> ${roomName}</div>
-                            <div><label>Capacity:</label> ${capacity}</div>
-                            <div><label>Location:</label> ${location}</div>
-                            <div><label>Equipment:</label> ${equipment}</div>
-                        </div>
-                        <div class="room-actions">
-                            <button class="edit-btn" onclick="openEditModal(${data.room_id || 'temp'})">Edit</button>
-                            <button class="delete-btn" onclick="deleteRoom(${data.room_id || 'temp'})">Delete</button>
-                        </div>
-                    `;
-
-                            roomList.appendChild(newRoomItem);
-                            alert(data.message || "Room added successfully!");
-                        } else {
-                            alert(data.message || "Operation failed");
+                        if (data.success) {
+                            document.querySelector('.add-room-form input').value = ''; // 清空表单
+                            loadRooms(); // 刷新列表
+                            alert('Room added successfully!');
                         }
                     })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert("Request failed: " + error.message);
-                    });
+                    .catch(error => console.error('Error:', error));
             }
 
-
-            // 删除房间
-            function deleteRoom(roomNo) {
-                if (confirm("Are you sure you want to delete room " + roomNo + "?")) {
-                    const roomItem = document.querySelector(`.room-item[data-room-no="${roomNo}"]`);
-                    roomItem.remove();
-                    alert("Room " + roomNo + " deleted.");
-                }
+            // 关闭模态框
+            function closeEditModal() {
+                document.getElementById('editModal').style.display = 'none';
             }
+
 
         </script>
 
