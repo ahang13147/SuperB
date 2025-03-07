@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     start_time:reservation.start_time,
                     end_time:reservation.end_time,
                     booking_date: reservation.booking_date,
-                    status: 'canceled',
+                    status: 'approved',
                 })
             });
 
