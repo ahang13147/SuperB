@@ -10,7 +10,7 @@ CORS(app)  # 启用 CORS，允许所有域名的请求
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': '1234',
+    'password': 'root',
     'database': 'booking_system_db',
     'charset': 'utf8mb4'
 }

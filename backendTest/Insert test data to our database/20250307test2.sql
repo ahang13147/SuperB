@@ -10,22 +10,22 @@ VALUES
 
 INSERT INTO Rooms (room_name, capacity, equipment, location)
 VALUES
-('A101', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('A102', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('A103', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('A104', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('A105', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('A106', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('A107', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('A108', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('A109', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('A110', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('A111', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('DIICSU635', 60, 'Projector, Whiteboard', 'DIICSU SIX Floor'),
-('DIICSU622', 42, 'Projector, Whiteboard', 'DIICSU SIX Floor'),
+('101', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
+('102', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
+('103', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
+('104', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
+('105', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
+('106', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
+('107', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
+('108', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
+('109', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
+('110', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
+('111', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
+('635', 60, 'Projector, Whiteboard', 'DIICSU SIX Floor'),
+('622', 42, 'Projector, Whiteboard', 'DIICSU SIX Floor'),
 ('formal meeting room', 14, 'Projector,Board Room Configuration', 'DIICSU Ground Floor'),
 ('informal meeting room', 12, 'Projector,Open Configuration', 'DIICSU Ground Floor'),
-('DIICSU 634', 10, 'Projector,Board Room Configuration', 'DIICSU 634');
+('634', 10, 'Projector,Board Room Configuration', 'DIICSU 634');
 
 
 INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, availability)
