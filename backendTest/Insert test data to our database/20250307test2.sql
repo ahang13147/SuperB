@@ -28,6 +28,7 @@ VALUES
 ('634', 10, 'Projector,Board Room Configuration', 'DIICSU 634');
 
 
+
 INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, availability)
 VALUES
 (1, '08:00', '10:00', '2025-03-06', 0),
