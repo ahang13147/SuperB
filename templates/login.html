@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microsoft Account login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Welcome to login</h1>
+            <p>Please use a Microsoft work or school account to continue</p>
+        </div>
+
+        <a href="{{ url_for('login') }}" class="login-btn">
+            <i class="fab fa-microsoft"></i>
+            Sign in with your Microsoft account
+        </a>
+
+        <div class="terms">
+            By continuing, you agree with us<a href="#">terms of service</a> 和 <a href="#">privacy policy</a>
+        </div>
+    </div>
+</body>
+</html>
