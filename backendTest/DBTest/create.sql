@@ -2,7 +2,7 @@
 -- @author: Xin Yu, Siyan Guo, Zibang Nie
 -- @description: This SQL script creates a booking system database, which includes tables for Users, Rooms, Bookings, Approvals, Notifications, and Reports.
 -- It provides a structure to manage users, room bookings, approval processes, notifications, and report generation.
--- ADD: add new tables of blacklist and trusted staff
+-- ADD: add new feild of rooms
 
 
 -- Set session variables for compatibility
@@ -33,7 +33,8 @@ CREATE TABLE Rooms (
     room_name VARCHAR(255) NOT NULL,            -- Room name
     capacity INT NOT NULL,                      -- Room capacity
     equipment TEXT,                             -- Equipment available in the room
-    location VARCHAR(255)                       -- Room's physical location
+    location VARCHAR(255),                       -- Room's physical location
+    is_normal_Room INT                         -- Whether the room is normal      0: available for all staff and students   1: staff only   2: trusted user only
 );
 
 -- 1.3 Room Availability Table (Stores room availability information for specific times)

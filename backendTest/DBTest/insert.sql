@@ -2,7 +2,7 @@
 -- @author: Xin Yu, Siyan Guo, Zibang Nie
 -- @description: This SQL script creates a booking system database, which includes tables for Users, Rooms, Bookings, Approvals, Notifications, and Reports.
 -- It provides a structure to manage users, room bookings, approval processes, notifications, and report generation.
--- ADD: add new tables of blacklist and trusted staff
+-- ADD: add new feild of rooms
 
 USE `booking_system_db`;
 
@@ -18,24 +18,24 @@ INSERT INTO Users (username, email, password_hash, role) VALUES
 ('student3', 'student3@example.com', 'hash9', 'student'),
 ('prof3', 'prof3@example.com', 'hash10', 'professor');
 
-INSERT INTO Rooms (room_name, capacity, equipment, location)
+INSERT INTO Rooms (room_name, capacity, equipment, location, is_normal_Room)
 VALUES
-('101', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('102', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('103', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('104', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('105', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('106', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('107', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('108', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('109', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('110', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('111', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('635', 60, 'Projector, Whiteboard', 'DIICSU SIX Floor'),
-('622', 42, 'Projector, Whiteboard', 'DIICSU SIX Floor'),
-('formal meeting room', 14, 'Projector,Board Room Configuration', 'DIICSU Ground Floor'),
-('informal meeting room', 12, 'Projector,Open Configuration', 'DIICSU Ground Floor'),
-('634', 10, 'Projector,Board Room Configuration', 'DIICSU 634');
+('101', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('102', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('103', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('104', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('105', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('106', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('107', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('108', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('109', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('110', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('111', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('635', 60, 'Projector, Whiteboard', 'DIICSU SIX Floor',1),
+('622', 42, 'Projector, Whiteboard', 'DIICSU SIX Floor',1),
+('formal meeting room', 14, 'Projector,Board Room Configuration', 'DIICSU Ground Floor',1),
+('informal meeting room', 12, 'Projector,Open Configuration', 'DIICSU Ground Floor',1),
+('634', 10, 'Projector,Board Room Configuration', 'DIICSU 634',2);
 
 INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, availability) VALUES
 (1, '09:00:00', '12:00:00', '2025-03-05', 0),
@@ -72,16 +72,16 @@ VALUES
 (1, 'Excel', '2025-03-06 09:00:00', '{"total_bookings": 15, "approved_bookings": 12, "canceled_bookings": 3}');
 
 INSERT INTO RoomTrustedUsers (room_id, user_id, added_by, added_date, added_time, notes) VALUES
-(1, 3, 1, '2025-03-01', '10:00:00', 'Trusted for academic purposes'),
-(2, 4, 1, '2025-03-01', '11:00:00', 'Trusted for tutoring sessions'),
-(3, 5, 5, '2025-03-02', '09:00:00', 'Trusted for workshops'),
-(4, 6, 5, '2025-03-02', '10:00:00', 'Trusted for group meetings'),
-(5, 7, 1, '2025-03-03', '14:00:00', 'Trusted for study groups'),
-(1, 8, 5, '2025-03-03', '15:00:00', 'Trusted for project work'),
-(2, 9, 1, '2025-03-04', '12:00:00', 'Trusted for presentations'),
-(3, 10, 5, '2025-03-04', '13:00:00', 'Trusted for discussions'),
-(4, 3, 1, '2025-03-05', '16:00:00', 'Trusted for academic purposes'),
-(5, 4, 5, '2025-03-05', '17:00:00', 'Trusted for tutoring sessions');
+(12, 3, 1, '2025-03-01', '10:00:00', 'Trusted for academic purposes'),
+(12, 4, 1, '2025-03-01', '11:00:00', 'Trusted for tutoring sessions'),
+(13, 5, 5, '2025-03-02', '09:00:00', 'Trusted for workshops'),
+(14, 6, 5, '2025-03-02', '10:00:00', 'Trusted for group meetings'),
+(15, 7, 1, '2025-03-03', '14:00:00', 'Trusted for study groups'),
+(12, 8, 5, '2025-03-03', '15:00:00', 'Trusted for project work'),
+(12, 9, 1, '2025-03-04', '12:00:00', 'Trusted for presentations'),
+(13, 10, 5, '2025-03-04', '13:00:00', 'Trusted for discussions'),
+(14, 3, 1, '2025-03-05', '16:00:00', 'Trusted for academic purposes'),
+(15, 4, 5, '2025-03-05', '17:00:00', 'Trusted for tutoring sessions');
 
 
 INSERT INTO Blacklist (user_id, added_by, added_date, added_time, start_date, start_time, end_date, end_time, reason) VALUES

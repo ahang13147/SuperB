@@ -1,5 +1,5 @@
 
--- @version: 3/6/2025
+-- @version: 3/11/2025
 -- @author: Xin Yu, Zibang Nie, Siyan Guo
 -- @description: This SQL script creates a advanced sql to manage Room_availability updates when a Booking is inserted or deleted.
 
