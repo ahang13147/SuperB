@@ -4,6 +4,7 @@
 -- It provides a structure to manage users, room bookings, approval processes, notifications, and report generation.
 -- ADD: add new tables of blacklist and trusted staff
 
+
 -- Set session variables for compatibility
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8 */;
