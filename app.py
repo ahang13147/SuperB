@@ -10,7 +10,7 @@ app.secret_key = 'your_secure_secret_key_here'
 CLIENT_ID = '736efa73-315a-4b77-a273-0447f5e2a27d'
 CLIENT_SECRET = 'SmK8Q~kGj~gKhSU0ZFE.Z0VC~6NMMvQ8qdBm4atq'
 AUTHORITY = 'https://login.microsoftonline.com/common'
-REDIRECT_URI = 'https://9553-116-128-238-47.ngrok-free.app/getAToken'   # 必须与Azure门户注册的一致
+REDIRECT_URI = 'https://9553-116-128-238-47.ngrok-free.app/getAToken'   # Must be consistent with Azure portal registration
 
 # 初始化MSAL应用
 msal_app = msal.ConfidentialClientApplication(
@@ -22,15 +22,15 @@ msal_app = msal.ConfidentialClientApplication(
 
 @app.route('/')
 def index():
-    # 如果已登录则跳转个人页，否则显示登录界面
+    # If you have logged in, the personal page is displayed. Otherwise, the login page is displayed
     if 'access_token' in session:
         return redirect(url_for('profile'))
-    return render_template('login.html')  # 渲染登录界面
+    return render_template('login.html')
 
 
 @app.route('/login')
 def login():
-    # 生成Microsoft登录URL
+    # Generate the Microsoft login URL
     auth_url = msal_app.get_authorization_request_url(
         scopes=["User.Read"],
         redirect_uri=REDIRECT_URI
@@ -43,7 +43,7 @@ def authorized():
     # 处理Microsoft回调
     code = request.args.get('code')
     if not code:
-        return "认证失败：缺少授权码", 400
+        return "Authentication failure: The authorization code is missing", 400
 
     # 用授权码换取令牌
     result = msal_app.acquire_token_by_authorization_code(
@@ -56,7 +56,7 @@ def authorized():
         session['access_token'] = result['access_token']
         return redirect(url_for('profile'))
     else:
-        return f"认证错误：{result.get('error_description')}", 500
+        return f"Authentication error：{result.get('error_description')}", 500
 
 
 @app.route('/profile')
@@ -69,9 +69,9 @@ def profile():
     user_info = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers).json()
 
     return f'''
-        <h1>欢迎回来，{user_info.get('displayName')}!</h1>
-        <p>邮箱：{user_info.get('mail')}</p>
-        <a href="/logout">退出登录</a>
+        <h1>welcome back，{user_info.get('displayName')}!</h1>
+        <p>email：{user_info.get('mail')}</p>
+        <a href="/logout">log out</a>
     '''
 
 
