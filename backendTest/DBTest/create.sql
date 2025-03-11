@@ -2,7 +2,7 @@
 -- @author: Xin Yu, Siyan Guo, Zibang Nie
 -- @description: This SQL script creates a booking system database, which includes tables for Users, Rooms, Bookings, Approvals, Notifications, and Reports.
 -- It provides a structure to manage users, room bookings, approval processes, notifications, and report generation.
--- ADD: add new tables of blacklist and trusted staff
+-- ADD: add new feild of rooms
 
 
 -- Set session variables for compatibility

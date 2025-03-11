@@ -72,16 +72,16 @@ VALUES
 (1, 'Excel', '2025-03-06 09:00:00', '{"total_bookings": 15, "approved_bookings": 12, "canceled_bookings": 3}');
 
 INSERT INTO RoomTrustedUsers (room_id, user_id, added_by, added_date, added_time, notes) VALUES
-(1, 3, 1, '2025-03-01', '10:00:00', 'Trusted for academic purposes'),
-(2, 4, 1, '2025-03-01', '11:00:00', 'Trusted for tutoring sessions'),
-(3, 5, 5, '2025-03-02', '09:00:00', 'Trusted for workshops'),
-(4, 6, 5, '2025-03-02', '10:00:00', 'Trusted for group meetings'),
-(5, 7, 1, '2025-03-03', '14:00:00', 'Trusted for study groups'),
-(1, 8, 5, '2025-03-03', '15:00:00', 'Trusted for project work'),
-(2, 9, 1, '2025-03-04', '12:00:00', 'Trusted for presentations'),
-(3, 10, 5, '2025-03-04', '13:00:00', 'Trusted for discussions'),
-(4, 3, 1, '2025-03-05', '16:00:00', 'Trusted for academic purposes'),
-(5, 4, 5, '2025-03-05', '17:00:00', 'Trusted for tutoring sessions');
+(12, 3, 1, '2025-03-01', '10:00:00', 'Trusted for academic purposes'),
+(12, 4, 1, '2025-03-01', '11:00:00', 'Trusted for tutoring sessions'),
+(13, 5, 5, '2025-03-02', '09:00:00', 'Trusted for workshops'),
+(14, 6, 5, '2025-03-02', '10:00:00', 'Trusted for group meetings'),
+(15, 7, 1, '2025-03-03', '14:00:00', 'Trusted for study groups'),
+(12, 8, 5, '2025-03-03', '15:00:00', 'Trusted for project work'),
+(12, 9, 1, '2025-03-04', '12:00:00', 'Trusted for presentations'),
+(13, 10, 5, '2025-03-04', '13:00:00', 'Trusted for discussions'),
+(14, 3, 1, '2025-03-05', '16:00:00', 'Trusted for academic purposes'),
+(15, 4, 5, '2025-03-05', '17:00:00', 'Trusted for tutoring sessions');
 
 
 INSERT INTO Blacklist (user_id, added_by, added_date, added_time, start_date, start_time, end_date, end_time, reason) VALUES
