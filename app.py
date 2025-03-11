@@ -6,7 +6,11 @@ from flask import Flask, redirect, request, session, url_for, render_template
 app = Flask(__name__)
 app.secret_key = 'your_secure_secret_key_here'
 
-
+# Azure配置
+CLIENT_ID = ''
+CLIENT_SECRET = ''
+AUTHORITY = 'https://login.microsoftonline.com/common'
+REDIRECT_URI = ''   # Must be consistent with Azure portal registration
 
 # 初始化MSAL应用
 msal_app = msal.ConfidentialClientApplication(
