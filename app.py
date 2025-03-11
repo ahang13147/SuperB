@@ -7,10 +7,10 @@ app = Flask(__name__)
 app.secret_key = 'your_secure_secret_key_here'
 
 # Azure配置
-CLIENT_ID = '736efa73-315a-4b77-a273-0447f5e2a27d'
-CLIENT_SECRET = 'SmK8Q~kGj~gKhSU0ZFE.Z0VC~6NMMvQ8qdBm4atq'
+CLIENT_ID = ''
+CLIENT_SECRET = ''
 AUTHORITY = 'https://login.microsoftonline.com/common'
-REDIRECT_URI = 'https://9553-116-128-238-47.ngrok-free.app/getAToken'   # Must be consistent with Azure portal registration
+REDIRECT_URI = ''   # Must be consistent with Azure portal registration
 
 # 初始化MSAL应用
 msal_app = msal.ConfidentialClientApplication(
