@@ -33,7 +33,8 @@ CREATE TABLE Rooms (
     room_name VARCHAR(255) NOT NULL,            -- Room name
     capacity INT NOT NULL,                      -- Room capacity
     equipment TEXT,                             -- Equipment available in the room
-    location VARCHAR(255)                       -- Room's physical location
+    location VARCHAR(255),                       -- Room's physical location
+    is_normal_Room INT                         -- Whether the room is normal      0: available for all staff and students   1: staff only   2: trusted user only
 );
 
 -- 1.3 Room Availability Table (Stores room availability information for specific times)
