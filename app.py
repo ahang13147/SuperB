@@ -8,7 +8,7 @@ app.secret_key = 'your_secure_secret_key_here'
 
 # Azure配置
 CLIENT_ID = ''
-CLIENT_SECRET = ''
+
 AUTHORITY = 'https://login.microsoftonline.com/common'
 REDIRECT_URI = ''   # Must be consistent with Azure portal registration
 
