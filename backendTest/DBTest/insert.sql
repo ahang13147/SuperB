@@ -2,7 +2,7 @@
 -- @author: Xin Yu, Siyan Guo, Zibang Nie
 -- @description: This SQL script creates a booking system database, which includes tables for Users, Rooms, Bookings, Approvals, Notifications, and Reports.
 -- It provides a structure to manage users, room bookings, approval processes, notifications, and report generation.
--- ADD: add new tables of blacklist and trusted staff
+-- ADD: new field of room
 
 USE `booking_system_db`;
 
@@ -18,24 +18,24 @@ INSERT INTO Users (username, email, password_hash, role) VALUES
 ('student3', 'student3@example.com', 'hash9', 'student'),
 ('prof3', 'prof3@example.com', 'hash10', 'professor');
 
-INSERT INTO Rooms (room_name, capacity, equipment, location)
+INSERT INTO Rooms (room_name, capacity, equipment, location, is_normal_Room)
 VALUES
-('101', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('102', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('103', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('104', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('105', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('106', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('107', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('108', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('109', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('110', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('111', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor'),
-('635', 60, 'Projector, Whiteboard', 'DIICSU SIX Floor'),
-('622', 42, 'Projector, Whiteboard', 'DIICSU SIX Floor'),
-('formal meeting room', 14, 'Projector,Board Room Configuration', 'DIICSU Ground Floor'),
-('informal meeting room', 12, 'Projector,Open Configuration', 'DIICSU Ground Floor'),
-('634', 10, 'Projector,Board Room Configuration', 'DIICSU 634');
+('101', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('102', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('103', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('104', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('105', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('106', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('107', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('108', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('109', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('110', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('111', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
+('635', 60, 'Projector, Whiteboard', 'DIICSU SIX Floor',1),
+('622', 42, 'Projector, Whiteboard', 'DIICSU SIX Floor',1),
+('formal meeting room', 14, 'Projector,Board Room Configuration', 'DIICSU Ground Floor',1),
+('informal meeting room', 12, 'Projector,Open Configuration', 'DIICSU Ground Floor',1),
+('634', 10, 'Projector,Board Room Configuration', 'DIICSU 634',2);
 
 INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, availability) VALUES
 (1, '09:00:00', '12:00:00', '2025-03-05', 0),
