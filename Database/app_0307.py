@@ -1,3 +1,9 @@
+#  @version: 3/11/2025
+#  @author: Xin Yu, Siyan Guo, Zibang Nie
+# add: cancel a booking,approve or reject a booking
+
+
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import mysql.connector
@@ -15,7 +21,7 @@ CORS(app)  # 允许所有来源访问
 db_config = {
     "host": "localhost",
     "user": "root",
-    "password": "1234",  # 注意：删除操作中使用的是1234，请保持一致
+    "password": "root",  # 注意：删除操作中使用的是1234，请保持一致
     "database": "booking_system_db"
 }
 
@@ -177,35 +183,35 @@ def delete_room_availability():
     result, status = delete_record(query, params)
     return jsonify({"message": result}), status
 
-@app.route('/delete/bookings', methods=['POST', 'OPTIONS'])
-def delete_bookings():
-    if request.method == 'OPTIONS':
-        return '', 200
-    data = request.json
-    booking_id = data.get('booking_id')
-    start_time = data.get('start_time')
-    end_time = data.get('end_time')
-    booking_date = data.get('booking_date')
-    status_val = data.get('status')
-    # 删除依赖记录：审批记录中对应的 booking_id
-    dependent_query = """
-    DELETE FROM Approvals 
-    WHERE booking_id = %s
-    """
-    dependent_params = (booking_id,)
-    delete_record(dependent_query, dependent_params)
-    # 根据 booking_id 及其他参数删除 Bookings 中的记录
-    query = """
-    DELETE FROM Bookings
-    WHERE booking_id = %s
-      AND start_time = %s
-      AND end_time = %s
-      AND booking_date = %s
-      AND (status = %s OR %s IS NULL)
-    """
-    params = (booking_id, start_time, end_time, booking_date, status_val, status_val)
-    result, status = delete_record(query, params)
-    return jsonify({"message": result}), status
+# @app.route('/delete/bookings', methods=['POST', 'OPTIONS'])
+# def delete_bookings():
+#     if request.method == 'OPTIONS':
+#         return '', 200
+#     data = request.json
+#     booking_id = data.get('booking_id')
+#     start_time = data.get('start_time')
+#     end_time = data.get('end_time')
+#     booking_date = data.get('booking_date')
+#     status_val = data.get('status')
+#     # 删除依赖记录：审批记录中对应的 booking_id
+#     dependent_query = """
+#     DELETE FROM Approvals
+#     WHERE booking_id = %s
+#     """
+#     dependent_params = (booking_id,)
+#     delete_record(dependent_query, dependent_params)
+#     # 根据 booking_id 及其他参数删除 Bookings 中的记录
+#     query = """
+#     DELETE FROM Bookings
+#     WHERE booking_id = %s
+#       AND start_time = %s
+#       AND end_time = %s
+#       AND booking_date = %s
+#       AND (status = %s OR %s IS NULL)
+#     """
+#     params = (booking_id, start_time, end_time, booking_date, status_val, status_val)
+#     result, status = delete_record(query, params)
+#     return jsonify({"message": result}), status
 
 @app.route('/delete/approvals', methods=['POST'])
 def delete_approvals():
@@ -293,6 +299,7 @@ def search_rooms():
     """
     请求参数示例：
     {
+
         "capacity": 20,
         "room_name": "会议室",
         "date": "2025-03-05",
@@ -320,7 +327,7 @@ def search_rooms():
         cursor = conn.cursor(dictionary=True, buffered=True)
         query = """
             SELECT 
-                r.room_id, r.room_name, r.capacity, r.equipment, r.location,
+                r.room_id, r.room_name, r.capacity, r.equipment, r.location,r.is_normal_Room,
                 ra.available_date, ra.available_begin, ra.available_end, ra.availability
             FROM Rooms r
             JOIN Room_availability ra ON r.room_id = ra.room_id
@@ -410,6 +417,38 @@ def get_all_bookings():
         if 'conn' in locals():
             conn.close()
 
+
+@app.route('/rooms', methods=['GET'])
+def get_rooms():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT room_id, room_name, capacity, equipment, location
+            FROM Rooms
+        """
+        cursor.execute(query)
+        rooms = cursor.fetchall()
+        return jsonify({
+            "count": len(rooms),
+            "rooms": rooms
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+
+# ---------------------------- update ----------------------------
+
 @app.route('/update-room/<int:room_id>', methods=['PUT'])
 def update_room(room_id):
     print(f"Received PUT request to update room with ID: {room_id}")
@@ -463,20 +502,52 @@ def update_room(room_id):
         if 'conn' in locals():
             conn.close()
 
-@app.route('/rooms', methods=['GET'])
-def get_rooms():
+
+@app.route('/update-booking-status/<int:booking_id>', methods=['PUT'])
+def update_booking_status(booking_id):
+    print(f"Received PUT request to update booking with ID: {booking_id}")
+    data = request.json
+    print(f"Request body: {data}")
+    status = data.get('status')
+
+    if status not in ['approved', 'rejected']:
+        return jsonify({"error": "Invalid status value. Allowed values are 'approved' or 'rejected'."}), 400
+
     try:
         conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        query = """
-            SELECT room_id, room_name, capacity, equipment, location
-            FROM Rooms
+        cursor = conn.cursor()
+
+        # Check if the booking exists and is in 'pending' status
+        cursor.execute("SELECT * FROM Bookings WHERE booking_id = %s AND status = 'pending'", (booking_id,))
+        booking = cursor.fetchone()
+
+        if not booking:
+            print(f"No pending booking found with ID {booking_id}.")
+            return jsonify({"error": "Booking not found or already processed"}), 404
+
+        # Update the booking's status
+        update_query = """
+            UPDATE Bookings
+            SET status = %s
+            WHERE booking_id = %s
         """
-        cursor.execute(query)
-        rooms = cursor.fetchall()
+        update_params = (status, booking_id)
+        print(f"Executing update query: {update_query} with parameters: {update_params}")
+        cursor.execute(update_query, update_params)
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            print(f"No room found with ID {booking_id}.")
+            return jsonify({"error": "Booking update failed"}), 500
+
+        cursor.execute("SELECT * FROM Bookings WHERE booking_id = %s", (booking_id,))
+        updated_booking = cursor.fetchone()
+        print(f"Updated booking: {updated_booking}")
+
         return jsonify({
-            "count": len(rooms),
-            "rooms": rooms
+            "message": f"Booking status updated to {status}",
+            "booking_id": updated_booking[0],
+            "status": updated_booking[6]  # Assuming status is the 6th column in Bookings table
         })
 
     except mysql.connector.Error as e:
@@ -490,6 +561,64 @@ def get_rooms():
             cursor.close()
         if 'conn' in locals():
             conn.close()
+
+@app.route('/cancel-booking/<int:booking_id>', methods=['PUT'])
+def cancel_booking(booking_id):
+    print(f"Received PUT request to cancel booking with ID: {booking_id}")
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 查找待取消的预定记录
+        cursor.execute("SELECT * FROM Bookings WHERE booking_id = %s AND status != 'canceled'", (booking_id,))
+        booking = cursor.fetchone()
+
+        if not booking:
+            print(f"No booking found with ID {booking_id} or the booking is already canceled.")
+            return jsonify({"error": "Booking not found or already canceled"}), 404
+
+        # 更新该预定的 status 为 'canceled'
+        update_query = """
+            UPDATE Bookings
+            SET status = 'canceled'
+            WHERE booking_id = %s
+        """
+        update_params = (booking_id,)
+        print(f"Executing update query: {update_query} with parameters: {update_params}")
+        cursor.execute(update_query, update_params)
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            print(f"Failed to cancel booking with ID {booking_id}.")
+            return jsonify({"error": "Failed to cancel booking"}), 500
+
+        # 获取更新后的预定信息
+        cursor.execute("SELECT * FROM Bookings WHERE booking_id = %s", (booking_id,))
+        updated_booking = cursor.fetchone()
+        print(f"Updated booking: {updated_booking}")
+
+        return jsonify({
+            "message": "Booking status updated to 'canceled'",
+            "booking_id": updated_booking[0],
+            "status": updated_booking[6]  # Assuming status is the 6th column in Bookings table
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+
+
+# ---------------------------- insert ----------------------------
 
 @app.route('/insert_booking', methods=['POST'])
 def insert_booking():
@@ -551,6 +680,8 @@ def insert_room():
     finally:
         if conn:
             conn.close()
+
+
 
 if __name__ == '__main__':
     print("\nRegistered routes:")
