@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>DIICSU 智能会议室预订系统</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', 'PingFang SC', system-ui;
+}
+
+/* Main container */
+.main-container {
+    width: 100%;
+    min-height: 1080px;
+    background: #f8f9fa;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+    position: fixed;
+    width: 200px;
+    height: 100vh;
+    left: 0;
+    top: 0;
+    background: linear-gradient(180deg, #2b5876 0%, #4e4376 100%);
+    padding: 30px 0;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+    z-index: 1000;
+}
+
+/* Content area */
+.content-area {
+    margin-left: 200px;
+    width: calc(100% - 200px);
+    min-height: 1080px;
+    padding: 40px;
+    box-sizing: border-box;
+    background: #f8f9fa;
+}
+
+/* Navigation items */
+.nav-item {
+    display: flex;
+    align-items: center;
+    color: rgba(255,255,255,0.9);
+    padding: 18px 25px;
+    margin: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-item:hover {
+    background: rgba(255,255,255,0.1);
+    transform: translateX(5px);
+}
+
+.nav-item.active {
+    background: rgba(255,255,255,0.15);
+    border-left: 3px solid #00f2c3;
+}
+
+.nav-icon {
+    font-size: 1.2rem;
+    width: 30px;
+    margin-right: 15px;
+}
+
+        /* 搜索区 */
+        .search-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+
+        .search-header {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .filter-item {
+            height: 50px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 0 15px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .filter-item:focus {
+            outline: none;
+            border-color: #00f2c3;
+            box-shadow: 0 0 0 3px rgba(0,242,195,0.2);
+        }
+
+        .search-btn {
+            background: linear-gradient(45deg, #00f2c3, #0098f0);
+            color: white;
+            border: none;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        /* 会议室卡片 */
+        .room-card {
+            display: grid;
+            grid-template-columns: 240px 1fr 160px;
+            align-items: center;
+            background: white;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            transition: transform 0.3s;
+        }
+
+        .room-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .room-meta h3 {
+            color: #2c3e50;
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+
+        .room-meta p {
+            color: #6c757d;
+            font-size: 0.95rem;
+        }
+
+        .equipment-tag {
+            display: inline-flex;
+            align-items: center;
+            background: #f1f3f5;
+            padding: 8px 15px;
+            margin: 0 8px 8px 0;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .equipment-tag i {
+            color: #00a8ff;
+            margin-right: 8px;
+        }
+
+        .book-btn {
+            background: linear-gradient(45deg, #00f2c3, #0098f0);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .book-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* 通知中心 */
+        .notification-panel {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+        }
+
+        .notification-item {
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid transparent;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .notification-item.unread {
+            border-left-color: #00f2c3;
+            background: rgba(0,242,195,0.03);
+        }
+
+        .notification-time {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .notification-content {
+            color: #2c3e50;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="nav-item active">
+                <i class="fas fa-calendar-alt nav-icon"></i>
+                预定中心
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-list-ul nav-icon"></i>
+                我的预定
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-bell nav-icon"></i>
+                通知中心
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-user-circle nav-icon"></i>
+                个人中心
+            </div>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="content-area">
+            <!-- 预定中心 -->
+            <div class="search-container">
+                <h2 class="search-header">会议室预定</h2>
+                <div class="filter-grid">
+                    <input type="date" class="filter-item" placeholder="选择日期">
+                    <select class="filter-item">
+                        <option>09:00 - 10:00</option>
+                        <option>10:00 - 11:00</option>
+                    </select>
+                    <input type="number" class="filter-item" placeholder="参会人数" min="1">
+                    <button class="filter-item search-btn">立即搜索</button>
+                </div>
+            </div>
+
+            <!-- 会议室列表 -->
+            <div class="room-card">
+                <div class="room-meta">
+                    <h3>创新会议室 101</h3>
+                    <p>容量：20人 | 楼层：3F</p>
+                </div>
+                <div class="equipment-tags">
+                    <span class="equipment-tag">
+                        <i class="fas fa-video"></i>
+                        视频会议
+                    </span>
+                    <span class="equipment-tag">
+                        <i class="fas fa-chalkboard"></i>
+                        智能白板
+                    </span>
+                    <span class="equipment-tag">
+                        <i class="fas fa-plug"></i>
+                        Type-C接口
+                    </span>
+                </div>
+                <button class="book-btn">立即预定</button>
+            </div>
+
+            <!-- 通知中心示例 -->
+            <div class="notification-panel" style="display: none;">
+                <div class="notification-item unread">
+                    <div class="notification-time">2023-10-01 09:00</div>
+                    <div class="notification-content">
+                        您的「创新会议室 101」预定已确认（09:00-10:00）
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面切换功能
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // 移除所有激活状态
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+
+                // 切换内容显示
+                const panels = document.querySelectorAll('.search-container, .notification-panel');
+                panels.forEach(p => p.style.display = 'none');
+
+                if(this.querySelector('.fa-bell')) {
+                    document.querySelector('.notification-panel').style.display = 'block';
+                } else {
+                    document.querySelector('.search-container').style.display = 'block';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
