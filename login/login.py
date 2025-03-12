@@ -1,34 +1,58 @@
-from flask import Flask, request, render_template_string
+# Author: Zibang Nie, Guanhang Zhang
+# This is a Flask application that connects to a MySQL database.
+# It contains a single POST route ('/get_user') that retrieves user information
+# from the 'Users' table based on a provided name and email.
+
+from flask import Flask, request, jsonify
+import mysql.connector
 
 app = Flask(__name__)
 
-# 定义一个用于验证邮箱的正则表达式
-import re
+# Function to establish a connection to the database
+def get_db_connection():
+    return mysql.connector.connect(
+        host="localhost",       # Database host (localhost for local database)
+        user="root",            # Database user
+        password="1234",        # Database password
+        database="booking_system_db"  # The database name to connect to
+    )
 
+# Route to get user information based on provided name and email
+@app.route('/get_user', methods=['POST'])
+def get_user():
+    # Get the JSON data from the incoming request
+    data = request.get_json()
+    name = data.get('name')  # Extract the 'name' value from the JSON data
+    email = data.get('email')  # Extract the 'email' value from the JSON data
 
-def validate_email(email):
-    # 检查邮箱是否以 @dundee.ac.uk 结尾
-    email_regex = r'^[a-zA-Z0-9._%+-]+@dundee\.ac\.uk$'
-    return re.match(email_regex, email) is not None
+    # If either name or email is not provided, return an error response
+    if not name or not email:
+        return jsonify({"error": "Name and email are required"}), 400
 
+    # Query the database to find the user by name and email
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT user_id, username, email, role 
+        FROM Users 
+        WHERE username = %s AND email = %s
+    """, (name, email))
 
-@app.route('/', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        email = request.form['email']
+    user = cursor.fetchone()  # Fetch a single result from the query
+    connection.close()  # Close the database connection
 
-        if validate_email(email):
-            return f"欢迎，{email}！你已成功登录。"
-        else:
-            return "错误：只能使用 @dundee.ac.uk 的邮箱登录！"
+    # If a user is found, return the user information in JSON format
+    if user:
+        return jsonify({
+            'name': user['username'],
+            'email': user['email'],
+            'id': user['user_id'],
+            'role': user['role']
+        })
+    else:
+        # If no user is found, return an error response
+        return jsonify({"error": "User not found"}), 404
 
-    return '''
-        <form method="POST">
-            邮箱地址：<input type="email" name="email" required>
-            <input type="submit" value="登录">
-        </form>
-    '''
-
-
+# Run the Flask application with debug mode enabled
 if __name__ == '__main__':
     app.run(debug=True)

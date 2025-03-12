@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Code - Classroom System</title>
+</head>
+<body>
+    <h2>Enter Verification Code</h2>
+    <form method="POST" action="{{ url_for('verify') }}">
+        <label for="email">Enter your email:</label>
+        <input type="email" id="email" name="email" required><br><br>
+
+        <label for="code">Enter the verification code you received:</label>
+        <input type="text" id="code" name="code" required><br><br>
+
+        <button type="submit">Verify Code</button>
+    </form>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+                {% for category, message in messages %}
+                    <li><strong>{{ category }}</strong>: {{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+</body>
+</html>
