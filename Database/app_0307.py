@@ -510,7 +510,7 @@ def get_Finished_Workflow_bookings():
             FROM Bookings b
             JOIN Users u ON b.user_id = u.user_id
             JOIN Rooms r ON b.room_id = r.room_id
-            WHERE b.status IN ('approved', 'rejected')
+            WHERE b.status IN ('approved', 'rejected','failed')
             ORDER BY b.booking_date, b.start_time
         """
 
