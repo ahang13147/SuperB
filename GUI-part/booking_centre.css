@@ -350,3 +350,41 @@ button:disabled {
     from { transform: translateX(100%); }
     to { transform: translateX(0); }
 }
+
+/* 新增原因输入弹窗样式 */
+#reasonModal.modal {
+    display: none;
+    position: fixed;
+    z-index: 1002;
+    /* 确保在原有弹窗之上 */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+#reasonModal .modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 50%;
+    position: relative;
+}
+
+#reasonInput {
+    width: 100%;
+    margin: 15px 0;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+#submitReason {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    float: right;
+}

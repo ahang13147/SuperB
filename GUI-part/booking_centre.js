@@ -1,3 +1,4 @@
+let pendingBookingData = null; // 用于暂存需要补充reason的预定数据
 let classrooms = [];
 let currentClassroom = null; // 添加在文件顶部，与classrooms变量并列
 document.addEventListener('DOMContentLoaded', async () => {
@@ -76,8 +77,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             responseData.results.forEach(room => {
                 if (!classroomMap.has(room.room_id)) {
                     classroomMap.set(room.room_id, {
-                        id: room.room_id,
+                        id: room.room_id,       // 新增room_id存储
                         name: room.room_name,
+                        type: room.room_type,   // 新增room_type存储
                         capacity: room.capacity,
                         equipment: room.equipment ? room.equipment.split(', ') : [],
                         availableTimes: []
@@ -102,7 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 渲染教室列表（修正版）
     function renderClassrooms() {
         elements.classroomList.innerHTML = classrooms.map(classroom => `
-        <div class="classroom-card" data-classroom="${classroom.name}">
+         <div class="classroom-card" data-classroom="${classroom.name}">
             <h3>${classroom.name}</h3>
             <div class="details">
                 <p>Capacity: ${classroom.capacity} people</p>
@@ -120,7 +122,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <button>
                 Book Now
             </button>
-        </div>
+        </>
     `).join('');
 
         // 绑定事件监听器
@@ -186,6 +188,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.datePicker.addEventListener('click', (event) => {
             event.stopPropagation();  // 阻止点击事件传播到 window
 
+        // 新增原因弹窗关闭事件
+        document.querySelector('.close-reason').onclick = () => {
+            document.getElementById('reasonModal').style.display = 'none';
+        };
+
+            // 新增原因提交事件
+        document.getElementById('submitReason').addEventListener('click', handleReasonSubmit);
+
+
         
         });
 
@@ -197,6 +208,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
     
+    // 修改后的handleBookingConfirmation函数：
     async function handleBookingConfirmation() {
         const selectedTime = document.querySelector('input[name="timeSlot"]:checked');
         if (!selectedTime) {
@@ -214,31 +226,78 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // 获取用户ID（这里暂时硬编码为1，实际项目应从登录状态获取）
-        const userId = 1;
+        // 获取用户ID（根据实际登录状态获取）
+        const userId = 3;
 
         try {
             const response = await fetch('http://localhost:5000/insert_booking', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    room_name: currentClassroom.name,
+                    room_id: currentClassroom.id, // 改为使用room_id
                     user_id: userId,
                     booking_date: bookingDate,
                     start_time: startTime,
-                    end_time: endTime
+                    end_time: endTime,
+                    reason: ' ' // 默认传空格
                 })
             });
 
             const data = await response.json();
-            if (!response.ok) throw new Error(data.message || 'Booking failed');
+            if (!response.ok) {
+                if (data.status === 'require_reason') {
+                    // 存储预定数据并显示原因输入框
+                    pendingBookingData = {
+                        room_id: currentClassroom.id,
+                        user_id: userId,
+                        booking_date: bookingDate,
+                        start_time: startTime,
+                        end_time: endTime
+                    };
+                    elements.modal.style.display = 'none';
+                    document.getElementById('reasonModal').style.display = 'block';
+                    return;
+                }
+                throw new Error(data.error || 'Booking failed');
+            }
 
             alert('Booking successful!');
             elements.modal.style.display = 'none';
-            await fetchClassrooms(); // 刷新教室列表
+            await fetchClassrooms();
         } catch (error) {
             console.error('Booking Error:', error);
             alert(`Booking failed: ${error.message}`);
+        }
+    }
+
+    // 新增处理原因提交的函数
+    async function handleReasonSubmit() {
+        const reason = document.getElementById('reasonInput').value.trim();
+        if (!reason) {
+            alert('Please enter booking reason');
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:5000/insert_booking_with_reason', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...pendingBookingData,
+                    reason: reason
+                })
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Booking failed');
+
+            alert('Booking request submitted, awaiting approval.');
+            document.getElementById('reasonModal').style.display = 'none';
+            pendingBookingData = null;
+            await fetchClassrooms();
+        } catch (error) {
+            console.error('Reason Submit Error:', error);
+            alert(`Submission failed: ${error.message}`);
         }
     }
 
