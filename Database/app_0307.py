@@ -457,7 +457,7 @@ def get_pending_bookings():
         # SQL 查询，获取状态为 'pending' 的预定记录，并连接 Users 和 Rooms 表
         query = """
             SELECT 
-                b.booking_id, b.booking_date, b.start_time, b.end_time, b.reason,
+                b.booking_id, b.booking_date, b.start_time, b.end_time, b.reason,b.status,
                 u.username AS user_name, r.room_name
             FROM Bookings b
             JOIN Users u ON b.user_id = u.user_id
@@ -505,7 +505,7 @@ def get_Finished_Workflow_bookings():
         # SQL 查询，获取状态为 'pending' 的预定记录，并连接 Users 和 Rooms 表
         query = """
             SELECT 
-                b.booking_id, b.booking_date, b.start_time, b.end_time, b.reason,
+                b.booking_id, b.booking_date, b.start_time, b.end_time, b.reason,b.status,
                 u.username AS user_name, r.room_name
             FROM Bookings b
             JOIN Users u ON b.user_id = u.user_id
