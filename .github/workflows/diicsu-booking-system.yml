@@ -1,6 +1,6 @@
 # Python on Linux Web App
 # Build a Python project (using Django/Flask/Bottle frameworks) and deploy it to Azure as a Linux web app.
-name: Deploy Python package to Azure Web App as a Linux web app.
+name: DIICSU-booking-System
 on:
   [push]
 # CONFIGURATION
@@ -12,12 +12,12 @@ on:
 #
 # 2. Change these variables for your configuration:
 env:
-  AZURE_WEBAPP_NAME: my-app     # set this to your application's name
+  AZURE_WEBAPP_NAME: DIICSU-booking-System     # set this to your application's name
   WORKING_DIRECTORY: '.'        # set this to the path to your path of working directory inside github repository, defaults to the repository root
-  PYTHON_VERSION: '3.10'        # set the version to use
-  STARTUP_COMMAND: ''           # set this to the startup command required to start the gunicorn server. default it is empty
+  PYTHON_VERSION: '3.12'        # set the version to use
+  STARTUP_COMMAND: 'python app.py'           # set this to the startup command required to start the gunicorn server. default it is empty
 
-name: Build and deploy Python app
+name: DIICSU-booking-System
 jobs:
  build-and-deploy:
   runs-on: ubuntu-latest
