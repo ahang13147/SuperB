@@ -12,7 +12,9 @@ from bs4 import BeautifulSoup
 import json
 import re
 import time
-from datetime import datetime, timedelta
+from datetime import date,datetime, timedelta
+
+
 
 app = Flask(__name__)
 CORS(app)  # 允许所有来源访问
@@ -299,7 +301,6 @@ def search_rooms():
     """
     请求参数示例：
     {
-
         "capacity": 20,
         "room_name": "会议室",
         "date": "2025-03-05",
@@ -988,31 +989,118 @@ def cancel_booking(booking_id):
 @app.route('/insert_booking', methods=['POST'])
 def insert_booking():
     data = request.get_json()
-    # 获取房间名称并转换为ID
-    room_name = data['room_name']
-    room_id = get_room_id(room_name)
-    if not room_id:
-        return jsonify({
-            "status": "error",
-            "error": f"Room '{room_name}' does not exist"
-        }), 400
-    user_id = data['user_id']
-    booking_date = data['booking_date']
-    start_time = data['start_time'] + ":00"
-    end_time = data['end_time'] + ":00"
-    status = 'approved'
+    room_id = data.get('room_id')
+    user_id = data.get('user_id')
+    booking_date = data.get('booking_date')
+    start_time = data.get('start_time') + ":00"
+    end_time = data.get('end_time') + ":00"
+    reason = data.get('reason', ' ')  # 默认为空字符串
+
     conn = get_db_connection()
     if not conn:
         return jsonify({"status": "error", "error": "Database connection failed"}), 500
+
     try:
         cursor = conn.cursor()
+
+        # 检查房间是否存在
+        cursor.execute("SELECT room_type FROM Rooms WHERE room_id = %s", (room_id,))
+        room_info = cursor.fetchone()
+        if not room_info:
+            return jsonify({"status": "error", "error": "Room not found"}), 400
+        room_type = room_info[0]
+
+        # 检查时间段是否可用
+        cursor.execute("""
+            SELECT availability_id FROM Room_availability 
+            WHERE room_id = %s 
+            AND available_date = %s 
+            AND available_begin <= %s 
+            AND available_end >= %s 
+            AND availability = 0
+        """, (room_id, booking_date, start_time, end_time))
+        if not cursor.fetchone():
+            return jsonify({"status": "error", "error": "The requested time slot is not available"}), 400
+
+        # 判断是否需要 reason
+        requires_reason = False
+        if room_type == 1:
+            cursor.execute("SELECT role FROM Users WHERE user_id = %s", (user_id,))
+            user = cursor.fetchone()
+            if not user:
+                return jsonify({"status": "error", "error": "User not found"}), 400
+            user_role = user[0]
+            if user_role not in ('admin', 'professor', 'tutor'):
+                requires_reason = True
+        elif room_type == 2:
+            cursor.execute("""
+                SELECT room_trusted_user_id FROM RoomTrustedUsers 
+                WHERE room_id = %s AND user_id = %s
+            """, (room_id, user_id))
+            if not cursor.fetchone():
+                requires_reason = True
+
+        # 如果需要 reason，但前端没有提供，返回状态，不插入数据
+        if requires_reason:
+            return jsonify({
+                "status": "require_reason",
+                "message": "Please enter the reason for booking."
+            }), 400
+
+        # 如果不需要 reason，直接插入数据库
+        status = 'approved'
+
         query = """
-        INSERT INTO Bookings (user_id, room_id, start_time, end_time, booking_date, status)
-        VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT INTO Bookings (user_id, room_id, start_time, end_time, booking_date, status, reason)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(query, (user_id, room_id, start_time, end_time, booking_date, status))
+        cursor.execute(query, (user_id, room_id, start_time, end_time, booking_date, status, reason))
         conn.commit()
-        return jsonify({"status": "success", "message": "Booking inserted successfully!"})
+
+        return jsonify({
+            "status": "success",
+            "message": "Booking successful" if status == 'approved' else "Booking request submitted, awaiting approval."
+        })
+
+    except mysql.connector.Error as err:
+        conn.rollback()
+        return jsonify({"status": "error", "error": str(err)}), 400
+    finally:
+        if conn:
+            conn.close()
+
+
+@app.route('/insert_booking_with_reason', methods=['POST'])
+def insert_booking_with_reason():
+    """前端输入 reason 后调用此 API 进行最终插入"""
+    data = request.get_json()
+    room_id = data.get('room_id')
+    user_id = data.get('user_id')
+    booking_date = data.get('booking_date')
+    start_time = data.get('start_time') + ":00"
+    end_time = data.get('end_time') + ":00"
+    reason = data.get('reason')
+
+    if not reason.strip():
+        return jsonify({"status": "error", "error": "Reason is required"}), 400
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"status": "error", "error": "Database connection failed"}), 500
+
+    try:
+        cursor = conn.cursor()
+
+        # 直接插入数据库
+        query = """
+            INSERT INTO Bookings (user_id, room_id, start_time, end_time, booking_date, status, reason)
+            VALUES (%s, %s, %s, %s, %s, 'pending', %s)
+        """
+        cursor.execute(query, (user_id, room_id, start_time, end_time, booking_date, reason))
+        conn.commit()
+
+        return jsonify({"status": "success", "message": "Booking request submitted, awaiting approval."})
+
     except mysql.connector.Error as err:
         conn.rollback()
         return jsonify({"status": "error", "error": str(err)}), 400
@@ -1046,6 +1134,103 @@ def insert_room():
         if conn:
             conn.close()
 
+
+
+@app.route('/insert-blacklist', methods=['POST'])
+def add_to_blacklist():
+    """
+    向 Blacklist 表插入一条新的记录。
+    示例请求体（JSON）:
+    {
+        "user_id": 2,
+        "added_by": 1,
+        "start_date": "2025-03-20",
+        "start_time": "09:00",
+        "end_date": "2025-03-22",
+        "end_time": "18:00",
+        "reason": "Violation of rules"
+    }
+    """
+    try:
+        # 获取请求数据
+        data = request.json
+
+        # 从请求体中获取必要字段
+        user_id = data.get('user_id')
+        added_by = data.get('added_by')
+        start_date_str = data.get('start_date')
+        start_time_str = data.get('start_time')
+        end_date_str = data.get('end_date')
+        end_time_str = data.get('end_time')
+        reason = data.get('reason')
+
+        # 检查必填字段是否存在
+        if not all([user_id, added_by, start_date_str, start_time_str, end_date_str, end_time_str]):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        # 转换日期和时间字符串为 datetime/date/time 对象
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            start_time = datetime.strptime(start_time_str, "%H:%M").time()
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+            end_time = datetime.strptime(end_time_str, "%H:%M").time()
+        except ValueError as e:
+            return jsonify({"error": f"Invalid date/time format: {str(e)}"}), 400
+
+        # 自动设置 added_date、added_time 为当前日期和时间
+        added_date = date.today()
+        added_time = datetime.now().time()
+
+        # 插入数据
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        insert_query = """
+            INSERT INTO Blacklist 
+            (user_id, added_by, added_date, added_time, start_date, start_time, end_date, end_time, reason)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(insert_query, (
+            user_id,
+            added_by,
+            added_date,
+            added_time,
+            start_date,
+            start_time,
+            end_date,
+            end_time,
+            reason
+        ))
+        conn.commit()
+
+        # 获取新插入记录的 ID
+        blacklist_id = cursor.lastrowid
+
+        return jsonify({
+            "message": "New blacklist entry created successfully",
+            "blacklist_id": blacklist_id,
+            "user_id": user_id,
+            "added_by": added_by,
+            "added_date": added_date.strftime("%Y-%m-%d"),
+            "added_time": added_time.strftime("%H:%M:%S"),
+            "start_date": start_date_str,
+            "start_time": start_time_str,
+            "end_date": end_date_str,
+            "end_time": end_time_str,
+            "reason": reason
+        }), 201
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
 
 
 if __name__ == '__main__':
