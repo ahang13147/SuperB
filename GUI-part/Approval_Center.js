@@ -6,40 +6,32 @@ function renderApprovalCards() {
   const container = document.querySelector('.approvals-container');
   container.innerHTML = ''; // 清空现有内容
 
+  if (!Array.isArray(bookings)) {
+    console.error('bookings is not an array:', bookings);
+    bookings = [];
+  }
+
+  if (bookings.length === 0) {
+    container.innerHTML = '<div class="no-data">No bookings found.</div>';
+    return;
+  }
+
   bookings.forEach(booking => {
     const card = document.createElement('div');
     card.className = `approval-card ${booking.status === 'pending' ? '' : 'reviewed'}`;
     card.dataset.reservationId = booking.booking_id;
 
-    // 构建卡片内容
+    // 卡片 HTML 结构
     card.innerHTML = `
-      <div class="reservation-info">
-        <label>Booking ID:</label>
-        <span>${booking.booking_id}</span>
-      </div>
-      <div class="reservation-info">
-        <label>User ID:</label>
-        <span>${booking.user_id}</span>
-      </div>
-      <div class="reservation-info">
-        <label>Room ID:</label>
-        <span>${booking.room_id}</span>
-      </div>
-      <div class="reservation-info">
-        <label>Date:</label>
-        <span>${booking.booking_date}</span>
-      </div>
-      <div class="reservation-info">
-        <label>Time:</label>
-        <span>${booking.start_time} - ${booking.end_time}</span>
-      </div>
-      <div class="reservation-info">
-        <label>Reason:</label>
-        <span class="reason-text">${booking.reason}</span>
-      </div>
+      <div class="reservation-info"><label>Booking ID:</label> <span>${booking.booking_id}</span></div>
+      <div class="reservation-info"><label>User Name:</label> <span>${booking.user_name}</span></div>
+      <div class="reservation-info"><label>Room Name:</label> <span>${booking.room_name}</span></div>
+      <div class="reservation-info"><label>Date:</label> <span>${booking.booking_date}</span></div>
+      <div class="reservation-info"><label>Time:</label> <span>${booking.start_time} - ${booking.end_time}</span></div>
+      <div class="reservation-info"><label>Reason:</label> <span class="reason-text">${booking.reason}</span></div>
       ${booking.status === 'pending' ? `
         <div class="approval-actions">
-          <button class="approve-btn">Approve</button>
+          <button class="accept-btn">Accept</button>
           <button class="reject-btn">Reject</button>
         </div>
       ` : `<div class="status-indicator ${booking.status}">${booking.status.toUpperCase()}</div>`}
@@ -48,10 +40,11 @@ function renderApprovalCards() {
     container.appendChild(card);
   });
 
-  // 重新绑定事件监听器
+  // 重新绑定按钮事件
   bindButtonEvents();
   handleReasonOverflow();
 }
+
 
 // 检测 Reason 文本是否超出，并添加省略号
 function handleReasonOverflow() {
@@ -88,16 +81,25 @@ function showFullText(fullText) {
 // 处理审批操作
 function handleApproval(action, card) {
   const bookingId = card.dataset.reservationId;
+  const newStatus = action.toLowerCase();
 
-  fetch(`/api/bookings/${bookingId}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: action.toLowerCase() })
-  })
+  console.log(`Attempting to ${action} booking ID: ${bookingId}`);
+
+fetch(`http://127.0.0.1:5000/update-booking-status/${bookingId}`, {
+  method: 'PUT',  // 或 'PUT'
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ status: newStatus })
+})
     .then(response => {
       if (!response.ok) throw new Error('Update failed');
+      return response.json();
+    })
+    .then(updatedBooking => {
+      console.log('Updated booking:', updatedBooking);
       const booking = bookings.find(b => b.booking_id === bookingId);
-      booking.status = action.toLowerCase();
+      if (booking) {
+        booking.status = updatedBooking.status;
+      }
       renderApprovalCards();
       alert(`${action} reservation ID: ${bookingId}`);
     })
@@ -107,40 +109,67 @@ function handleApproval(action, card) {
     });
 }
 
+
+
 // 绑定按钮事件
 function bindButtonEvents() {
-  document.querySelectorAll('.approve-btn, .reject-btn').forEach(btn => {
+  document.querySelectorAll('.accept-btn, .reject-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const action = btn.classList.contains('approve-btn') ? 'Approved' : 'Rejected';
+      const action = btn.classList.contains('accept-btn') ? 'Approved' : 'Rejected';
       const card = btn.closest('.approval-card');
       handleApproval(action, card);
     });
   });
 }
 
+
 // 获取已完成的工作流预订
 function fetchFinishedBookings() {
-  fetch('http://localhost:5000/finished-workflow-bookings')
-    .then(response => response.json())
+  fetch('http://127.0.0.1:5000/finished-workflow-bookings')
+    .then(response => {
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      return response.json();
+    })
     .then(data => {
-      bookings = data;
+      if (data && Array.isArray(data.bookings)) {
+        bookings = data.bookings.filter(b => b.status !== 'pending'); // 确保只显示已审批数据
+      } else {
+        console.error('Invalid data format:', data);
+        bookings = [];
+      }
       renderApprovalCards();
     })
     .catch(error => {
       console.error('Error fetching finished bookings:', error);
+      bookings = [];
+      renderApprovalCards();
     });
 }
 
+
 // 获取待处理的预订
 function fetchPendingBookings() {
-  fetch('http://localhost:5000/pending-bookings')
-    .then(response => response.json())
+  fetch('http://127.0.0.1:5000/pending-bookings')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return response.json();
+    })
     .then(data => {
-      bookings = data;
+      // 确保 data.bookings 是一个数组
+      if (data && Array.isArray(data.bookings)) {
+        bookings = data.bookings; // 提取 bookings 数组
+      } else {
+        console.error('Invalid data format:', data);
+        bookings = []; // 设置为空数组，避免错误
+      }
       renderApprovalCards();
     })
     .catch(error => {
       console.error('Error fetching pending bookings:', error);
+      bookings = []; // 设置为空数组，避免错误
+      renderApprovalCards(); // 即使出错，也尝试渲染空数据
     });
 }
 
@@ -152,17 +181,21 @@ function initTabs() {
     tab.addEventListener('click', () => {
       tabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
+
       if (tab.dataset.tab === 'pending') {
         fetchPendingBookings();
       } else if (tab.dataset.tab === 'finished') {
         fetchFinishedBookings();
+      } else {
+        console.error('Unknown tab:', tab.dataset.tab);
       }
     });
   });
 
-  // 初始显示pending
+  // 默认加载 pending 预订
   fetchPendingBookings();
 }
+
 
 // 初始化页面
 document.addEventListener('DOMContentLoaded', () => {
