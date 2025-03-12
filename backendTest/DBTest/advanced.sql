@@ -1,29 +1,29 @@
 
--- @version: 3/11/2025
+-- @version: 3/6/2025
 -- @author: Xin Yu, Zibang Nie, Siyan Guo
 -- @description: This SQL script creates a advanced sql to manage Room_availability updates when a Booking is inserted or deleted.
--- ADD:add two  advanced sql(cancel, and failed)
+
 
 USE `booking_system_db`;
 
 
--- 触发器：当从 Bookings 表删除记录时，更新 Room_availability 表中的 availability 为 0
-DELIMITER //
+-- -- 触发器：当从 Bookings 表删除记录时，更新 Room_availability 表中的 availability 为 0
+-- DELIMITER //
 
-CREATE TRIGGER update_availability_on_booking_delete
-AFTER DELETE ON Bookings
-FOR EACH ROW
-BEGIN
-    -- 更新对应的 Room_availability 的 availability 为 0
-    UPDATE Room_availability
-    SET availability = 0
-    WHERE room_id = OLD.room_id
-      AND available_date = OLD.booking_date
-      AND available_begin = OLD.start_time
-      AND available_end = OLD.end_time;
-END //
+-- CREATE TRIGGER update_availability_on_booking_delete
+-- AFTER DELETE ON Bookings
+-- FOR EACH ROW
+-- BEGIN
+--     -- 更新对应的 Room_availability 的 availability 为 0
+--     UPDATE Room_availability
+--     SET availability = 0
+--     WHERE room_id = OLD.room_id
+--       AND available_date = OLD.booking_date
+--       AND available_begin = OLD.start_time
+--       AND available_end = OLD.end_time;
+-- END //
 
-DELIMITER ;
+-- DELIMITER ;
 
 
 -- 触发器：当 Bookings 表中的记录的 status 字段被更新为 'approved' 时，更新 Room_availability 中的 availability 为 2
@@ -94,7 +94,7 @@ DELIMITER ;
 
 
 DELIMITER //
--- 这是我现在的数据库。我希望当Bookings中的  status字段变成'canceled',时，Room_availability中的availability变为0
+-- 当Bookings中的  status字段变成'canceled',时，Room_availability中的availability变为0
 CREATE TRIGGER update_availability_on_booking_canceled
 AFTER UPDATE ON Bookings
 FOR EACH ROW
