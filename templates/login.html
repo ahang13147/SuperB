@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microsoft Account login</title>
+    <link rel="stylesheet" href="{{ url_for('../static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Welcome to login</h1>
+            <p>Please use a Microsoft work or school account to continue</p>
+        </div>
+
+        <a href="http://192.168.31.235:8000" class="login-btn">
+            <i class="fab fa-microsoft"></i>
+            Sign in with your Microsoft account
+        </a>
+
+        <div class="terms">
+            By continuing, you agree with us<a href="#">terms of service</a> 和 <a href="#">privacy policy</a>
+        </div>
+    </div>
+</body>
+<style>
+
+* {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px 50px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            width: 450px;
+            transition: all 0.3s ease;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .login-header h1 {
+            color: #333;
+            font-size: 2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background: #2F2F2F;
+            color: white;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .login-btn i {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 30px 0;
+            color: #666;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            display: inline-block;
+            width: 45%;
+            height: 1px;
+            background: #ddd;
+            vertical-align: middle;
+            margin: 0 10px;
+        }
+
+        .terms {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        .terms a {
+            color: #764ba2;
+            text-decoration: none;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                width: 90%;
+                padding: 30px;
+            }
+        }
+
+</style>
+</html>

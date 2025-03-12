@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title><!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户信息</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .profile-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 600px;
+            transition: all 0.3s ease;
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .profile-header h1 {
+            color: #333;
+            font-size: 2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .profile-header p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .profile-details {
+            margin-top: 20px;
+        }
+
+        .profile-details .detail-item {
+            margin-bottom: 15px;
+        }
+
+        .detail-item label {
+            display: block;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .detail-item span {
+            display: block;
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 8px;
+            color: #555;
+            font-size: 0.9em;
+        }
+
+        .logout-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background: #2F2F2F;
+            color: white;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-align: center;
+            text-decoration: none;
+            margin-top: 20px;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-container">
+        <div class="profile-header">
+            <h1>用户信息</h1>
+            <p>以下是您的 Microsoft 账户详细信息</p>
+        </div>
+
+        <div class="profile-details">
+            <div class="detail-item">
+                <label>显示名称</label>
+                <span id="displayName">{{ name }}</span>
+            </div>
+            <div class="detail-item">
+                <label>邮箱</label>
+                <span id="email">{{ email }}</span>
+            </div>
+            <div class="detail-item">
+                <label>用户 ID</label>
+                <span id="userId">{{ id }}</span>
+            </div>
+            <div class="detail-item">
+                <label>职位</label>
+                <span id="jobTitle">{{ job_title }}</span>
+            </div>
+            <div class="detail-item">
+                <label>公司</label>
+                <span id="companyName">{{ company_name }}</span>
+            </div>
+            <div class="detail-item">
+                <label>电话号码</label>
+                <span id="phoneNumber">{{ phone_number }}</span>
+            </div>
+        </div>
+
+        <a href="/logout" class="logout-btn">退出登录</a>
+    </div>
+
+    <script>
+        // 在控制台打印完整的用户信息
+        const userInfo = {
+            displayName: "{{ name }}",
+            email: "{{ email }}",
+            userId: "{{ id }}",
+            jobTitle: "{{ job_title }}",
+            companyName: "{{ company_name }}",
+            phoneNumber: "{{ phone_number }}",
+            rawData: {{ raw_data | tojson }}
+        };
+        console.log('完整用户信息:', userInfo);
+    </script>
+</body>
+</html></title>
+</head>
+<body>
+
+</body>
+</html>
