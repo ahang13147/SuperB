@@ -1,4 +1,5 @@
 let classrooms = [];
+let currentClassroom = null; // 添加在文件顶部，与classrooms变量并列
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('The document is loaded and initialization begins...');
 
@@ -71,6 +72,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // 合并同一教室的多个时间段
             const classroomMap = new Map();
+            // 修改这部分代码
             responseData.results.forEach(room => {
                 if (!classroomMap.has(room.room_id)) {
                     classroomMap.set(room.room_id, {
@@ -84,7 +86,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const classroom = classroomMap.get(room.room_id);
                 classroom.availableTimes.push({
                     time: `${room.available_begin}-${room.available_end}`,
-                    booked: false // 根据实际业务逻辑判断是否被预订
+                    // 修改这里：根据availability判断是否被预定
+                    booked: room.availability === 2 // 当availability等于2时设为true
                 });
             });
 
@@ -132,27 +135,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 显示预定弹窗
     function showBookingModal(classroom) {
-        document.querySelectorAll('.classroom-card').forEach(card => {
-            card.dataset.active = "false";
-        });
-        document.querySelector(`.classroom-card[data-classroom="${classroom.name}"]`).dataset.active = "true";
-
+        currentClassroom = classroom;
         elements.availableTimesContainer.innerHTML = classroom.availableTimes.map(timeSlot => `
-            <div class="${timeSlot.booked ? 'time-slot-booked' : ''}">
-                <input 
-                    type="radio" 
-                    name="timeSlot" 
-                    id="slot_${timeSlot.time}" 
-                    value="${timeSlot.time}"
-                    ${timeSlot.booked ? 'disabled' : ''}
-                >
-                <label for="slot_${timeSlot.time}">
-                    ${timeSlot.booked ? '⛔️ ' : '🕒 '}
-                    ${timeSlot.time}
-                    ${timeSlot.booked ? '<small>(Booked)</small>' : ''}
-                </label>
-            </div>
-        `).join('');
+        <div class="time-slot ${timeSlot.booked ? 'time-slot-booked' : ''}">
+            <input 
+                type="radio" 
+                name="timeSlot" 
+                id="slot_${timeSlot.time.replace(/:/g, '')}" 
+                value="${timeSlot.time}"
+                ${timeSlot.booked ? 'disabled' : ''}
+            >
+            <label for="slot_${timeSlot.time.replace(/:/g, '')}">
+                ${timeSlot.booked ? '⛔️ ' : '🕒 '}
+                ${timeSlot.time}
+                ${timeSlot.booked ? '<small>(Booked)</small>' : ''}
+            </label>
+        </div>
+    `).join('');
+
+        // 新增：添加时间段选中样式交互
+        elements.availableTimesContainer.querySelectorAll('.time-slot').forEach(slot => {
+            const radio = slot.querySelector('input[type="radio"]');
+            radio.addEventListener('change', () => {
+                // 移除所有槽的选中状态
+                document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('checked'));
+                // 添加当前选中槽的样式
+                if (radio.checked) slot.classList.add('checked');
+            });
+        });
 
         elements.modal.style.display = 'block';
     }
@@ -166,6 +176,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.endSelect.addEventListener(eventType, fetchClassrooms);
             elements.datePicker.addEventListener(eventType, fetchClassrooms);
             elements.equipmentFilter.addEventListener(eventType, fetchClassrooms);
+            elements.confirmBookingButton.addEventListener('click', handleBookingConfirmation);
         });
 
         // 关闭 Modal 的事件监听
@@ -174,6 +185,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 防止点击日期选择器时关闭 modal
         elements.datePicker.addEventListener('click', (event) => {
             event.stopPropagation();  // 阻止点击事件传播到 window
+
+        
         });
 
         // 关闭 Modal 的事件监听：只有点击 modal 背景才关闭
@@ -183,14 +196,64 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         };
     }
+    
+    async function handleBookingConfirmation() {
+        const selectedTime = document.querySelector('input[name="timeSlot"]:checked');
+        if (!selectedTime) {
+            alert('Please select a time slot.');
+            return;
+        }
+
+        const timeRange = selectedTime.value.split('-');
+        const startTime = timeRange[0].trim();
+        const endTime = timeRange[1].trim();
+
+        const bookingDate = elements.datePicker.value;
+        if (!bookingDate) {
+            alert('Please select a date.');
+            return;
+        }
+
+        // 获取用户ID（这里暂时硬编码为1，实际项目应从登录状态获取）
+        const userId = 1;
+
+        try {
+            const response = await fetch('http://localhost:5000/insert_booking', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    room_name: currentClassroom.name,
+                    user_id: userId,
+                    booking_date: bookingDate,
+                    start_time: startTime,
+                    end_time: endTime
+                })
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Booking failed');
+
+            alert('Booking successful!');
+            elements.modal.style.display = 'none';
+            await fetchClassrooms(); // 刷新教室列表
+        } catch (error) {
+            console.error('Booking Error:', error);
+            alert(`Booking failed: ${error.message}`);
+        }
+    }
 
 
     // 初始化流程
     try {
         initTimeSelectors();
         initEventListeners();
+        // 设置中国本地日期（新增代码）
+        const today = new Date();
+        elements.datePicker.value =
+            `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         await fetchClassrooms();
         console.log('System initialization complete');
+        
     } catch (error) {
         console.error('Initialization error:', error);
         alert('System initialization failed');

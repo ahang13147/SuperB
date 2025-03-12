@@ -41,7 +41,7 @@ CREATE TABLE Room_availability (
     available_begin TIME,                      -- Start time of room availability
     available_end TIME,                        -- End time of room availability
     available_date DATE,                       -- Date of room availability
-    availability INT,                          -- Whether the room is available  0: available 1: not available 2: booked
+    availability INT,                          -- Whether the room is available      0: available   1: not available    2: booked
     FOREIGN KEY (room_id) REFERENCES Rooms(room_id) -- Foreign key constraint referencing the Rooms table
 );
 

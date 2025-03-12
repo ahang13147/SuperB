@@ -1,14 +1,13 @@
 <!-- booking_centre.html -->
 <!--
-author: Guanhang Zhang  &Xin Yu
-this version fix the notification,add room management pae
-Version 3.0.2
+author: Guanhang Zhang & Jiawei You
+Version 2.0.1
+this version fixing backend connection
 
 -->
 
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,23 +16,6 @@ Version 3.0.2
     <link rel="stylesheet" href="sidebarAndNotice.css"> <!-- 引入侧边栏的CSS文件 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
-
-    <script>
-        // 打印所有URL参数
-        const urlParams = new URLSearchParams(window.location.search);
-        const userInfo = {
-            name: decodeURIComponent(urlParams.get('name') || ''),
-            email: decodeURIComponent(urlParams.get('email') || ''),
-            id: decodeURIComponent(urlParams.get('id') || '')
-        };
-
-        console.log('[浏览器控制台] 微软返回的用户信息:', {
-            DisplayName: userInfo.name,
-            Email: userInfo.email,
-            AzureID: userInfo.id,
-            FullParams: Object.fromEntries(urlParams.entries())
-        });
-    </script>
 <body>
 
     <div id="bookingModal" class="modal">
@@ -47,26 +29,22 @@ Version 3.0.2
     <div class="main-container">
         <!-- Sidebar -->
         <div class="sidebar">
-            <a class="nav-item active" href="booking_centre.html">
+            <div class="nav-item active">
                 <i class="fas fa-calendar-alt nav-icon"></i>
                 Booking Center
-            </a>
-            <a class="nav-item" href="my_reservation.html">
+            </div>
+            <div class="nav-item">
                 <i class="fas fa-list-ul nav-icon"></i>
                 My Bookings
-            </a>
-            <a class="nav-item" href="sidebarAndNotice.html">
+            </div>
+            <div class="nav-item">
                 <i class="fas fa-bell nav-icon"></i>
                 Notifications
-            </a>
-            <a class="nav-item" href="#">
+            </div>
+            <div class="nav-item">
                 <i class="fas fa-user-circle nav-icon"></i>
-                Profile (Coming Soon)
-            </a>
-            <a class="nav-item" href="manage room detail.html">
-                <i class="fas fa-user-circle nav-icon"></i>
-                Room Management
-            </a>
+                Profile
+            </div>
         </div>
 
         <!-- Content Area -->
@@ -76,15 +54,6 @@ Version 3.0.2
 
                 <!-- 搜索和过滤区域 -->
                 <div class="filters">
-                    <!-- 在 filters div 中添加 -->
-                    <input type="date" id="datePicker">
-
-                    <select id="equipmentFilter">
-                        <option value="">All Equipment</option>
-                        <option value="Projector">Projector</option>
-                        <option value="Whiteboard">Whiteboard</option>
-                    </select>
-
                     <input type="text" id="searchKeyword" placeholder="Search classroom name...">
                     <select id="capacityFilter">
                         <option value="0">All capacity</option>
@@ -110,7 +79,6 @@ Version 3.0.2
     </div>
 
     <script src="booking_centre.js"></script>
-    <script src="common.js"></script>
+    <script src="sidebarAndNotice.js"></script>
 </body>
-
 </html>

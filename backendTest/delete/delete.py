@@ -134,42 +134,39 @@ def delete_room_availability():
     return jsonify({"message": result}), status
 
 # ---------------------------- 删除 Bookings ----------------------------
-@app.route('/delete/bookings', methods=['POST'])
+@app.route('/delete/bookings', methods=['POST', 'OPTIONS'])
 def delete_bookings():
+    if request.method == 'OPTIONS':
+        return '', 200  # 或返回一个空的 JSON 响应
+
     data = request.json
-    # 根据 room_name 来查找 room_id，再加上 start_time, end_time, booking_date, status
-    room_name = data.get('room_name')
+    booking_id = data.get('booking_id')
     start_time = data.get('start_time')
     end_time = data.get('end_time')
     booking_date = data.get('booking_date')
     status_val = data.get('status')
-    # 先删除依赖：审批记录对应的 booking_id
+
+    # 删除依赖记录：审批记录中对应的 booking_id
     dependent_query = """
     DELETE FROM Approvals 
-    WHERE booking_id IN (
-        SELECT booking_id FROM (
-            SELECT booking_id FROM Bookings 
-            WHERE room_id = (SELECT room_id FROM Rooms WHERE room_name = %s)
-              AND start_time = %s
-              AND end_time = %s
-              AND booking_date = %s
-              AND (status = %s OR %s IS NULL)
-        ) AS t
-    )
+    WHERE booking_id = %s
     """
-    dependent_params = (room_name, start_time, end_time, booking_date, status_val, status_val)
+    dependent_params = (booking_id,)
     delete_record(dependent_query, dependent_params)
+
+    # 直接根据 booking_id 以及其他参数删除 Bookings 中的记录
     query = """
     DELETE FROM Bookings
-    WHERE room_id = (SELECT room_id FROM Rooms WHERE room_name = %s)
+    WHERE booking_id = %s
       AND start_time = %s
       AND end_time = %s
       AND booking_date = %s
       AND (status = %s OR %s IS NULL)
     """
-    params = (room_name, start_time, end_time, booking_date, status_val, status_val)
+    params = (booking_id, start_time, end_time, booking_date, status_val, status_val)
     result, status = delete_record(query, params)
     return jsonify({"message": result}), status
+
 
 # ---------------------------- 删除 Approvals ----------------------------
 @app.route('/delete/approvals', methods=['POST'])

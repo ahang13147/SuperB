@@ -236,7 +236,7 @@ def format_schedule_data(new_room_2d_array):
 # ============================ 更新数据库 ============================
 def update_room_availability(formatted_schedule):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True, buffered=True)
     try:
         for entry in formatted_schedule:
             room_name, available_date, available_begin, available_end = entry  # 解包数据
@@ -245,7 +245,8 @@ def update_room_availability(formatted_schedule):
             if not room_result:
                 print(f"房间 {room_name} 不存在，跳过...")
                 continue
-            room_id = room_result[0]
+            # 使用键名访问数据
+            room_id = room_result["room_id"]
             cursor.execute("""
                 SELECT availability_id FROM Room_availability
                 WHERE room_id = %s AND available_date = %s 
@@ -257,16 +258,14 @@ def update_room_availability(formatted_schedule):
                     UPDATE Room_availability 
                     SET availability = 1
                     WHERE availability_id = %s
-                """, (existing_availability[0],))
-                print(
-                    f"更新 Room_availability: 房间 {room_name}, 日期 {available_date}, 时间 {available_begin}-{available_end}")
+                """, (existing_availability["availability_id"],))
+                print(f"更新 Room_availability: 房间 {room_name}, 日期 {available_date}, 时间 {available_begin}-{available_end}")
             else:
                 cursor.execute("""
                     INSERT INTO Room_availability (room_id, available_date, available_begin, available_end, availability)
                     VALUES (%s, %s, %s, %s, 1)
                 """, (room_id, available_date, available_begin, available_end))
-                print(
-                    f"新增 Room_availability: 房间 {room_name}, 日期 {available_date}, 时间 {available_begin}-{available_end}")
+                print(f"新增 Room_availability: 房间 {room_name}, 日期 {available_date}, 时间 {available_begin}-{available_end}")
         conn.commit()
     except mysql.connector.Error as err:
         print(f"数据库错误: {err}")

@@ -9,7 +9,7 @@ DB_CONFIG = {
     "host": "127.0.0.1",
     "port": 3306,
     "user": "root",
-    "password": "0000",  # 替换为你的密码
+    "password": "1234",  # 替换为你的密码
     "database": "booking_system_db"
 }
 
