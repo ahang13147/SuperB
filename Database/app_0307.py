@@ -543,6 +543,68 @@ def get_Finished_Workflow_bookings():
             conn.close()
 
 
+
+
+@app.route('/get-blacklist', methods=['GET'])
+def get_blacklist():
+    try:
+        # 获取数据库连接
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # SQL 查询，连接 Blacklist 与 Users 表，获取黑名单记录和对应的 username
+        query = """
+            SELECT 
+                b.blacklist_id,
+                b.user_id,
+                u.username,
+                b.added_by,
+                b.added_date,
+                b.added_time,
+                b.start_date,
+                b.start_time,
+                b.end_date,
+                b.end_time,
+                b.reason
+            FROM Blacklist b
+            JOIN Users u ON b.user_id = u.user_id
+            ORDER BY b.added_date DESC, b.added_time DESC
+        """
+
+        # 执行查询
+        cursor.execute(query)
+        blacklists = cursor.fetchall()
+
+        # 格式化日期和时间字段
+        for record in blacklists:
+            if record['added_date']:
+                record['added_date'] = record['added_date'].strftime("%Y-%m-%d")
+            if record['added_time']:
+                record['added_time'] = format_time(record['added_time'])
+            record['start_date'] = record['start_date'].strftime("%Y-%m-%d")
+            record['start_time'] = format_time(record['start_time'])
+            record['end_date'] = record['end_date'].strftime("%Y-%m-%d")
+            record['end_time'] = format_time(record['end_time'])
+
+        # 返回 JSON 格式数据
+        return jsonify({
+            "count": len(blacklists),
+            "blacklists": blacklists
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+
 # ---------------------------- update ----------------------------
 #
 # @app.route('/update-room/<int:room_id>', methods=['PUT'])
@@ -676,25 +738,85 @@ def update_room(room_id):
         if 'conn' in locals():
             conn.close()
 
+#
+# @app.route('/update-booking-status/<int:booking_id>', methods=['PUT'])
+# # /*
+# #  * 示例：更新预定状态（approved 或 rejected）
+# #  *
+# #  * 假设我们需要将 booking_id 为 123 的预定更新为 approved 状态，
+# #  * 前端可以使用如下代码调用后端接口。
+# #  *
+# #  * 1. 请求 URL 为：http://localhost:5000/update-booking-status/123
+# #  * 2. 请求方法为：PUT
+# #  * 3. 请求体（body）需要传递 JSON 格式的数据，例如：{ "status": "approved" }或者{ "status": "rejected" }
+# #  * 4. 后端返回的数据将包含更新后的预定信息，例如：
+# #  *    {
+# #  *       "message": "Booking status updated to approved",
+# #  *       "booking_id": 123,
+# #  *       "status": "approved"
+# #  *    }
+# #  *
+# #  */
+# def update_booking_status(booking_id):
+#     print(f"Received PUT request to update booking with ID: {booking_id}")
+#     data = request.json
+#     print(f"Request body: {data}")
+#     status = data.get('status')
+#
+#     if status not in ['approved', 'rejected']:
+#         return jsonify({"error": "Invalid status value. Allowed values are 'approved' or 'rejected'."}), 400
+#
+#     try:
+#         conn = get_db_connection()
+#         cursor = conn.cursor()
+#
+#         # Check if the booking exists and is in 'pending' status
+#         cursor.execute("SELECT * FROM Bookings WHERE booking_id = %s AND status = 'pending'", (booking_id,))
+#         booking = cursor.fetchone()
+#
+#         if not booking:
+#             print(f"No pending booking found with ID {booking_id}.")
+#             return jsonify({"error": "Booking not found or already processed"}), 404
+#
+#         # Update the booking's status
+#         update_query = """
+#             UPDATE Bookings
+#             SET status = %s
+#             WHERE booking_id = %s
+#         """
+#         update_params = (status, booking_id)
+#         print(f"Executing update query: {update_query} with parameters: {update_params}")
+#         cursor.execute(update_query, update_params)
+#         conn.commit()
+#
+#         if cursor.rowcount == 0:
+#             print(f"No room found with ID {booking_id}.")
+#             return jsonify({"error": "Booking update failed"}), 500
+#
+#         cursor.execute("SELECT * FROM Bookings WHERE booking_id = %s", (booking_id,))
+#         updated_booking = cursor.fetchone()
+#         print(f"Updated booking: {updated_booking}")
+#
+#         return jsonify({
+#             "message": f"Booking status updated to {status}",
+#             "booking_id": updated_booking[0],
+#             "status": updated_booking[6]  # Assuming status is the 6th column in Bookings table
+#         })
+#
+#     except mysql.connector.Error as e:
+#         print(f"Database error: {str(e)}")
+#         return jsonify({"error": "Database error", "details": str(e)}), 500
+#     except Exception as e:
+#         print(f"Unexpected error: {str(e)}")
+#         return jsonify({"error": "Internal server error", "details": str(e)}), 500
+#     finally:
+#         if 'cursor' in locals():
+#             cursor.close()
+#         if 'conn' in locals():
+#             conn.close()
+
 
 @app.route('/update-booking-status/<int:booking_id>', methods=['PUT'])
-# /*
-#  * 示例：更新预定状态（approved 或 rejected）
-#  *
-#  * 假设我们需要将 booking_id 为 123 的预定更新为 approved 状态，
-#  * 前端可以使用如下代码调用后端接口。
-#  *
-#  * 1. 请求 URL 为：http://localhost:5000/update-booking-status/123
-#  * 2. 请求方法为：PUT
-#  * 3. 请求体（body）需要传递 JSON 格式的数据，例如：{ "status": "approved" }或者{ "status": "rejected" }
-#  * 4. 后端返回的数据将包含更新后的预定信息，例如：
-#  *    {
-#  *       "message": "Booking status updated to approved",
-#  *       "booking_id": 123,
-#  *       "status": "approved"
-#  *    }
-#  *
-#  */
 def update_booking_status(booking_id):
     print(f"Received PUT request to update booking with ID: {booking_id}")
     data = request.json
@@ -706,52 +828,104 @@ def update_booking_status(booking_id):
 
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
 
-        # Check if the booking exists and is in 'pending' status
-        cursor.execute("SELECT * FROM Bookings WHERE booking_id = %s AND status = 'pending'", (booking_id,))
+        # 检查该预定是否存在且状态为 pending
+        cursor.execute(
+            "SELECT * FROM Bookings WHERE booking_id = %s AND status = 'pending'",
+            (booking_id,)
+        )
         booking = cursor.fetchone()
 
         if not booking:
             print(f"No pending booking found with ID {booking_id}.")
             return jsonify({"error": "Booking not found or already processed"}), 404
 
-        # Update the booking's status
-        update_query = """
-            UPDATE Bookings
-            SET status = %s
-            WHERE booking_id = %s
-        """
-        update_params = (status, booking_id)
-        print(f"Executing update query: {update_query} with parameters: {update_params}")
-        cursor.execute(update_query, update_params)
+        # 开始事务
+        # 如果审批状态为 approved，需要额外更新其他冲突记录和房间状态
+        if status == 'approved':
+            # 1. 将当前预定更新为 approved
+            cursor.execute(
+                "UPDATE Bookings SET status = 'approved' WHERE booking_id = %s",
+                (booking_id,)
+            )
+
+            # 2. 获取当前预定详情（用于后续更新其它记录）
+            cursor.execute(
+                """
+                SELECT room_id, booking_date, start_time, end_time 
+                FROM Bookings 
+                WHERE booking_id = %s
+                """,
+                (booking_id,)
+            )
+            booking_details = cursor.fetchone()
+            room_id = booking_details['room_id']
+            booking_date = booking_details['booking_date']
+            start_time = booking_details['start_time']
+            end_time = booking_details['end_time']
+
+            # 3. 将同一房间、同一时段中其他 pending 的记录更新为 failed
+            cursor.execute(
+                """
+                UPDATE Bookings
+                SET status = 'failed'
+                WHERE room_id = %s
+                  AND booking_date = %s
+                  AND start_time = %s
+                  AND end_time = %s
+                  AND status = 'pending'
+                """,
+                (room_id, booking_date, start_time, end_time)
+            )
+
+            # 4. 更新 Room_availability 表，将对应记录的 availability 设为 2（已预订）
+            cursor.execute(
+                """
+                UPDATE Room_availability 
+                SET availability = 2 
+                WHERE room_id = %s 
+                  AND available_date = %s 
+                  AND available_begin = %s 
+                  AND available_end = %s
+                """,
+                (room_id, booking_date, start_time, end_time)
+            )
+        else:
+            # 如果状态为 rejected，仅更新当前预定记录
+            cursor.execute(
+                "UPDATE Bookings SET status = 'rejected' WHERE booking_id = %s",
+                (booking_id,)
+            )
+
+        # 提交事务
         conn.commit()
 
-        if cursor.rowcount == 0:
-            print(f"No room found with ID {booking_id}.")
-            return jsonify({"error": "Booking update failed"}), 500
-
+        # 查询更新后的预定信息
         cursor.execute("SELECT * FROM Bookings WHERE booking_id = %s", (booking_id,))
         updated_booking = cursor.fetchone()
         print(f"Updated booking: {updated_booking}")
 
         return jsonify({
-            "message": f"Booking status updated to {status}",
-            "booking_id": updated_booking[0],
-            "status": updated_booking[6]  # Assuming status is the 6th column in Bookings table
+            "message": f"Booking status updated to {updated_booking['status']}",
+            "booking_id": updated_booking['booking_id'],
+            "status": updated_booking['status']
         })
 
     except mysql.connector.Error as e:
         print(f"Database error: {str(e)}")
+        conn.rollback()
         return jsonify({"error": "Database error", "details": str(e)}), 500
     except Exception as e:
         print(f"Unexpected error: {str(e)}")
+        conn.rollback()
         return jsonify({"error": "Internal server error", "details": str(e)}), 500
     finally:
         if 'cursor' in locals():
             cursor.close()
         if 'conn' in locals():
             conn.close()
+
 
 @app.route('/cancel-booking/<int:booking_id>', methods=['PUT'])
 def cancel_booking(booking_id):
