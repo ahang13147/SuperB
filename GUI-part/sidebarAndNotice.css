@@ -38,25 +38,38 @@
 }
 
 /* Navigation items */
+/* sidebarAndNotice.css */
 .nav-item {
     display: flex;
+    /* 强制使用 flex 布局 */
     align-items: center;
-    color: rgba(255,255,255,0.9);
+    color: rgba(255, 255, 255, 0.9);
     padding: 18px 25px;
+    /* 统一高度 */
     margin: 8px 15px;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    /* 移除下划线 */
+    border-bottom: none;
+    /* 移除底部边框 */
 }
 
+
+
 .nav-item:hover {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
     transform: translateX(5px);
+    text-decoration: none;
+    /* 确保悬停时没有下划线 */
 }
 
 .nav-item.active {
-    background: rgba(255,255,255,0.15);
+    background: rgba(255, 255, 255, 0.15);
     border-left: 3px solid #00f2c3;
+    text-decoration: none;
+    /* 确保激活状态没有下划线 */
 }
 
 .nav-icon {
