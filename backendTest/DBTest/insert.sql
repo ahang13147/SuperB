@@ -18,7 +18,7 @@ INSERT INTO Users (username, email, password_hash, role) VALUES
 ('student3', 'student3@example.com', 'hash9', 'student'),
 ('prof3', 'prof3@example.com', 'hash10', 'professor');
 
-INSERT INTO Rooms (room_name, capacity, equipment, location, is_normal_Room)
+INSERT INTO Rooms (room_name, capacity, equipment, location, room_type)
 VALUES
 ('101', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
 ('102', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
@@ -46,7 +46,7 @@ INSERT INTO Room_availability (room_id, available_begin, available_end, availabl
 (3, '11:00:00', '13:00:00', '2025-03-06', 1),
 (4, '09:00:00', '12:00:00', '2025-03-06', 0),
 (4, '14:00:00', '16:00:00', '2025-03-06', 2),
-(5, '10:00:00', '12:00:00', '2025-03-07', 0),
+(12, '10:00:00', '12:00:00', '2025-03-07', 0),
 (5, '13:00:00', '15:00:00', '2025-03-07', 1);
 
 
