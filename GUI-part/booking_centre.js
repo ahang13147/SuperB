@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 渲染教室列表（修正版）
     function renderClassrooms() {
         elements.classroomList.innerHTML = classrooms.map(classroom => `
-         <div class="classroom-card" data-classroom="${classroom.name}">
+        <div class="classroom-card" data-classroom="${classroom.name}">
             <h3>${classroom.name}</h3>
             <div class="details">
                 <p>Capacity: ${classroom.capacity} people</p>
@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <button>
                 Book Now
             </button>
-        </>
+        </div> <!-- 修复闭合标签 -->
     `).join('');
 
         // 绑定事件监听器

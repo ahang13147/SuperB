@@ -91,19 +91,24 @@ Version 3.0.2
                 <div id="classroomList" class="classroom-grid"></div>
             </div>
         </div>
-    </div>
-    <!-- 原因输入弹窗 -->
-    <div id="reasonModal" class="modal">
-        <div class="modal-content">
-            <span class="close-reason">&times;</span>
-            <h2>Please enter the reason for booking:</h2>
-            <textarea id="reasonInput" rows="4" placeholder="Enter your reason here..."></textarea>
-            <button id="submitReason">Submit</button>
+        <!-- 修改原因弹窗的HTML结构 -->
+        <div id="reasonModal" class="modal">
+            <div class="modal-content">
+                <span class="close-reason">&times;</span>
+                <h2>Please enter the reason for booking:</h2>
+                <textarea id="reasonInput" rows="4" placeholder="Enter your reason here..."></textarea>
+                <!-- 添加按钮容器 -->
+                <div class="button-container">
+                    <button id="submitReason">Submit</button>
+                </div>
+            </div>
         </div>
     </div>
+
 
     <script src="booking_centre.js"></script>
     <script src="common.js"></script>
 </body>
+
 
 </html>
