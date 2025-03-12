@@ -1,6 +1,6 @@
-#  @version: 3/11/2025
+#  @version: 3/12/2025
 #  @author: Xin Yu, Siyan Guo, Zibang Nie
-# add: cancel a booking,approve or reject a booking
+# add: finished-workflow-booking get api
 
 
 
@@ -495,8 +495,8 @@ def get_pending_bookings():
             conn.close()
 
 
-@app.route('/approved-bookings', methods=['GET'])
-def get_approved_bookings():
+@app.route('/finished-workflow-bookings', methods=['GET'])
+def get_Finished_Workflow_bookings():
     try:
         # 获取数据库连接
         conn = get_db_connection()
@@ -510,7 +510,7 @@ def get_approved_bookings():
             FROM Bookings b
             JOIN Users u ON b.user_id = u.user_id
             JOIN Rooms r ON b.room_id = r.room_id
-            WHERE b.status = 'approved'
+            WHERE b.status IN ('approved', 'rejected')
             ORDER BY b.booking_date, b.start_time
         """
 
@@ -600,6 +600,23 @@ def update_room(room_id):
 
 
 @app.route('/update-booking-status/<int:booking_id>', methods=['PUT'])
+# /*
+#  * 示例：更新预定状态（approved 或 rejected）
+#  *
+#  * 假设我们需要将 booking_id 为 123 的预定更新为 approved 状态，
+#  * 前端可以使用如下代码调用后端接口。
+#  *
+#  * 1. 请求 URL 为：http://localhost:5000/update-booking-status/123
+#  * 2. 请求方法为：PUT
+#  * 3. 请求体（body）需要传递 JSON 格式的数据，例如：{ "status": "approved" }或者{ "status": "rejected" }
+#  * 4. 后端返回的数据将包含更新后的预定信息，例如：
+#  *    {
+#  *       "message": "Booking status updated to approved",
+#  *       "booking_id": 123,
+#  *       "status": "approved"
+#  *    }
+#  *
+#  */
 def update_booking_status(booking_id):
     print(f"Received PUT request to update booking with ID: {booking_id}")
     data = request.json
