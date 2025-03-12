@@ -85,22 +85,32 @@ function handleApproval(action, card) {
 
   console.log(`Attempting to ${action} booking ID: ${bookingId}`);
 
-fetch(`http://127.0.0.1:5000/update-booking-status/${bookingId}`, {
-  method: 'PUT',  // 或 'PUT'
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ status: newStatus })
-})
+  fetch(`http://127.0.0.1:5000/update-booking-status/${bookingId}`, {
+    method: 'PUT', // 或 'PUT'，根据后端支持的方法
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: newStatus })
+  })
     .then(response => {
       if (!response.ok) throw new Error('Update failed');
       return response.json();
     })
     .then(updatedBooking => {
       console.log('Updated booking:', updatedBooking);
-      const booking = bookings.find(b => b.booking_id === bookingId);
-      if (booking) {
-        booking.status = updatedBooking.status;
+
+      // 更新本地数据
+      const index = bookings.findIndex(b => b.booking_id === bookingId);
+      if (index !== -1) {
+        bookings[index] = updatedBooking; // 替换整个对象
       }
-      renderApprovalCards();
+
+      // 根据当前标签页重新加载数据
+      const activeTab = document.querySelector('.approval-tabs .tab.active');
+      if (activeTab.dataset.tab === 'pending') {
+        fetchPendingBookings();
+      } else if (activeTab.dataset.tab === 'finished') {
+        fetchFinishedBookings();
+      }
+
       alert(`${action} reservation ID: ${bookingId}`);
     })
     .catch(error => {
