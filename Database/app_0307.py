@@ -292,7 +292,7 @@ def delete_room_availability_by_room():
     result, status = delete_record(query, params)
     return jsonify({"message": result}), status
 
-# ---------------------------- 其他操作接口 ----------------------------
+# ---------------------------- search/display ----------------------------
 
 @app.route('/search-rooms', methods=['POST'])
 def search_rooms():
@@ -432,6 +432,102 @@ def get_rooms():
         return jsonify({
             "count": len(rooms),
             "rooms": rooms
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+
+@app.route('/pending-bookings', methods=['GET'])
+def get_pending_bookings():
+    try:
+        # 获取数据库连接
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # SQL 查询，获取状态为 'pending' 的预定记录，并连接 Users 和 Rooms 表
+        query = """
+            SELECT 
+                b.booking_id, b.booking_date, b.start_time, b.end_time, b.reason,
+                u.username AS user_name, r.room_name
+            FROM Bookings b
+            JOIN Users u ON b.user_id = u.user_id
+            JOIN Rooms r ON b.room_id = r.room_id
+            WHERE b.status = 'pending'
+            ORDER BY b.booking_date, b.start_time
+        """
+
+        # 执行查询
+        cursor.execute(query)
+        bookings = cursor.fetchall()
+
+        # 格式化返回的数据
+        for booking in bookings:
+            booking['start_time'] = format_time(booking['start_time'])
+            booking['end_time'] = format_time(booking['end_time'])
+            booking['booking_date'] = booking['booking_date'].strftime("%Y-%m-%d")
+
+        # 返回数据
+        return jsonify({
+            "count": len(bookings),
+            "bookings": bookings
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+
+@app.route('/approved-bookings', methods=['GET'])
+def get_approved_bookings():
+    try:
+        # 获取数据库连接
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # SQL 查询，获取状态为 'pending' 的预定记录，并连接 Users 和 Rooms 表
+        query = """
+            SELECT 
+                b.booking_id, b.booking_date, b.start_time, b.end_time, b.reason,
+                u.username AS user_name, r.room_name
+            FROM Bookings b
+            JOIN Users u ON b.user_id = u.user_id
+            JOIN Rooms r ON b.room_id = r.room_id
+            WHERE b.status = 'approved'
+            ORDER BY b.booking_date, b.start_time
+        """
+
+        # 执行查询
+        cursor.execute(query)
+        bookings = cursor.fetchall()
+
+        # 格式化返回的数据
+        for booking in bookings:
+            booking['start_time'] = format_time(booking['start_time'])
+            booking['end_time'] = format_time(booking['end_time'])
+            booking['booking_date'] = booking['booking_date'].strftime("%Y-%m-%d")
+
+        # 返回数据
+        return jsonify({
+            "count": len(bookings),
+            "bookings": bookings
         })
 
     except mysql.connector.Error as e:
