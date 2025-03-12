@@ -1,36 +1,5 @@
 // 模拟数据库返回的预订数据
-const bookings = [
-  {
-    booking_id: 'B1001',
-    user_id: 'U12345',
-    room_id: 'R1001',
-    start_time: '14:00',
-    end_time: '16:00',
-    booking_date: '2023-11-05',
-    status: 'pending',
-    reason: 'Department Meeting111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111'
-  },
-  {
-    booking_id: 'B1002',
-    user_id: 'U67890',
-    room_id: 'R1002',
-    start_time: '09:00',
-    end_time: '11:00',
-    booking_date: '2023-10-28',
-    status: 'approved',
-    reason: 'Product Launch Prep'
-  },
-  {
-    booking_id: 'B1003',
-    user_id: 'U11223',
-    room_id: 'R1003',
-    start_time: '15:00',
-    end_time: '17:00',
-    booking_date: '2023-11-06',
-    status: 'rejected',
-    reason: 'Client Workshop'
-  }
-];
+let bookings = [];
 
 // 动态生成审批卡片
 function renderApprovalCards() {
@@ -138,7 +107,6 @@ function handleApproval(action, card) {
     });
 }
 
-
 // 绑定按钮事件
 function bindButtonEvents() {
   document.querySelectorAll('.approve-btn, .reject-btn').forEach(btn => {
@@ -150,32 +118,53 @@ function bindButtonEvents() {
   });
 }
 
+// 获取已完成的工作流预订
+function fetchFinishedBookings() {
+  fetch('http://localhost:5000/finished-workflow-bookings')
+    .then(response => response.json())
+    .then(data => {
+      bookings = data;
+      renderApprovalCards();
+    })
+    .catch(error => {
+      console.error('Error fetching finished bookings:', error);
+    });
+}
+
+// 获取待处理的预订
+function fetchPendingBookings() {
+  fetch('http://localhost:5000/pending-bookings')
+    .then(response => response.json())
+    .then(data => {
+      bookings = data;
+      renderApprovalCards();
+    })
+    .catch(error => {
+      console.error('Error fetching pending bookings:', error);
+    });
+}
+
 // 初始化标签切换功能
 function initTabs() {
   const tabs = document.querySelectorAll('.approval-tabs .tab');
-
-  const filterCards = (showPending) => {
-    document.querySelectorAll('.approval-card').forEach(card => {
-      const isPending = card.dataset.reservationId ===
-        bookings.find(b => b.booking_id === card.dataset.reservationId && b.status === 'pending')?.booking_id;
-      card.style.display = (showPending === isPending) ? 'flex' : 'none';
-    });
-  };
 
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       tabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-      filterCards(tab.dataset.tab === 'pending');
+      if (tab.dataset.tab === 'pending') {
+        fetchPendingBookings();
+      } else if (tab.dataset.tab === 'finished') {
+        fetchFinishedBookings();
+      }
     });
   });
 
   // 初始显示pending
-  filterCards(true);
+  fetchPendingBookings();
 }
 
 // 初始化页面
 document.addEventListener('DOMContentLoaded', () => {
-  renderApprovalCards();
   initTabs();
 });
