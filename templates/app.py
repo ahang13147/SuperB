@@ -84,7 +84,7 @@ def profile():
     headers = {'Authorization': f'Bearer {session["access_token"]}'}
     user_info = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers).json()
 
-    # 获取用户ID
+    # getting user id
     user_id = user_info.get('id', '')
     session['user_id'] = user_id
 
@@ -94,7 +94,7 @@ def profile():
         if role_response.status_code == 200:
             role_data = role_response.json()
             user_role = role_data.get('role', 'user')
-            session['user_role'] = user_role  # 存储到会话中供其他页面使用
+            session['user_role'] = user_role
 
             # Redirect by role
             if user_role == 'admin':
@@ -105,8 +105,9 @@ def profile():
             # API call failed, default redirect
             return redirect(url_for('booking_centre'))
     except Exception as e:
-        print(f"获取用户角色时出错: {str(e)}")
+        print(f"Error obtaining user role: {str(e)}")
         return redirect(url_for('booking_centre'))
+
 
 
 
@@ -128,4 +129,4 @@ def profile():
 #     )
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8001, debug=True)
+    app.run(host='0.0.0.0', port=8000, debug=True)
