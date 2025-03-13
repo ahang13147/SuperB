@@ -18,36 +18,27 @@
             font-family: 'Segoe UI', system-ui, sans-serif;
             background-color: var(--background);
             padding: 2rem;
-            margin: 0;
-            transition: opacity 0.3s ease;
         }
 
-        body.loading {
-            opacity: 0;
-        }
-
-        body.loaded {
-            opacity: 1;
-        }
-
-        /* 侧边栏样式 */
+        /* Sidebar style */
         .sidebar {
             width: 200px;
-            height: 100vh;
+            height: 100vh; /* Takes up the entire viewport height */
             background: linear-gradient(180deg, #2b5876 0%, #4e4376 100%);
             padding: 30px 0;
-            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
-            position: fixed;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+            position: fixed; /* fixed sidebar */
             left: 0;
             top: 0;
-            z-index: 1000;
+            z-index: 1000; /* Make sure the sidebar is at the top */
             transition: all 0.3s;
         }
 
         .nav-item {
             display: flex;
             align-items: center;
-            color: rgba(255, 255, 255, 0.9);
+
+            color: rgba(255,255,255,0.9);
             padding: 18px 25px;
             margin: 8px 15px;
             border-radius: 8px;
@@ -57,12 +48,14 @@
         }
 
         .nav-item:hover {
-            background: rgba(255, 255, 255, 0.1);
+
+            background: rgba(255,255,255,0.1);
+
             transform: translateX(5px);
         }
 
         .nav-item.active {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255,255,255,0.15);
             border-left: 3px solid #00f2c3;
         }
 
@@ -72,21 +65,26 @@
             margin-right: 15px;
         }
 
+
+
         .container {
             max-width: 1400px;
-            margin-left: 220px;
-            margin-right: auto;
+            margin: 0 auto;
+
             background: white;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             padding: 2rem;
         }
 
+
         h1 {
             color: var(--primary-color);
             text-align: center;
             margin-bottom: 2rem;
             font-weight: 600;
+            position: relative;
+
         }
 
         .table-wrapper {
@@ -198,35 +196,36 @@
         }
     </style>
 </head>
-<body class="loading">
-    <div class="sidebar">
-        <a class="nav-item" href="booking_centre.html">
-            <i class="fas fa-calendar-alt nav-icon"></i>
-            Booking Center
-        </a>
-        <a class="nav-item" href="my_reservation.html">
-            <i class="fas fa-list-ul nav-icon"></i>
-            My Bookings
-        </a>
-        <a class="nav-item" href="notifications.html">
-            <i class="fas fa-bell nav-icon"></i>
-            Notifications
-        </a>
-        <a class="nav-item" href="profile.html">
-            <i class="fas fa-user-circle nav-icon"></i>
-            Profile
-        </a>
-        <a class="nav-item" href="room_management.html">
-            <i class="fas fa-door-open nav-icon"></i>
-            Room Management
-        </a>
-        <a class="nav-item active" href="blacklist.html">
-            <i class="fas fa-ban nav-icon"></i>
-            Blacklist Management
-        </a>
-    </div>
 
+<body>
     <div class="container">
+        <div class="sidebar">
+            <a class="nav-item active" href="booking_centre.html">
+                <i class="fas fa-calendar-alt nav-icon"></i>
+                Booking Center
+            </a>
+            <a class="nav-item" href="my_reservation.html">
+                <i class="fas fa-list-ul nav-icon"></i>
+                My Bookings
+            </a>
+            <a class="nav-item" href="sidebarAndNotice.html">
+                <i class="fas fa-bell nav-icon"></i>
+                Notifications
+            </a>
+            <a class="nav-item" href="#">
+                <i class="fas fa-user-circle nav-icon"></i>
+                Profile (Coming Soon)
+            </a>
+            <a class="nav-item" href="manage room detail.html">
+                <i class="fas fa-user-circle nav-icon"></i>
+                Room Management
+            </a>
+            <a class="nav-item" href="blacklists.html">
+                <i class="fas fa-user-circle nav-icon"></i>
+                Blacklist Management
+            </a>
+        </div>
+
         <h1>Blacklist Management System</h1>
 
         <div class="table-wrapper">
@@ -242,7 +241,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- 数据将通过 JavaScript 动态加载 -->
+                    <!-- The data is loaded dynamically via JavaScript -->
                 </tbody>
             </table>
         </div>
@@ -263,7 +262,7 @@
                 </div>
                 <div>
                     <input type="text" id="endTime" class="flatpickr-input" placeholder="End Time">
-                    <div id="timeError" class="error-message">解封时间必须晚于拉黑时间！</div>
+                    <div id="timeError" class="error-message">The unblocking time must be later than the masking time!</div>
                 </div>
                 <div>
                     <input type="text" id="reason" placeholder="Reason">
@@ -278,33 +277,11 @@
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
-        // 页面加载时设置加载状态
-        document.addEventListener('DOMContentLoaded', function () {
-            // 模拟加载延迟
-            setTimeout(() => {
-                document.body.classList.remove('loading');
-                document.body.classList.add('loaded');
-            }, 500);
-
-            // 设置侧边栏激活状态
-            const currentPage = window.location.pathname.split("/").pop();
-            document.querySelectorAll('.nav-item').forEach(item => {
-                const link = item.getAttribute('href');
-                if (link === currentPage) {
-                    item.classList.add('active');
-                } else {
-                    item.classList.remove('active');
-                }
-            });
-
-            // 加载黑名单数据
-            loadBlacklist();
-        });
-
-        // 初始化时间选择器
+        // Initializes the time selector
         const startDatePicker = flatpickr("#startDate", {
             dateFormat: "Y-m-d",
-            onChange: function (selectedDates) {
+            onChange: function(selectedDates) {
+
                 endDatePicker.set('minDate', selectedDates[0] || new Date());
                 validateTimes();
             }
@@ -315,14 +292,17 @@
             noCalendar: true,
             dateFormat: "H:i",
             time_24hr: true,
-            onChange: function () {
+          
+            onChange: function() {
                 validateTimes();
             }
         });
 
         const endDatePicker = flatpickr("#endDate", {
             dateFormat: "Y-m-d",
-            onChange: function () {
+
+            onChange: function() {
+
                 validateTimes();
             }
         });
@@ -332,12 +312,14 @@
             noCalendar: true,
             dateFormat: "H:i",
             time_24hr: true,
-            onChange: function () {
+
+            onChange: function() {
+
                 validateTimes();
             }
         });
 
-        // 验证时间
+        // proof time
         function validateTimes() {
             const startDate = document.getElementById('startDate').value;
             const startTime = document.getElementById('startTime').value;
@@ -363,10 +345,10 @@
             return true;
         }
 
-        // 添加黑名单
+        // Add blacklist
         async function addToBlacklist() {
             if (!validateTimes()) {
-                alert('解封时间必须晚于拉黑时间！');
+                alert('The decapsulating time must be later than the masking time！');
                 return;
             }
 
@@ -380,7 +362,7 @@
             if (userId && startDate && startTime && endDate && endTime && reason) {
                 const requestBody = {
                     user_id: parseInt(userId, 10),
-                    added_by: 1, // 假设当前用户ID为1
+                    added_by: 1, // Assume that the current user ID is 1
                     start_date: startDate,
                     start_time: startTime,
                     end_date: endDate,
@@ -396,18 +378,18 @@
                     });
 
                     if (response.ok) {
-                        alert('添加成功！');
+                        alert('successfully added！');
                         loadBlacklist();
                     } else {
                         const errorData = await response.json();
-                        alert(`添加失败：${errorData.message}`);
+                        alert(`fail to add：${errorData.message}`);
                     }
                 } catch (error) {
-                    console.error('请求失败：', error);
-                    alert('网络错误，请稍后重试。');
+                    console.error('Request failed：', error);
+                    alert('Network error, please try again later');
                 }
 
-                // 清空输入框
+                // Clear input field
                 document.getElementById('userId').value = '';
                 document.getElementById('startDate').value = '';
                 document.getElementById('startTime').value = '';
@@ -415,11 +397,35 @@
                 document.getElementById('endTime').value = '';
                 document.getElementById('reason').value = '';
             } else {
-                alert('请填写所有必填字段（用户ID、开始日期、开始时间、结束日期、结束时间、原因）');
+                alert('Please fill in all required fields (User ID, start date, start time, end date, end time, reason)');
             }
         }
 
-        // 加载黑名单数据
+
+        // Remove blacklist
+        async function removeFromBlacklist(button, blacklistId) {
+            if (confirm('Are you sure you want to unblock this user？')) {
+                try {
+                    const response = await fetch(`/api/remove-from-blacklist/${blacklistId}`, {
+                        method: 'DELETE',
+                    });
+
+                    if (response.ok) {
+                        alert('Successfully unsealed！');
+                        loadBlacklist();
+                    } else {
+                        const errorData = await response.json();
+                        alert(`Unseal failure：${errorData.message}`);
+                    }
+                } catch (error) {
+                    console.error('Request failed：', error);
+                    alert('Network error, please try again later.');
+                }
+            }
+        }
+
+
+        // Load blacklist data
         async function loadBlacklist() {
             try {
                 const response = await fetch('http://localhost:5000/get-blacklist');
@@ -428,11 +434,11 @@
                     renderBlacklist(result.blacklists);
                 }
             } catch (error) {
-                console.error('请求失败：', error);
+                console.error('Request failed：', error);
             }
         }
 
-        // 渲染黑名单表格
+        // Render blacklist table
         function renderBlacklist(data) {
             const tableBody = document.querySelector('#blacklistTable tbody');
             tableBody.innerHTML = '';
@@ -457,6 +463,13 @@
                 tableBody.appendChild(row);
             });
         }
+
+
+        // The data is initialized when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            loadBlacklist();
+        });
+
     </script>
 </body>
 </html>
