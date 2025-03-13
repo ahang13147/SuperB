@@ -294,6 +294,70 @@ def delete_room_availability_by_room():
     result, status = delete_record(query, params)
     return jsonify({"message": result}), status
 
+
+@app.route('/delete_trusted_user', methods=['DELETE'])
+def delete_trusted_user():
+    data = request.get_json()
+    room_id = data['room_id']
+    user_id = data['user_id']
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"status": "error", "error": "Database connection failed"}), 500
+    try:
+        cursor = conn.cursor(dictionary=True,buffered=True)
+        # 检查记录是否存在
+        check_query = "SELECT * FROM RoomTrustedUsers WHERE room_id = %s AND user_id = %s"
+        cursor.execute(check_query, (room_id, user_id))
+        existing = cursor.fetchone()
+        if not existing:
+            return jsonify({"status": "error", "error": "Trusted user record not found"}), 404
+
+        # 删除记录
+        delete_query = "DELETE FROM RoomTrustedUsers WHERE room_id = %s AND user_id = %s"
+        cursor.execute(delete_query, (room_id, user_id))
+        conn.commit()
+        return jsonify({"status": "success", "message": "Trusted user removed successfully!"})
+    except mysql.connector.Error as err:
+        conn.rollback()
+        return jsonify({"status": "error", "error": str(err)}), 400
+    finally:
+        if conn:
+            conn.close()
+
+
+@app.route('/delete_blacklist', methods=['DELETE'])
+def delete_blacklist():
+    data = request.get_json()
+    blacklist_id = data.get('blacklist_id')
+    if not blacklist_id:
+        return jsonify({"status": "error", "error": "Blacklist ID is required"}), 400
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"status": "error", "error": "Database connection failed"}), 500
+    try:
+        cursor = conn.cursor(dictionary=True)
+        # 检查记录是否存在
+        check_query = "SELECT * FROM Blacklist WHERE blacklist_id = %s"
+        cursor.execute(check_query, (blacklist_id,))
+        record = cursor.fetchone()
+        if not record:
+            return jsonify({"status": "error", "error": "Blacklist record not found"}), 404
+
+        # 删除记录
+        delete_query = "DELETE FROM Blacklist WHERE blacklist_id = %s"
+        cursor.execute(delete_query, (blacklist_id,))
+        conn.commit()
+        return jsonify({"status": "success", "message": "Blacklist entry removed successfully!"})
+    except mysql.connector.Error as err:
+        conn.rollback()
+        return jsonify({"status": "error", "error": str(err)}), 400
+    finally:
+        if conn:
+            conn.close()
+
+
 # ---------------------------- search/display ----------------------------
 
 @app.route('/search-rooms', methods=['POST'])
@@ -603,6 +667,32 @@ def get_blacklist():
         if 'cursor' in locals():
             cursor.close()
         if 'conn' in locals():
+            conn.close()
+
+
+
+
+@app.route('/get_room_trusted_users', methods=['GET'])
+def get_room_trusted_users():
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"status": "error", "error": "Database connection failed"}), 500
+    try:
+        # 使用 dictionary=True 返回字典格式的结果
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT u.username, u.user_id, r.room_id, r.room_name
+            FROM RoomTrustedUsers rt
+            JOIN Users u ON rt.user_id = u.user_id
+            JOIN Rooms r ON rt.room_id = r.room_id;
+        """
+        cursor.execute(query)
+        results = cursor.fetchall()
+        return jsonify({"status": "success", "data": results})
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "error": str(err)}), 400
+    finally:
+        if conn:
             conn.close()
 
 
@@ -1230,6 +1320,47 @@ def add_to_blacklist():
         if 'cursor' in locals():
             cursor.close()
         if 'conn' in locals():
+            conn.close()
+
+
+@app.route('/insert_trusted_user', methods=['POST'])
+def insert_trusted_user():
+    data = request.get_json()
+    room_id = data['room_id']
+    user_id = data['user_id']
+    added_by = data['added_by']
+    # 如果前端没有传入日期和时间，可以考虑自动生成当前日期和时间
+    added_date = data.get('added_date')  # 格式应为 'YYYY-MM-DD'
+    added_time = data.get('added_time')  # 格式应为 'HH:MM:SS'
+    notes = data.get('notes', '')
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"status": "error", "error": "Database connection failed"}), 500
+    try:
+        # 使用字典格式返回结果
+        cursor = conn.cursor(dictionary=True)
+
+        # 先检查该用户是否已在该房间的受信任名单中
+        check_query = "SELECT * FROM RoomTrustedUsers WHERE room_id = %s AND user_id = %s"
+        cursor.execute(check_query, (room_id, user_id))
+        existing = cursor.fetchone()
+        if existing:
+            return jsonify({"status": "error", "error": "The user is already in the trusted user list for this room."}), 400
+
+        # 如果不存在则执行插入操作
+        query = """
+        INSERT INTO RoomTrustedUsers (room_id, user_id, added_by, added_date, added_time, notes)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(query, (room_id, user_id, added_by, added_date, added_time, notes))
+        conn.commit()
+        return jsonify({"status": "success", "message": "Trusted user added successfully!"})
+    except mysql.connector.Error as err:
+        conn.rollback()
+        return jsonify({"status": "error", "error": str(err)}), 400
+    finally:
+        if conn:
             conn.close()
 
 

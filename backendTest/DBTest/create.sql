@@ -23,7 +23,7 @@ CREATE TABLE Users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,    -- User ID, auto-incremented
     username VARCHAR(255) NOT NULL,             -- Username
     email VARCHAR(255) NOT NULL UNIQUE,         -- User's email, must be unique
-    password_hash VARCHAR(255) NOT NULL,        -- Hashed password for security
+    phone_number VARCHAR(255) NOT NULL,        -- phone number of user
     role ENUM('admin', 'professor', 'student', 'tutor') NOT NULL  -- User's role in the system
 );
 
