@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="my_profile.css">
+  <link rel="stylesheet" href="sidebarAndNotice.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <title>My Profile</title>
+</head>
+<body>
+  <div class="main-container">
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+      <a class="nav-item" href="booking_centre.html">
+        <i class="fas fa-calendar-alt nav-icon"></i>
+        Booking Center
+      </a>
+      <a class="nav-item" href="my_reservation.html">
+        <i class="fas fa-list-ul nav-icon"></i>
+        My Bookings
+      </a>
+      <a class="nav-item" href="admin_approval.html">
+        <i class="fas fa-check-circle nav-icon"></i>
+        Approval Management
+      </a>
+      <a class="nav-item" href="sidebarAndNotice.html">
+        <i class="fas fa-bell nav-icon"></i>
+        Notifications
+      </a>
+      <a class="nav-item active" href="my_profile.html">
+        <i class="fas fa-user-circle nav-icon"></i>
+        My Profile
+      </a>
+    </div>
+
+    <!-- 内容区域 -->
+    <div class="content-area">
+      <header>
+        <h1>My Profile</h1>
+      </header>
+
+      <!-- 个人资料表单 -->
+      <div class="profile-container">
+        <div class="profile-header">
+          <div class="profile-picture">
+            <img src="https://via.placeholder.com/150" alt="Profile Picture" id="profile-image">
+            <button class="edit-picture-btn" onclick="triggerFileInput()">
+              <i class="fas fa-camera"></i>
+            </button>
+            <input type="file" id="file-input" style="display: none;" onchange="handleImageUpload(event)">
+          </div>
+          <h2 id="username">John Doe</h2>
+          <p id="role-type">(Student)</p> <!-- 新增 Role Type -->
+        </div>
+
+        <form id="profile-form">
+          <div class="form-group">
+            <label for="full-name">Full Name</label>
+            <input type="text" id="full-name" name="full-name" value="John Doe" disabled>
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" value="john.doe@example.com" disabled>
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone</label>
+            <input type="tel" id="phone" name="phone" value="+1234567890" disabled>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" id="edit-btn" onclick="toggleEditMode()">Edit Profile</button>
+            <button type="submit" id="save-btn" style="display: none;">Save Changes</button>
+            <button type="button" id="cancel-btn" style="display: none;" onclick="cancelEditMode()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="my_profile.js"></script>
+</body>
+</html>
