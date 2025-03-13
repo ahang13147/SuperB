@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 #  @version: 3/12/2025
+=======
+#  @version: 3/13/2025
+>>>>>>> Stashed changes
 #  @author: Xin Yu, Siyan Guo, Zibang Nie
 # add: finished-workflow-booking get api
 
@@ -567,6 +571,52 @@ def get_all_bookings():
             conn.close()
 
 
+<<<<<<< Updated upstream
+=======
+@app.route('/user-bookings', methods=['GET'])
+def get_user_bookings():
+    try:
+        # 从查询参数中获取user_id
+        user_id = request.args.get('user_id')
+        if not user_id:
+            return jsonify({"error": "user_id parameter is required"}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT 
+                b.booking_id, b.user_id, b.room_id, b.booking_date, b.start_time, b.end_time, b.status,
+                r.room_name, r.location, r.capacity, r.equipment
+            FROM Bookings b
+            JOIN Rooms r ON b.room_id = r.room_id
+            WHERE b.user_id = %s
+            ORDER BY b.booking_date, b.start_time
+        """
+        cursor.execute(query, (user_id,))
+        bookings = cursor.fetchall()
+        for booking in bookings:
+            booking['start_time'] = format_time(booking['start_time'])
+            booking['end_time'] = format_time(booking['end_time'])
+            booking['booking_date'] = booking['booking_date'].strftime("%Y-%m-%d")
+        return jsonify({
+            "count": len(bookings),
+            "bookings": bookings
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+
+>>>>>>> Stashed changes
 @app.route('/rooms', methods=['GET'])
 def get_rooms():
     try:
