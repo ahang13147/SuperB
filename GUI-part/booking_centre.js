@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         Object.keys(requestData).forEach(key => requestData[key] === undefined && delete requestData[key]);
 
         try {
-            const response = await fetch('http://localhost:5000/search-rooms', {
+            const response = await fetch('http://localhost:8000/search-rooms', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestData)
@@ -227,10 +227,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // 获取用户ID（根据实际登录状态获取）
-        const userId = 3;
+        const userId = 2;
 
         try {
-            const response = await fetch('http://localhost:5000/insert_booking', {
+            const response = await fetch('http://localhost:8000/insert_booking', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -279,7 +279,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         try {
-            const response = await fetch('http://localhost:5000/insert_booking_with_reason', {
+            const response = await fetch('http://localhost:8000/insert_booking_with_reason', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
