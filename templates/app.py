@@ -4,8 +4,8 @@ from flask import Flask, redirect, request, session, url_for, render_template
 from flask_cors import CORS
 
 app = Flask(__name__)
-app.secret_key = 'your_ultra_secure_key_123!'  # 必须修改为强密码
-CORS(app, supports_credentials=True)
+app.secret_key = 'your_ultra_secure_key_123!'  # 建议使用更复杂的密钥
+CORS(app, resources={r"/*": {"origins": "http://localhost:8001"}}, supports_credentials=True)
 
 # Azure配置
 CLIENT_ID = '736efa73-315a-4b77-a273-0447f5e2a27d'
@@ -64,23 +64,6 @@ def auth_callback():
         return f"认证错误：{result.get('error_description')}", 500
 
 
-# @app.route('/profile')
-# def profile():
-#     # 显示用户信息
-#     if 'access_token' not in session:
-#         return redirect(url_for('index'))
-#
-#     headers = {'Authorization': f'Bearer {session["access_token"]}'}
-#     user_info = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers).json()
-#
-#     # 渲染本地HTML文件并传递用户信息
-#     return render_template(
-#         'booking_centre.html',
-#         name=user_info.get('displayName', '未知用户'),
-#         email=user_info.get('mail', '无邮箱信息'),
-#         id=user_info.get('id', '')
-#     )
-
 @app.route('/profile')
 def profile():
     if 'access_token' not in session:
@@ -102,6 +85,22 @@ def profile():
 
     return render_template('user_profile.html', **profile_data)
 
+# @app.route('/profile')
+# def profile():
+#     # 显示用户信息
+#     if 'access_token' not in session:
+#         return redirect(url_for('index'))
+#
+#     headers = {'Authorization': f'Bearer {session["access_token"]}'}
+#     user_info = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers).json()
+#
+#     # 渲染本地HTML文件并传递用户信息
+#     return render_template(
+#         'booking_centre.html',
+#         name=user_info.get('displayName', '未知用户'),
+#         email=user_info.get('mail', '无邮箱信息'),
+#         id=user_info.get('id', '')
+#     )
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    app.run(host='0.0.0.0', port=8001, debug=True)

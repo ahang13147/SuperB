@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DIICSU Intelligent Meeting Room Booking System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="nav-item active">
+                <i class="fas fa-calendar-alt nav-icon"></i>
+                Booking Center
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-list-ul nav-icon"></i>
+                My Bookings
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-bell nav-icon"></i>
+                Notifications
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-user-circle nav-icon"></i>
+                Profile
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Notification Center Example -->
+            <div class="notification-panel" style="display: none;">
+                <div class="notification-item unread">
+                    <div class="notification-time">2023-10-01 09:00</div>
+                    <div class="notification-content">
+                        Your booking for "Innovation Room 101" has been confirmed (09:00-10:00)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
