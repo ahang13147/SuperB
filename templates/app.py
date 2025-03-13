@@ -20,6 +20,7 @@ msal_app = msal.ConfidentialClientApplication(
 )
 
 
+
 @app.route('/')
 def index():
     return redirect(url_for('login_page'))
