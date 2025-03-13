@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 获取并展示预约信息（字段名对齐）
     async function loadReservations() {
         try {
-            const response = await fetch('http://localhost:5000/bookings');
+            const response = await fetch('http://localhost:8000/bookings');
             const { bookings } = await response.json(); // 注意后端返回的数据结构
 
             reservationsContainer.innerHTML = bookings
