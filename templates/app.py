@@ -64,26 +64,50 @@ def auth_callback():
         return f"认证错误：{result.get('error_description')}", 500
 
 
+
+@app.route('/approval_center')
+def approval_center():
+    return render_template('Approval_Center.html')
+
+
+@app.route('/booking_centre')
+def booking_centre():
+    return render_template('booking_centre.html')
+
+
 @app.route('/profile')
 def profile():
     if 'access_token' not in session:
-        return redirect(url_for('index'))
+        return redirect(url_for('login.html'))
 
     headers = {'Authorization': f'Bearer {session["access_token"]}'}
     user_info = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers).json()
 
-    # 提取用户信息
-    profile_data = {
-        'name': user_info.get('displayName', '未知用户'),
-        'email': user_info.get('mail', '无邮箱信息'),
-        'id': user_info.get('id', ''),
-        'job_title': user_info.get('jobTitle', '无职位信息'),
-        'company_name': user_info.get('companyName', '无公司信息'),
-        'phone_number': user_info.get('mobilePhone', '无电话号码'),
-        'raw_data': user_info  # 传递完整原始数据
-    }
+    # 获取用户ID
+    user_id = user_info.get('id', '')
+    session['user_id'] = user_id
 
-    return render_template('user_profile.html', **profile_data)
+    try:
+        # Call the existing API to get the user role
+        role_response = requests.get(f"http://101.200.193.132:8000/get_user_role?user_id={user_id}")
+        if role_response.status_code == 200:
+            role_data = role_response.json()
+            user_role = role_data.get('role', 'user')
+            session['user_role'] = user_role  # 存储到会话中供其他页面使用
+
+            # Redirect by role
+            if user_role == 'admin':
+                return redirect(url_for('approval_center'))
+            else:
+                return redirect(url_for('booking_centre'))
+        else:
+            # API call failed, default redirect
+            return redirect(url_for('booking_centre'))
+    except Exception as e:
+        print(f"获取用户角色时出错: {str(e)}")
+        return redirect(url_for('booking_centre'))
+
+
 
 # @app.route('/profile')
 # def profile():
