@@ -4,38 +4,59 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModalBtn = document.getElementById('closeModal');
     const confirmCancelBtn = document.getElementById('confirmCancel');
 
-    // 渲染预约卡片函数（适配数据库字段）
-    function renderReservation(reservation) {
-        return `
-            <div class="reservation-card" data-reservation-id="${reservation.booking_id}">
-                <div class="card-header">
-                    <span class="room-tag" data-room-id="${reservation.room_id}">Room ${reservation.room_id}</span>
-                    <span class="status-indicator" style="background: ${reservation.status === 'approved' ? 'var(--success-color)' : 'var(--danger-color)'}">
-                        ${reservation.status}
-                    </span>
-                </div>
-                <div class="card-body">
-                    <p><span data-booking-date="${reservation.booking_date}">📅 ${reservation.booking_date}</span></p>
-                    <p><span data-time-range="${reservation.start_time}-${reservation.end_time}">⏰ ${reservation.start_time} - ${reservation.end_time}</span></p>
-                </div>
-                ${['approved', 'pending'].includes(reservation.status) ?
-                    `<button class="cancel-btn">Cancel Reservation</button>` :
-                    `<button class="cancel-btn" disabled>Canceled</button>`}
+    const DEFAULT_USER_ID = 3;
+
+    // Show loading status
+    function showLoading() {
+        reservationsContainer.innerHTML = `
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i> Loading...
             </div>
         `;
     }
 
-    // 获取并展示预约信息（字段名对齐）
+    // Hide the loading state and display the contents
+    function hideLoading() {
+        const loadingSpinner = document.querySelector('.loading-spinner');
+        if (loadingSpinner) {
+            loadingSpinner.remove();
+        }
+    }
+
+    // Render the reservation card function
+    function renderReservation(reservation) {
+        return `
+        <div class="reservation-card" data-reservation-id="${reservation.booking_id}">
+            <div class="card-header">
+                <span class="room-tag" data-room-id="${reservation.room_id}">${reservation.room_name}</span>
+                <span class="status-indicator" data-status="${reservation.status}">
+                    ${reservation.status}
+                </span>
+            </div>
+            <div class="card-body">
+                <p><span data-booking-date="${reservation.booking_date}">📅 ${reservation.booking_date}</span></p>
+                <p><span data-time-range="${reservation.start_time}-${reservation.end_time}">⏰ ${reservation.start_time} - ${reservation.end_time}</span></p>
+                ${reservation.reason ? `<p><span>Reason: ${reservation.reason}</span></p>` : ''}
+            </div>
+            ${['approved', 'pending'].includes(reservation.status) ?
+                `<button class="cancel-btn">Cancel Reservation</button>` :
+                `<button class="cancel-btn" disabled>Canceled</button>`}
+        </div>
+    `;
+    }
+
+    // Get and display reservation information (field name alignment)
     async function loadReservations() {
+        showLoading(); 
+
         try {
-            const response = await fetch('http://localhost:8000/bookings');
-            const { bookings } = await response.json(); // 注意后端返回的数据结构
+            const response = await fetch(`http://localhost:8000/user-bookings?user_id=${DEFAULT_USER_ID}`);
+            const { bookings } = await response.json(); 
 
             reservationsContainer.innerHTML = bookings
                 .map(reservation => renderReservation(reservation))
                 .join('');
 
-            // 重新绑定事件
             document.querySelectorAll('.cancel-btn').forEach(btn => {
                 btn.addEventListener('click', showCancelModal);
             });
@@ -43,37 +64,33 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error:', error);
             reservationsContainer.innerHTML = `<p class="error">Failed to load reservations</p>`;
+        } finally {
+            hideLoading(); 
         }
     }
 
-    // 弹窗逻辑（使用正确字段）
     function showCancelModal(e) {
         const card = e.target.closest('.reservation-card');
         const reservationData = {
-            booking_id: card.dataset.reservationId, // 使用 booking_id
+            booking_id: card.dataset.reservationId, 
             booking_date: card.querySelector('[data-booking-date]').dataset.bookingDate,
             start_time: card.querySelector('[data-time-range]').dataset.timeRange.split('-')[0],
             end_time: card.querySelector('[data-time-range]').dataset.timeRange.split('-')[1],
             room_id: card.querySelector('[data-room-id]').dataset.roomId,
-            status: 'canceled' // 注意数据库中是 canceled 不是 cancelled
+            status: 'canceled' 
         };
 
         modal.dataset.reservation = JSON.stringify(reservationData);
         modal.style.display = 'flex';
     }
 
-    // 确认取消（发送正确数据结构）
     confirmCancelBtn.addEventListener('click', async () => {
         const reservation = JSON.parse(modal.dataset.reservation);
 
         try {
-            const response = await fetch('/api/cancel', {
-                method: 'POST',
+            const response = await fetch(`http://127.0.0.1:8000/cancel-booking/${reservation.booking_id}`, {
+                method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    booking_id: reservation.booking_id, // 关键字段
-                    status: 'canceled'
-                })
             });
 
             if (response.ok) {
@@ -82,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.querySelector('.status-indicator').style.backgroundColor = 'var(--danger-color)';
                 card.querySelector('.cancel-btn').disabled = true;
                 modal.style.display = 'none';
-                loadReservations(); // 重新加载数据确保同步
+                loadReservations(); 
             } else {
                 alert('Failed to cancel reservation');
             }
@@ -92,10 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 初始化加载
     loadReservations();
 
-    // 其他事件监听保持不变...
     closeModalBtn.addEventListener('click', () => modal.style.display = 'none');
     window.addEventListener('click', (e) => e.target === modal && (modal.style.display = 'none'));
 });
