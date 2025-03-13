@@ -4,6 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModalBtn = document.getElementById('closeModal');
     const confirmCancelBtn = document.getElementById('confirmCancel');
 
+    // 默认 user_id
+    const DEFAULT_USER_ID = 2;
+
     // 渲染预约卡片函数（适配数据库字段）
     function renderReservation(reservation) {
         return `
@@ -19,8 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p><span data-time-range="${reservation.start_time}-${reservation.end_time}">⏰ ${reservation.start_time} - ${reservation.end_time}</span></p>
                 </div>
                 ${['approved', 'pending'].includes(reservation.status) ?
-                    `<button class="cancel-btn">Cancel Reservation</button>` :
-                    `<button class="cancel-btn" disabled>Canceled</button>`}
+                `<button class="cancel-btn">Cancel Reservation</button>` :
+                `<button class="cancel-btn" disabled>Canceled</button>`}
             </div>
         `;
     }
@@ -28,7 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 获取并展示预约信息（字段名对齐）
     async function loadReservations() {
         try {
-            const response = await fetch('http://localhost:5000/bookings');
+            // 默认 user_id 为 2
+            const response = await fetch(`http://localhost:8000/user-bookings?user_id=${DEFAULT_USER_ID}`);
             const { bookings } = await response.json(); // 注意后端返回的数据结构
 
             reservationsContainer.innerHTML = bookings
@@ -67,16 +71,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const reservation = JSON.parse(modal.dataset.reservation);
 
         try {
-            const response = await fetch('http://127.0.0.1:5000/delete/bookings', {
-                method: 'POST',
+            const response = await fetch(`http://127.0.0.1:8000/cancel-booking/${reservation.booking_id}`, {
+                method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    booking_id: reservation.booking_id, // 关键字段
-                    start_time:reservation.start_time,
-                    end_time:reservation.end_time,
-                    booking_date: reservation.booking_date,
-                    status: 'approved',
-                })
             });
 
             if (response.ok) {
