@@ -3,8 +3,7 @@
 # add: finished-workflow-booking get api
 
 
-
-from flask import Flask, request, jsonify
+from flask import Flask, redirect, request, session, url_for, render_template, jsonify
 from flask_cors import CORS
 import mysql.connector
 import requests
@@ -13,24 +12,53 @@ import json
 import re
 import time
 from datetime import date,datetime, timedelta
-
+import yaml
+import msal
 
 
 app = Flask(__name__)
 CORS(app)  # 允许所有来源访问
 
-# ---------------------------- 数据库连接配置 ----------------------------
-db_config = {
-    "host": "localhost",
-    "user": "root",
-    "password": "root",  # 注意：删除操作中使用的是1234，请保持一致
-    "database": "booking_system_db"
-}
+# ---------------------------- import config----------------------------
+# db_config = {
+#     "host": "localhost",
+#     "user": "root",
+#     "password": "root",  # 注意：删除操作中使用的是1234，请保持一致
+#     "database": "booking_system_db"
+# }
+#
+# def get_db_connection():
+#     return mysql.connector.connect(**db_config)
+
+
+
+def load_config(config_path="config.yaml"):
+    """加载配置文件并返回配置字典"""
+    with open(config_path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+# 加载配置
+config = load_config()
+
+# 获取数据库连接配置
+db_config = config.get("db_config")
 
 def get_db_connection():
     return mysql.connector.connect(**db_config)
 
-# ---------------------------- 删除操作的辅助函数 ----------------------------
+# 获取 Azure 配置
+CLIENT_ID = config.get("CLIENT_ID")
+CLIENT_SECRET = config.get("CLIENT_SECRET")
+AUTHORITY = config.get("AUTHORITY")
+REDIRECT_URI = config.get("REDIRECT_URI")
+
+# 初始化 msal 应用
+msal_app = msal.ConfidentialClientApplication(
+    CLIENT_ID,
+    authority=AUTHORITY,
+    client_credential=CLIENT_SECRET
+)
+# ---------------------------- helper function----------------------------
 def delete_record(query, params):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -45,7 +73,6 @@ def delete_record(query, params):
         cursor.close()
         conn.close()
 
-# ---------------------------- 其他辅助函数 ----------------------------
 def validate_time(time_str):
     """验证时间格式 HH:MM"""
     try:
@@ -91,8 +118,94 @@ def get_room_id(room_name):
     finally:
         if conn:
             conn.close()
+# ---------------------------- login ----------------------------
 
-# ---------------------------- 删除操作接口 ----------------------------
+
+@app.route('/')
+def index():
+    return redirect(url_for('login_page'))
+
+
+@app.route('/login')
+def login_page():
+    return '''
+    <script>
+        window.location.href = "/auth";
+    </script>
+    '''
+
+
+@app.route('/auth')
+def auth():
+    auth_url = msal_app.get_authorization_request_url(
+        scopes=["User.Read"],
+        redirect_uri=REDIRECT_URI
+    )
+    return redirect(auth_url)
+
+
+@app.route('/auth_callback')
+def auth_callback():
+    # 处理Microsoft回调
+    code = request.args.get('code')
+    if not code:
+        return "认证失败：缺少授权码", 400
+
+    # 用授权码换取令牌
+    result = msal_app.acquire_token_by_authorization_code(
+        code,
+        scopes=["User.Read"],
+        redirect_uri=REDIRECT_URI
+    )
+
+    if "access_token" in result:
+        session['access_token'] = result['access_token']
+        return redirect(url_for('profile'))
+    else:
+        return f"认证错误：{result.get('error_description')}", 500
+
+
+# @app.route('/profile')
+# def profile():
+#     # 显示用户信息
+#     if 'access_token' not in session:
+#         return redirect(url_for('index'))
+#
+#     headers = {'Authorization': f'Bearer {session["access_token"]}'}
+#     user_info = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers).json()
+#
+#     # 渲染本地HTML文件并传递用户信息
+#     return render_template(
+#         'booking_centre.html',
+#         name=user_info.get('displayName', '未知用户'),
+#         email=user_info.get('mail', '无邮箱信息'),
+#         id=user_info.get('id', '')
+#     )
+
+@app.route('/profile')
+def profile():
+    if 'access_token' not in session:
+        return redirect(url_for('index'))
+
+    headers = {'Authorization': f'Bearer {session["access_token"]}'}
+    user_info = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers).json()
+
+    # 提取用户信息
+    profile_data = {
+        'name': user_info.get('displayName', '未知用户'),
+        'email': user_info.get('mail', '无邮箱信息'),
+        'id': user_info.get('id', ''),
+        'job_title': user_info.get('jobTitle', '无职位信息'),
+        'company_name': user_info.get('companyName', '无公司信息'),
+        'phone_number': user_info.get('mobilePhone', '无电话号码'),
+        'raw_data': user_info  # 传递完整原始数据
+    }
+
+    return render_template('user_profile.html', **profile_data)
+
+
+
+# ---------------------------- delete ----------------------------
 @app.route('/delete/users', methods=['POST'])
 def delete_users():
     data = request.json
@@ -185,35 +298,6 @@ def delete_room_availability():
     result, status = delete_record(query, params)
     return jsonify({"message": result}), status
 
-# @app.route('/delete/bookings', methods=['POST', 'OPTIONS'])
-# def delete_bookings():
-#     if request.method == 'OPTIONS':
-#         return '', 200
-#     data = request.json
-#     booking_id = data.get('booking_id')
-#     start_time = data.get('start_time')
-#     end_time = data.get('end_time')
-#     booking_date = data.get('booking_date')
-#     status_val = data.get('status')
-#     # 删除依赖记录：审批记录中对应的 booking_id
-#     dependent_query = """
-#     DELETE FROM Approvals
-#     WHERE booking_id = %s
-#     """
-#     dependent_params = (booking_id,)
-#     delete_record(dependent_query, dependent_params)
-#     # 根据 booking_id 及其他参数删除 Bookings 中的记录
-#     query = """
-#     DELETE FROM Bookings
-#     WHERE booking_id = %s
-#       AND start_time = %s
-#       AND end_time = %s
-#       AND booking_date = %s
-#       AND (status = %s OR %s IS NULL)
-#     """
-#     params = (booking_id, start_time, end_time, booking_date, status_val, status_val)
-#     result, status = delete_record(query, params)
-#     return jsonify({"message": result}), status
 
 @app.route('/delete/approvals', methods=['POST'])
 def delete_approvals():
@@ -697,59 +781,6 @@ def get_room_trusted_users():
 
 
 # ---------------------------- update ----------------------------
-#
-# @app.route('/update-room/<int:room_id>', methods=['PUT'])
-# def update_room(room_id):
-#     print(f"Received PUT request to update room with ID: {room_id}")
-#     data = request.json
-#     print(f"Request body: {data}")
-#     room_name = data.get('room_name')
-#     capacity = data.get('capacity')
-#     equipment = data.get('equipment')
-#     location = data.get('location')
-#     try:
-#         conn = get_db_connection()
-#         cursor = conn.cursor()
-#         cursor.execute("SELECT * FROM Rooms WHERE room_name = %s AND room_id != %s", (room_name, room_id))
-#         existing_room = cursor.fetchone()
-#         if existing_room:
-#             print(f"Room name '{room_name}' already exists.")
-#             return jsonify({"error": "Room name already exists"}), 400
-#         update_query = """
-#             UPDATE Rooms
-#             SET room_name = %s, capacity = %s, equipment = %s, location = %s
-#             WHERE room_id = %s
-#         """
-#         update_params = (room_name, capacity, equipment, location, room_id)
-#         print(f"Executing update query: {update_query} with parameters: {update_params}")
-#         cursor.execute(update_query, update_params)
-#         conn.commit()
-#         if cursor.rowcount == 0:
-#             print(f"No room found with ID {room_id}.")
-#             return jsonify({"error": "Room not found"}), 404
-#         cursor.execute("SELECT * FROM Rooms WHERE room_id = %s", (room_id,))
-#         updated_room = cursor.fetchone()
-#         print(f"Updated room: {updated_room}")
-#         return jsonify({
-#             "message": "Room updated successfully",
-#             "room_id": updated_room[0],
-#             "room_name": updated_room[1],
-#             "capacity": updated_room[2],
-#             "equipment": updated_room[3],
-#             "location": updated_room[4]
-#         })
-#
-#     except mysql.connector.Error as e:
-#         print(f"Database error: {str(e)}")
-#         return jsonify({"error": "Database error", "details": str(e)}), 500
-#     except Exception as e:
-#         print(f"Unexpected error: {str(e)}")
-#         return jsonify({"error": "Internal server error", "details": str(e)}), 500
-#     finally:
-#         if 'cursor' in locals():
-#             cursor.close()
-#         if 'conn' in locals():
-#             conn.close()
 
 @app.route('/update-room/<int:room_id>', methods=['PUT'])
 def update_room(room_id):
@@ -828,83 +859,6 @@ def update_room(room_id):
             cursor.close()
         if 'conn' in locals():
             conn.close()
-
-#
-# @app.route('/update-booking-status/<int:booking_id>', methods=['PUT'])
-# # /*
-# #  * 示例：更新预定状态（approved 或 rejected）
-# #  *
-# #  * 假设我们需要将 booking_id 为 123 的预定更新为 approved 状态，
-# #  * 前端可以使用如下代码调用后端接口。
-# #  *
-# #  * 1. 请求 URL 为：http://localhost:5000/update-booking-status/123
-# #  * 2. 请求方法为：PUT
-# #  * 3. 请求体（body）需要传递 JSON 格式的数据，例如：{ "status": "approved" }或者{ "status": "rejected" }
-# #  * 4. 后端返回的数据将包含更新后的预定信息，例如：
-# #  *    {
-# #  *       "message": "Booking status updated to approved",
-# #  *       "booking_id": 123,
-# #  *       "status": "approved"
-# #  *    }
-# #  *
-# #  */
-# def update_booking_status(booking_id):
-#     print(f"Received PUT request to update booking with ID: {booking_id}")
-#     data = request.json
-#     print(f"Request body: {data}")
-#     status = data.get('status')
-#
-#     if status not in ['approved', 'rejected']:
-#         return jsonify({"error": "Invalid status value. Allowed values are 'approved' or 'rejected'."}), 400
-#
-#     try:
-#         conn = get_db_connection()
-#         cursor = conn.cursor()
-#
-#         # Check if the booking exists and is in 'pending' status
-#         cursor.execute("SELECT * FROM Bookings WHERE booking_id = %s AND status = 'pending'", (booking_id,))
-#         booking = cursor.fetchone()
-#
-#         if not booking:
-#             print(f"No pending booking found with ID {booking_id}.")
-#             return jsonify({"error": "Booking not found or already processed"}), 404
-#
-#         # Update the booking's status
-#         update_query = """
-#             UPDATE Bookings
-#             SET status = %s
-#             WHERE booking_id = %s
-#         """
-#         update_params = (status, booking_id)
-#         print(f"Executing update query: {update_query} with parameters: {update_params}")
-#         cursor.execute(update_query, update_params)
-#         conn.commit()
-#
-#         if cursor.rowcount == 0:
-#             print(f"No room found with ID {booking_id}.")
-#             return jsonify({"error": "Booking update failed"}), 500
-#
-#         cursor.execute("SELECT * FROM Bookings WHERE booking_id = %s", (booking_id,))
-#         updated_booking = cursor.fetchone()
-#         print(f"Updated booking: {updated_booking}")
-#
-#         return jsonify({
-#             "message": f"Booking status updated to {status}",
-#             "booking_id": updated_booking[0],
-#             "status": updated_booking[6]  # Assuming status is the 6th column in Bookings table
-#         })
-#
-#     except mysql.connector.Error as e:
-#         print(f"Database error: {str(e)}")
-#         return jsonify({"error": "Database error", "details": str(e)}), 500
-#     except Exception as e:
-#         print(f"Unexpected error: {str(e)}")
-#         return jsonify({"error": "Internal server error", "details": str(e)}), 500
-#     finally:
-#         if 'cursor' in locals():
-#             cursor.close()
-#         if 'conn' in locals():
-#             conn.close()
 
 
 @app.route('/update-booking-status/<int:booking_id>', methods=['PUT'])
@@ -1364,8 +1318,14 @@ def insert_trusted_user():
             conn.close()
 
 
+# if __name__ == '__main__':
+#     print("\nRegistered routes:")
+#     for rule in app.url_map.iter_rules():
+#         print(f"→ {rule}")
+#     app.run(debug=True)
+
 if __name__ == '__main__':
     print("\nRegistered routes:")
     for rule in app.url_map.iter_rules():
         print(f"→ {rule}")
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=8000, debug=True)
