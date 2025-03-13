@@ -1317,7 +1317,6 @@ def insert_trusted_user():
         if conn:
             conn.close()
 
-
 # if __name__ == '__main__':
 #     print("\nRegistered routes:")
 #     for rule in app.url_map.iter_rules():
