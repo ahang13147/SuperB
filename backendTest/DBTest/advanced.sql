@@ -1,5 +1,6 @@
 USE `booking_system_db`;
 
+
 -- 触发器：当 Bookings 表中插入新记录时，更新对应 Room_availability 的 availability 为 2（已预订）。
 DELIMITER //
 CREATE TRIGGER update_availability_on_booking_insert

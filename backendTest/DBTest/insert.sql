@@ -1,4 +1,4 @@
--- @version: 3/11/2025
+-- @version: 3/13/2025
 -- @author: Xin Yu, Siyan Guo, Zibang Nie
 -- @description: This SQL script creates a booking system database, which includes tables for Users, Rooms, Bookings, Approvals, Notifications, and Reports.
 -- It provides a structure to manage users, room bookings, approval processes, notifications, and report generation.
@@ -6,7 +6,7 @@
 
 USE `booking_system_db`;
 
-INSERT INTO Users (username, email, password_hash, role) VALUES
+INSERT INTO Users (username, email, phone_number, role) VALUES
 ('admin1', 'admin1@example.com', 'hash1', 'admin'),
 ('prof1', 'prof1@example.com', 'hash2', 'professor'),
 ('student1', 'student1@example.com', 'hash3', 'student'),
