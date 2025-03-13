@@ -7,17 +7,17 @@ from flask import Flask, redirect, request, session, url_for, render_template, j
 from flask_cors import CORS
 import mysql.connector
 import requests
-from bs4 import BeautifulSoup
-import json
-import re
-import time
-from datetime import date,datetime, timedelta
+# from bs4 import BeautifulSoup
+# import json
+# import re
+# import time
+from datetime import date, datetime, timedelta
 import yaml
 import msal
 
-
 app = Flask(__name__)
 CORS(app)  # 允许所有来源访问
+app.secret_key = 'your-secret-key-here'
 
 # ---------------------------- import config----------------------------
 # db_config = {
@@ -31,11 +31,11 @@ CORS(app)  # 允许所有来源访问
 #     return mysql.connector.connect(**db_config)
 
 
-
 def load_config(config_path="config.yaml"):
     """加载配置文件并返回配置字典"""
     with open(config_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
+
 
 # 加载配置
 config = load_config()
@@ -43,8 +43,10 @@ config = load_config()
 # 获取数据库连接配置
 db_config = config.get("db_config")
 
+
 def get_db_connection():
     return mysql.connector.connect(**db_config)
+
 
 # 获取 Azure 配置
 CLIENT_ID = config.get("CLIENT_ID")
@@ -58,6 +60,8 @@ msal_app = msal.ConfidentialClientApplication(
     authority=AUTHORITY,
     client_credential=CLIENT_SECRET
 )
+
+
 # ---------------------------- helper function----------------------------
 def delete_record(query, params):
     conn = get_db_connection()
@@ -73,6 +77,7 @@ def delete_record(query, params):
         cursor.close()
         conn.close()
 
+
 def validate_time(time_str):
     """验证时间格式 HH:MM"""
     try:
@@ -80,6 +85,7 @@ def validate_time(time_str):
         return True
     except ValueError:
         return False
+
 
 def format_time(time_val):
     """
@@ -96,6 +102,7 @@ def format_time(time_val):
     except Exception:
         return str(time_val)
 
+
 def generate_date_range(start_date, end_date):
     """生成从 start_date 到 end_date（含）之间的所有日期列表"""
     date_list = []
@@ -104,6 +111,7 @@ def generate_date_range(start_date, end_date):
         date_list.append(current_date)
         current_date += timedelta(days=1)
     return date_list
+
 
 def get_room_id(room_name):
     conn = get_db_connection()
@@ -118,6 +126,8 @@ def get_room_id(room_name):
     finally:
         if conn:
             conn.close()
+
+
 # ---------------------------- login ----------------------------
 
 
@@ -139,7 +149,8 @@ def login_page():
 def auth():
     auth_url = msal_app.get_authorization_request_url(
         scopes=["User.Read"],
-        redirect_uri=REDIRECT_URI
+        redirect_uri=REDIRECT_URI,
+        prompt="select_account"  # 添加此行
     )
     return redirect(auth_url)
 
@@ -163,6 +174,11 @@ def auth_callback():
         return redirect(url_for('profile'))
     else:
         return f"认证错误：{result.get('error_description')}", 500
+
+
+@app.route("/logout")
+def logout():
+    return redirect(auth.log_out(url_for("index", _external=True)))
 
 
 # @app.route('/profile')
@@ -202,7 +218,6 @@ def profile():
     }
 
     return render_template('user_profile.html', **profile_data)
-
 
 
 # ---------------------------- delete ----------------------------
@@ -255,6 +270,7 @@ def delete_users():
         conn.close()
     return jsonify({"message": result}), status_code
 
+
 @app.route('/delete/rooms', methods=['POST'])
 def delete_rooms():
     data = request.json
@@ -280,6 +296,7 @@ def delete_rooms():
     result, status = delete_record(query, params)
     return jsonify({"message": result}), status
 
+
 @app.route('/delete/room_availability', methods=['POST'])
 def delete_room_availability():
     data = request.json
@@ -294,7 +311,8 @@ def delete_room_availability():
       AND (available_begin = %s OR %s IS NULL)
       AND (available_end = %s OR %s IS NULL)
     """
-    params = (room_id, room_id, available_date, available_date, available_begin, available_begin, available_end, available_end)
+    params = (
+    room_id, room_id, available_date, available_date, available_begin, available_begin, available_end, available_end)
     result, status = delete_record(query, params)
     return jsonify({"message": result}), status
 
@@ -317,6 +335,7 @@ def delete_approvals():
     result, status = delete_record(query, params)
     return jsonify({"message": result}), status
 
+
 @app.route('/delete/notifications', methods=['POST'])
 def delete_notifications():
     data = request.json
@@ -331,9 +350,11 @@ def delete_notifications():
       AND (notification_type = %s OR %s IS NULL)
       AND (status = %s OR %s IS NULL)
     """
-    params = (notification_id, notification_id, user_id, user_id, notification_type, notification_type, status_val, status_val)
+    params = (
+    notification_id, notification_id, user_id, user_id, notification_type, notification_type, status_val, status_val)
     result, status = delete_record(query, params)
     return jsonify({"message": result}), status
+
 
 @app.route('/delete/reports', methods=['POST'])
 def delete_reports():
@@ -351,6 +372,7 @@ def delete_reports():
     result, status = delete_record(query, params)
     return jsonify({"message": result}), status
 
+
 @app.route('/delete/notifications_by_user', methods=['POST'])
 def delete_notifications_by_user():
     data = request.json
@@ -360,6 +382,7 @@ def delete_notifications_by_user():
     result, status = delete_record(query, params)
     return jsonify({"message": result}), status
 
+
 @app.route('/delete/approvals_by_booking', methods=['POST'])
 def delete_approvals_by_booking():
     data = request.json
@@ -368,6 +391,7 @@ def delete_approvals_by_booking():
     params = (booking_id,)
     result, status = delete_record(query, params)
     return jsonify({"message": result}), status
+
 
 @app.route('/delete/room_availability_by_room', methods=['POST'])
 def delete_room_availability_by_room():
@@ -389,7 +413,7 @@ def delete_trusted_user():
     if not conn:
         return jsonify({"status": "error", "error": "Database connection failed"}), 500
     try:
-        cursor = conn.cursor(dictionary=True,buffered=True)
+        cursor = conn.cursor(dictionary=True, buffered=True)
         # 检查记录是否存在
         check_query = "SELECT * FROM RoomTrustedUsers WHERE room_id = %s AND user_id = %s"
         cursor.execute(check_query, (room_id, user_id))
@@ -529,6 +553,7 @@ def search_rooms():
             cursor.close()
         if 'conn' in locals():
             conn.close()
+
 
 @app.route('/bookings', methods=['GET'])
 def get_all_bookings():
@@ -692,8 +717,6 @@ def get_Finished_Workflow_bookings():
             conn.close()
 
 
-
-
 @app.route('/get-blacklist', methods=['GET'])
 def get_blacklist():
     try:
@@ -752,8 +775,6 @@ def get_blacklist():
             cursor.close()
         if 'conn' in locals():
             conn.close()
-
-
 
 
 @app.route('/get_room_trusted_users', methods=['GET'])
@@ -1027,7 +1048,6 @@ def cancel_booking(booking_id):
             conn.close()
 
 
-
 # ---------------------------- insert ----------------------------
 
 @app.route('/insert_booking', methods=['POST'])
@@ -1152,6 +1172,7 @@ def insert_booking_with_reason():
         if conn:
             conn.close()
 
+
 @app.route('/insert_room', methods=['POST'])
 def insert_room():
     data = request.get_json()
@@ -1177,7 +1198,6 @@ def insert_room():
     finally:
         if conn:
             conn.close()
-
 
 
 @app.route('/insert-blacklist', methods=['POST'])
@@ -1300,7 +1320,8 @@ def insert_trusted_user():
         cursor.execute(check_query, (room_id, user_id))
         existing = cursor.fetchone()
         if existing:
-            return jsonify({"status": "error", "error": "The user is already in the trusted user list for this room."}), 400
+            return jsonify(
+                {"status": "error", "error": "The user is already in the trusted user list for this room."}), 400
 
         # 如果不存在则执行插入操作
         query = """

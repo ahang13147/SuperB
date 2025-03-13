@@ -1,11 +1,12 @@
-// 模拟数据库返回的预订数据
+
 let bookings = [];
 
-// 动态生成审批卡片
+// Dynamically generate approval cards
 function renderApprovalCards() {
   const container = document.querySelector('.approvals-container');
-  container.innerHTML = ''; // 清空现有内容
+  container.innerHTML = ''; // Clear existing content
 
+  
   if (!Array.isArray(bookings)) {
     console.error('bookings is not an array:', bookings);
     bookings = [];
@@ -21,7 +22,7 @@ function renderApprovalCards() {
     card.className = `approval-card ${booking.status === 'pending' ? '' : 'reviewed'}`;
     card.dataset.reservationId = booking.booking_id;
 
-    // 卡片 HTML 结构
+    // Card HTML structure
     card.innerHTML = `
       <div class="reservation-info"><label>Booking ID:</label> <span>${booking.booking_id}</span></div>
       <div class="reservation-info"><label>User Name:</label> <span>${booking.user_name}</span></div>
@@ -40,18 +41,19 @@ function renderApprovalCards() {
     container.appendChild(card);
   });
 
-  // 重新绑定按钮事件
+
+  // Rebind button event
   bindButtonEvents();
   handleReasonOverflow();
 }
 
 
-// 检测 Reason 文本是否超出，并添加省略号
+// Detects if the Reason text is exceeded and adds an ellipsis
 function handleReasonOverflow() {
   document.querySelectorAll('.reason-text').forEach(span => {
     let reason = span.innerText.trim();
 
-    // 先检查是否超出容器
+    // Check whether the container is exceeded first
     if (span.scrollHeight > span.clientHeight || span.scrollWidth > span.clientWidth) {
       let ellipsis = document.createElement("span");
       ellipsis.classList.add("ellipsis");
@@ -61,32 +63,33 @@ function handleReasonOverflow() {
       ellipsis.style.fontWeight = "bold";
       ellipsis.style.marginLeft = "5px";
 
-      // 点击 `...` 显示完整内容
+      // Click on '... 'Show the full content
       ellipsis.addEventListener("click", function (event) {
-        event.stopPropagation(); // 阻止冒泡，防止误触
+        event.stopPropagation(); // Prevent bubbling, prevent miscontact
         showFullText(reason);
       });
 
-      span.innerHTML = reason.substring(0, 50) + " "; // 只显示前50字符
+      span.innerHTML = reason.substring(0, 50) + " "; 
       span.appendChild(ellipsis);
     }
   });
 }
 
-// 显示完整文本（可替换为 Modal）
+// Display full text (can be replaced with Modal)
 function showFullText(fullText) {
-  alert(fullText); // 你可以换成自定义 Modal
+  alert(fullText); // 
 }
 
-// 处理审批操作
+// Process approval operation
 function handleApproval(action, card) {
   const bookingId = card.dataset.reservationId;
+
   const newStatus = action.toLowerCase();
 
   console.log(`Attempting to ${action} booking ID: ${bookingId}`);
 
   fetch(`http://127.0.0.1:5000/update-booking-status/${bookingId}`, {
-    method: 'PUT', // 或 'PUT'，根据后端支持的方法
+    method: 'PUT', 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status: newStatus })
   })
@@ -97,13 +100,13 @@ function handleApproval(action, card) {
     .then(updatedBooking => {
       console.log('Updated booking:', updatedBooking);
 
-      // 更新本地数据
+      // Update local data
       const index = bookings.findIndex(b => b.booking_id === bookingId);
       if (index !== -1) {
-        bookings[index] = updatedBooking; // 替换整个对象
+        bookings[index] = updatedBooking; // Replace entire object
       }
 
-      // 根据当前标签页重新加载数据
+      // Reload the data based on the current TAB
       const activeTab = document.querySelector('.approval-tabs .tab.active');
       if (activeTab.dataset.tab === 'pending') {
         fetchPendingBookings();
@@ -115,17 +118,18 @@ function handleApproval(action, card) {
     })
     .catch(error => {
       console.error('Error:', error);
-      alert('操作失败，请稍后重试');
+      alert('The operation failed. Please try again later');
     });
 }
 
 
 
-// 绑定按钮事件
+// Bind button event
 function bindButtonEvents() {
   document.querySelectorAll('.accept-btn, .reject-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const action = btn.classList.contains('accept-btn') ? 'Approved' : 'Rejected';
+
       const card = btn.closest('.approval-card');
       handleApproval(action, card);
     });
@@ -133,7 +137,7 @@ function bindButtonEvents() {
 }
 
 
-// 获取已完成的工作流预订
+//Get a completed workflow reservation
 function fetchFinishedBookings() {
   fetch('http://127.0.0.1:5000/finished-workflow-bookings')
     .then(response => {
@@ -142,7 +146,7 @@ function fetchFinishedBookings() {
     })
     .then(data => {
       if (data && Array.isArray(data.bookings)) {
-        bookings = data.bookings.filter(b => b.status !== 'pending'); // 确保只显示已审批数据
+        bookings = data.bookings.filter(b => b.status !== 'pending'); // Ensure that only approved data is displayed
       } else {
         console.error('Invalid data format:', data);
         bookings = [];
@@ -157,7 +161,7 @@ function fetchFinishedBookings() {
 }
 
 
-// 获取待处理的预订
+// Get a pending reservation
 function fetchPendingBookings() {
   fetch('http://127.0.0.1:5000/pending-bookings')
     .then(response => {
@@ -167,30 +171,32 @@ function fetchPendingBookings() {
       return response.json();
     })
     .then(data => {
-      // 确保 data.bookings 是一个数组
+      // Make sure that data.bookings is an array
       if (data && Array.isArray(data.bookings)) {
-        bookings = data.bookings; // 提取 bookings 数组
+        bookings = data.bookings; 
       } else {
         console.error('Invalid data format:', data);
-        bookings = []; // 设置为空数组，避免错误
+        bookings = []; // Set to an empty array to avoid errors
       }
       renderApprovalCards();
     })
     .catch(error => {
       console.error('Error fetching pending bookings:', error);
-      bookings = []; // 设置为空数组，避免错误
-      renderApprovalCards(); // 即使出错，也尝试渲染空数据
+      bookings = []; 
+      renderApprovalCards(); // Even if something goes wrong, try to render empty data
     });
 }
 
-// 初始化标签切换功能
+// Initializes the label switching function
 function initTabs() {
   const tabs = document.querySelectorAll('.approval-tabs .tab');
 
+  
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       tabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
+      
 
       if (tab.dataset.tab === 'pending') {
         fetchPendingBookings();
@@ -202,12 +208,13 @@ function initTabs() {
     });
   });
 
-  // 默认加载 pending 预订
+  //load pending 
   fetchPendingBookings();
 }
 
 
-// 初始化页面
+//initialization GUI
 document.addEventListener('DOMContentLoaded', () => {
+
   initTabs();
 });

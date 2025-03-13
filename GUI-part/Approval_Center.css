@@ -87,7 +87,7 @@ header h1 {
   flex: 1 1 18%;
   padding: 5px 10px;
   display: flex;
-  align-items: flex-start; /* 顶部对齐 */
+  align-items: flex-start; /* Top alignment */
 }
 
 .reservation-info label {
@@ -102,14 +102,14 @@ header h1 {
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 2; /* 最多显示两行 */
+  -webkit-line-clamp: 2; /* Display a maximum of two lines */
   -webkit-box-orient: vertical;
   position: relative;
   cursor: pointer;
 }
 
 .reservation-info .tooltip {
-  display: none; /* 默认隐藏 */
+  display: none; /* Default hiding */
   position: absolute;
   max-width: 200px;
   background-color: rgba(0, 0, 0, 0.8);
@@ -178,7 +178,7 @@ header h1 {
   }
 
   .reservation-info span {
-    -webkit-line-clamp: 3; /* 小屏幕上显示更多行 */
+    -webkit-line-clamp: 3;
   }
 
   .approval-actions {
