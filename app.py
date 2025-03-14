@@ -225,16 +225,59 @@ def my_notification():
     return render_template('my_notification.html')
 
 
-
 @app.route('/error')
 def error_page():
     return render_template('error.html')  # 确保 templates/error.html 文件存在
 
 
-# 路由：渲染 approval_center.html
-@app.route('/approval_center')
-def approval_center():
-    return render_template(' Approval_Center.html')
+@app.route('/adminSidebar')
+def adminSidebar():
+    return render_template('adminSidebar.html')
+
+
+@app.route('/Approval_Center')
+def Approval_Center():
+    return render_template('Approval_Center.html')
+
+
+@app.route('/blacklist')
+def blacklist():
+    return render_template('blacklist.html')
+
+
+@app.route('/booking_centre_admin')
+def booking_centre_admin():
+    return render_template('booking_centre_admin.html')
+
+
+@app.route('/cancel_reservation')
+def cancel_reservation():
+    return render_template('cancel_reservation.html')
+
+
+@app.route('/my_profile_admin')
+def my_profile_admin():
+    return render_template('my_profile_admin.html')
+
+
+@app.route('/my_reservation_admin')
+def my_reservation_admin():
+    return render_template('my_reservation_admin.html')
+
+
+@app.route('/notice_admin')
+def notice_admin():
+    return render_template('notice_admin.html')
+
+
+@app.route('/room_management')
+def room_management():
+    return render_template('room_management.html')
+
+
+@app.route('/trust_list')
+def trust_list():
+    return render_template('trust_list.html')
 
 
 # 路由：渲染 login.html
@@ -284,8 +327,8 @@ def profile():
 
             # 根据角色重定向
             if user_role == 'admin':
-                print("User is admin, redirecting to approval_center")
-                return redirect(url_for('approval_center'))
+                print("User is admin, redirecting to booking_centre_admin")
+                return redirect(url_for('booking_centre_admin'))
             else:
                 print("User is not admin, redirecting to booking_centre")
                 return redirect(url_for('booking_centre'))
