@@ -1,79 +1,78 @@
-import msal
-import requests
 import datetime
-import pytz  # 用于处理时区
+import win32com.client
+import threading
+import pythoncom
 
-# Azure 应用注册信息
-CLIENT_ID = 'a062851f-35e7-4b1d-aeb4-bd0e3f3726fa'
-CLIENT_SECRET = 'k-z8Q~DWi8SOR2m..XcdM6Yjy8HFbiIwHLXX1bXC'
-TENANT_ID = '52ff27b4-1ebf-4510-a74f-8940dbf42624'
-SCOPES = ['https://graph.microsoft.com/.default']  # 修改此行
-
-# 获取OAuth2令牌
-def get_access_token():
-    authority = f'https://login.microsoftonline.com/{TENANT_ID}'
-    app = msal.ConfidentialClientApplication(
-        CLIENT_ID, authority=authority, client_credential=CLIENT_SECRET
-    )
-
-    result = app.acquire_token_for_client(scopes=SCOPES)
-
-    if 'access_token' in result:
-        return result['access_token']
-    else:
-        print('Error getting token:', result.get('error_description'))
-        return None
+from icalendar import Calendar, Event
 
 
-# 创建活动
-def create_event(access_token, user_id, start_time, end_time, location, description):
-    url = f'https://graph.microsoft.com/v1.0/users/{user_id}/events'  # 修改此行，使用特定用户的 ID
+# 创建ICS事件数据
+def create_ics():
+    # 创建一个空的日历对象
+    cal = Calendar()
 
-    headers = {
-        'Authorization': f'Bearer {access_token}',
-        'Content-Type': 'application/json'
-    }
+    # 创建一个新的事件
+    event = Event()
 
-    event_data = {
-        "subject": "Sample Event",  # 活动标题
-        "body": {
-            "contentType": "HTML",
-            "content": description  # 活动描述
-        },
-        "start": {
-            "dateTime": start_time,
-            "timeZone": "UTC"  # 确保时区是UTC
-        },
-        "end": {
-            "dateTime": end_time,
-            "timeZone": "UTC"  # 确保时区是UTC
-        },
-        "location": {
-            "displayName": location  # 活动地点
-        }
-    }
+    # 设置事件的基本属性
+    event.add('summary', '会议')
+    event.add('dtstart', datetime.datetime(2025, 3, 15, 14, 30))  # 开始时间
+    event.add('dtend', datetime.datetime(2025, 3, 15, 16, 30))  # 结束时间
 
-    response = requests.post(url, headers=headers, json=event_data)
+    # 将事件添加到日历中
+    cal.add_component(event)
 
-    if response.status_code == 201:
-        print('Event created successfully!')
-    else:
-        print('Error creating event:', response.json())
+    # 返回生成的icalendar数据
+    return cal.to_ical()
 
 
-# 主程序
-if __name__ == '__main__':
-    access_token = get_access_token()
+# 导入ICS数据到Outlook
+def import_ics_to_outlook(ics_data):
+    try:
+        # 初始化COM
+        pythoncom.CoInitialize()
 
-    if access_token:
-        # 设置活动的开始时间、结束时间、地点和描述
-        tz = pytz.timezone('UTC')  # 设置时区为 UTC
-        start_time = datetime.datetime(2025, 3, 15, 10, 0, 0, 0).replace(tzinfo=tz).isoformat()  # 格式化时间
-        end_time = datetime.datetime(2025, 3, 15, 11, 0, 0, 0).replace(tzinfo=tz).isoformat()  # 格式化时间
-        location = "Meeting Room A"
-        description = "This is a detailed description of the event."
+        # 获取Outlook应用对象
+        outlook = win32com.client.Dispatch("Outlook.Application")
+        namespace = outlook.GetNamespace("MAPI")
 
-        # 使用特定用户的 user_id
-        user_id = '2542881@dundee.ac.uk'  # 替换为实际的用户 ID 或邮箱地址
+        # 通过Outlook的日历导入ICS数据
+        calendar_folder = namespace.GetDefaultFolder(9)  # 9代表日历文件夹
+        calendar_item = calendar_folder.Items.Add()
 
-        create_event(access_token, user_id, start_time, end_time, location, description)
+        # 设置日历项的属性
+        calendar_item.Subject = "会议"
+        calendar_item.Start = datetime.datetime(2025, 3, 15, 14, 30)
+        calendar_item.End = datetime.datetime(2025, 3, 15, 16, 30)
+
+        calendar_item.Save()  # 保存事件到日历
+        print("成功将ICS事件导入Outlook日历！")
+    except Exception as e:
+        print(f"导入出错：{e}")
+    finally:
+        # 取消COM初始化
+        pythoncom.CoUninitialize()
+
+
+# 多线程操作
+def thread_function():
+    # 创建ICS事件数据
+    ics_data = create_ics()
+
+    # 将ICS数据导入到Outlook
+    import_ics_to_outlook(ics_data)
+
+
+# 创建并启动一个新的线程
+def main():
+    print("主线程开始执行...")
+    thread = threading.Thread(target=thread_function)
+    thread.start()  # 启动线程
+    thread.join()  # 等待线程完成
+
+    print("主线程完成!")
+
+
+# 运行主程序
+if __name__ == "__main__":
+    main()

@@ -22,36 +22,31 @@ def get_db_connection():
 def get_user():
     # Get the JSON data from the incoming request
     data = request.get_json()
-    name = data.get('name')  # Extract the 'name' value from the JSON data
     email = data.get('email')  # Extract the 'email' value from the JSON data
 
-    # If either name or email is not provided, return an error response
-    if not name or not email:
-        return jsonify({"error": "Name and email are required"}), 400
+    # If email is not provided, return an error response
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
 
-    # Query the database to find the user by name and email
+    # Query the database to find the user by email
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
     cursor.execute("""
-        SELECT user_id, username, email, role 
+        SELECT role 
         FROM Users 
-        WHERE username = %s AND email = %s
-    """, (name, email))
+        WHERE email = %s
+    """, (email,))
 
     user = cursor.fetchone()  # Fetch a single result from the query
     connection.close()  # Close the database connection
 
-    # If a user is found, return the user information in JSON format
+    # If a user is found, return the user's role
     if user:
-        return jsonify({
-            'name': user['username'],
-            'email': user['email'],
-            'id': user['user_id'],
-            'role': user['role']
-        })
+        return jsonify({'role': user['role']})
     else:
         # If no user is found, return an error response
         return jsonify({"error": "User not found"}), 404
+
 
 # Run the Flask application with debug mode enabled
 if __name__ == '__main__':

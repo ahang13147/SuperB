@@ -4,3 +4,12 @@ beautifulsoup4>=4.9.0
 mysql-connector-python==8.0.11
 flask>=2.0.0
 msal>=1.31.1
+
+PyMySQL~=1.1.1
+mysql~=0.0.3
+PyYAML~=6.0
+bs4~=0.0.2
+pytz~=2023.4
+PyJWT~=2.8.0
+crypto~=1.4.1
+azure-core~=1.32.0

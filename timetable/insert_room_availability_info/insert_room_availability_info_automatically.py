@@ -6,7 +6,11 @@ import time
 import mysql.connector
 from datetime import datetime, timedelta
 from flask import Flask, jsonify
+from flask_cors import CORS
 
+# 在创建 Flask 应用后启用 CORS
+app = Flask(__name__)
+CORS(app)
 app = Flask(__name__)
 
 # ============================ 数据库连接配置 ============================
@@ -124,7 +128,7 @@ def crawl_data():
                     "zc": "1",
                     "xnxq01id": semester_id,
                     "xx04mc": "",
-                    "sfFD": "1"
+                    "sfFD": "3"
                 }
                 response_schedule = session.post(schedule_url, data=schedule_data, headers=headers)
                 if response_schedule.status_code != 200 or not response_schedule.text.strip():
@@ -277,20 +281,30 @@ def update_room_availability(formatted_schedule):
 
 # ============================ 主调度函数 ============================
 def main_scheduler():
-    # 1. 爬取数据
-    class_usage = crawl_data()
-    # 2. 整合数据到二维数组
-    room_2d_array = integrate_schedule(class_usage)
-    # 3. 拆分时间段，去除中括号
-    new_room_2d_array = split_time_slots(room_2d_array)
-    print(new_room_2d_array)  # 输出检查
-    # 4. 格式化数据，生成标准格式列表
-    formatted_schedule = format_schedule_data(new_room_2d_array)
-    for entry in formatted_schedule:
-        print(entry)
-    # 5. 更新数据库
-    update_room_availability(formatted_schedule)
-    return "爬取并更新数据库成功！"
+    try:
+        # 1. 爬取数据
+        class_usage = crawl_data()
+        print("Class usage:", class_usage)
+
+        # 2. 整合数据到二维数组
+        room_2d_array = integrate_schedule(class_usage)
+        print("Room schedule array:", room_2d_array)
+
+        # 3. 拆分时间段，去除中括号
+        new_room_2d_array = split_time_slots(room_2d_array)
+        print("New room schedule array:", new_room_2d_array)
+
+        # 4. 格式化数据，生成标准格式列表
+        formatted_schedule = format_schedule_data(new_room_2d_array)
+        print("Formatted schedule:", formatted_schedule)
+
+        # 5. 更新数据库
+        update_room_availability(formatted_schedule)
+
+        return "爬取并更新数据库成功！"
+    except Exception as e:
+        print(f"Error occurred: {e}")  # 输出错误信息
+        raise
 
 
 # ============================ Flask API 端点 ============================
@@ -300,6 +314,7 @@ def run_scheduler():
         result = main_scheduler()
         return jsonify({"message": result}), 200
     except Exception as e:
+        print(f"Error occurred: {e}")  # 输出错误到控制台
         return jsonify({"error": str(e)}), 500
 
 
