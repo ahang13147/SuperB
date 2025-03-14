@@ -780,6 +780,31 @@ def get_room_trusted_users():
             conn.close()
 
 
+@app.route('/get_user', methods=['POST'])
+def get_user():
+    data = request.get_json()
+    if not data or 'user_id' not in data:
+        return jsonify({"status": "error", "error": "Missing user_id parameter"}), 400
+
+    user_id = data['user_id']
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"status": "error", "error": "Database connection failed"}), 500
+    try:
+        cursor = conn.cursor(dictionary=True)
+        query = "SELECT user_id, username, email, phone_number, role FROM Users WHERE user_id = %s"
+        cursor.execute(query, (user_id,))
+        user = cursor.fetchone()
+        if not user:
+            return jsonify({"status": "error", "error": "User not found"}), 404
+        return jsonify({"status": "success", "data": user})
+    except mysql.connector.Error as err:
+        conn.rollback()
+        return jsonify({"status": "error", "error": str(err)}), 400
+    finally:
+        if conn:
+            conn.close()
+
 # ---------------------------- update ----------------------------
 
 @app.route('/update-room/<int:room_id>', methods=['PUT'])
@@ -1027,6 +1052,68 @@ def cancel_booking(booking_id):
             conn.close()
 
 
+@app.route('/update_user', methods=['POST'])
+def update_user():
+    data = request.get_json()
+    if not data or 'user_id' not in data:
+        return jsonify({"status": "error", "error": "Missing user_id parameter"}), 400
+
+    user_id = data['user_id']
+
+    # 不能更新 user_id，所以将其从 data 中删除（如果存在其他更新项时也防止意外更改）
+    if 'user_id' in data:
+        data.pop('user_id')
+
+    # 提取允许更新的字段
+    update_fields = {}
+    for field in ['username', 'email', 'phone_number', 'role']:
+        if field in data:
+            update_fields[field] = data[field]
+
+    if not update_fields:
+        return jsonify({"status": "error", "error": "No update information provided"}), 400
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"status": "error", "error": "Database connection failed"}), 500
+
+    try:
+        cursor = conn.cursor(dictionary=True)
+        # 先查询当前用户信息
+        query_select = "SELECT username, email, phone_number, role FROM Users WHERE user_id = %s"
+        cursor.execute(query_select, (user_id,))
+        current_user = cursor.fetchone()
+        if not current_user:
+            return jsonify({"status": "error", "error": "User not found"}), 404
+
+        # 检查更新字段和当前数据的区别
+        fields_to_update = {}
+        for key, new_value in update_fields.items():
+            if current_user[key] != new_value:
+                fields_to_update[key] = new_value
+
+        # 如果没有实际变化，提示用户信息未更新
+        if not fields_to_update:
+            return jsonify({"status": "success", "message": "No changes detected, data remains the same"}), 200
+
+        # 构造动态 SQL 更新语句
+        update_clause = ", ".join([f"{field} = %s" for field in fields_to_update.keys()])
+        update_values = list(fields_to_update.values())
+        update_values.append(user_id)
+
+        query_update = f"UPDATE Users SET {update_clause} WHERE user_id = %s"
+        cursor.execute(query_update, tuple(update_values))
+        conn.commit()
+
+        return jsonify({"status": "success", "message": "User updated successfully!"})
+    except mysql.connector.Error as err:
+        conn.rollback()
+        return jsonify({"status": "error", "error": str(err)}), 400
+    finally:
+        if conn:
+            conn.close()
+
+
 
 # ---------------------------- insert ----------------------------
 
@@ -1038,7 +1125,7 @@ def insert_booking():
     booking_date = data.get('booking_date')
     start_time = data.get('start_time') + ":00"
     end_time = data.get('end_time') + ":00"
-    reason = data.get('reason', ' ')  # 默认为空字符串
+    reason = data.get('reason', '')  # 默认为空字符串
 
     conn = get_db_connection()
     if not conn:

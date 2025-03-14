@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         Object.keys(requestData).forEach(key => requestData[key] === undefined && delete requestData[key]);
 
         try {
-            const response = await fetch('http://localhost:5000/search-rooms', {
+            const response = await fetch('http://localhost:8000/search-rooms', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestData)
