@@ -41,4 +41,4 @@ def create_event(subject, start, end, busy, location='', reminder_minutes=15):
     print("事件创建并显示完成!")
 
 if __name__ == '__main__':
-    create_event("给客户回电话", "2025-03-15 23:00", "2025-03-15 23:30", 0, "Teams", reminder_minutes=10)
+    create_event("A Good Event", "2025-03-15 11:00", "2025-03-15 11:30", 0, "Teams", reminder_minutes=10)
