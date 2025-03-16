@@ -305,7 +305,7 @@ def profile():
         print(f"Microsoft API error: {str(e)}")
         return redirect(url_for('error_page'))
 
-    # 获取用户 email
+    # get email
     user_email = user_info.get('mail') or user_info.get('userPrincipalName')
     if not user_email:
         print("No email or userPrincipalName in Microsoft response")
@@ -325,7 +325,7 @@ def profile():
             user_role = role_data.get('role', 'user')
             session['user_role'] = user_role
 
-            # 根据角色重定向
+            # redirect the URL by the role of the user
             if user_role == 'admin':
                 print("User is admin, redirecting to booking_centre_admin")
                 return redirect(url_for('booking_centre_admin'))
@@ -1270,11 +1270,11 @@ def update_user():
 
     user_id = data['user_id']
 
-    # 不能更新 user_id，所以将其从 data 中删除（如果存在其他更新项时也防止意外更改）
+    # user_id cannot be updated, so delete it from data (also prevent accidental changes if there are other updates)
     if 'user_id' in data:
         data.pop('user_id')
 
-    # 提取允许更新的字段
+    # get the fields that are allow to update
     update_fields = {}
     for field in ['username', 'email', 'phone_number', 'role']:
         if field in data:
