@@ -3,13 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="../static/css/user_profile.css">
-  <link rel="stylesheet" href="../static/css/sidebar.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_profile.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <title>My Profile</title>
   <script src="{{ url_for('static', filename='js/user_profile.js') }}"></script>
 </head>
 <body>
+  <div class="hamburger-menu">
+      <i class="fas fa-bars"></i>
+  </div>
   <div class="main-container">
     <!-- sidebar -->
     <div class="sidebar">
@@ -26,9 +29,12 @@
         Notifications
       </a>
       <a class="nav-item active" href="{{ url_for('user_profile') }}">
-        <i class="fas fa-user-circle nav-icon"></i>
-        My Profile
+             <i class="fas fa-user-circle nav-icon"></i>
+             My Profile
       </a>
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+        </div>
     </div>
 
     <!-- content area-->
