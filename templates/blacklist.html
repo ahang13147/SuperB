@@ -5,32 +5,81 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blacklist Management</title>
     <link rel="stylesheet" href="../static/css/blacklist.css">
+    <link rel="stylesheet" href="../static/css/sidebar.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-  <script src="{{ url_for('static', filename='js/adminSidebar.js') }}"></script>
 </head>
 
 <body>
+<div class="hamburger-menu">
+        <i class="fas fa-bars"></i>
+</div>
     <div class="main-container">
+
+         <div class="sidebar">
+
+          <a class="nav-item" href="{{ url_for('booking_centre_admin') }}">
+            <i class="fas fa-calendar-alt nav-icon"></i>
+            Booking Center
+          </a>
+          <a class="nav-item" href="{{ url_for('my_reservation_admin') }}">
+            <i class="fas fa-list-ul nav-icon"></i>
+            My Bookings
+          </a>
+          <a class="nav-item" href="{{ url_for('Approval_Center') }}">
+            <i class="fas fa-check-circle nav-icon"></i>
+            Approval Management
+          </a>
+          <a class="nav-item" href="{{ url_for('cancel_reservation') }}">
+            <i class="fas fa-calendar-times nav-icon"></i>
+            Cancel Reservation
+          </a>
+          <a class="nav-item" href="{{ url_for('room_management') }}">
+            <i class="fas fa-door-open nav-icon"></i>
+            Room Management
+          </a>
+          <a class="nav-item" href="{{ url_for('notice_admin') }}">
+            <i class="fas fa-bell nav-icon"></i>
+            Notifications
+          </a>
+          <a class="nav-item active" href="{{ url_for('blacklist') }}">
+            <i class="fas fa-ban nav-icon"></i>
+            Black List
+          </a>
+          <a class="nav-item" href="{{ url_for('trust_list') }}">
+            <i class="fas fa-shield-alt nav-icon"></i>
+            Trust List
+          </a>
+          <a class="nav-item" href="{{ url_for('my_profile_admin') }}">
+            <i class="fas fa-user-circle nav-icon"></i>
+            My Profile
+          </a>
+             <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+            </div>
+        </div>
 
         <h1>Blacklist Management System</h1>
 
-        <div class="table-wrapper">
-            <table id="blacklistTable">
-                <thead>
-                    <tr>
-                        <th>Username</th>
-                        <th>User ID</th>
-                        <th>Start Time</th>
-                        <th>End Time</th>
-                        <th>Reason</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- The data is loaded dynamically via JavaScript -->
-                </tbody>
-            </table>
+        <!-- Wrap the table in a mobile card container -->
+        <div class="mobile-card-container">
+            <div class="table-wrapper">
+                <table id="blacklistTable">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>User ID</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Reason</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- The data is loaded dynamically via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="add-section">
@@ -63,200 +112,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script>
-        // Initializes the time selector
-        const startDatePicker = flatpickr("#startDate", {
-            dateFormat: "Y-m-d",
-            onChange: function(selectedDates) {
-
-                endDatePicker.set('minDate', selectedDates[0] || new Date());
-                validateTimes();
-            }
-        });
-
-        const startTimePicker = flatpickr("#startTime", {
-            enableTime: true,
-            noCalendar: true,
-            dateFormat: "H:i",
-            time_24hr: true,
-
-            onChange: function() {
-                validateTimes();
-            }
-        });
-
-        const endDatePicker = flatpickr("#endDate", {
-            dateFormat: "Y-m-d",
-
-            onChange: function() {
-
-                validateTimes();
-            }
-        });
-
-        const endTimePicker = flatpickr("#endTime", {
-            enableTime: true,
-            noCalendar: true,
-            dateFormat: "H:i",
-            time_24hr: true,
-
-            onChange: function() {
-
-                validateTimes();
-            }
-        });
-
-        // proof time
-        function validateTimes() {
-            const startDate = document.getElementById('startDate').value;
-            const startTime = document.getElementById('startTime').value;
-            const endDate = document.getElementById('endDate').value;
-            const endTime = document.getElementById('endTime').value;
-            const errorElement = document.getElementById('timeError');
-
-            if (startDate && startTime && endDate && endTime) {
-                const startDateTime = new Date(`${startDate}T${startTime}`);
-                const endDateTime = new Date(`${endDate}T${endTime}`);
-
-                if (endDateTime <= startDateTime) {
-                    errorElement.style.display = 'block';
-                    document.getElementById('endDate').classList.add('input-error');
-                    document.getElementById('endTime').classList.add('input-error');
-                    return false;
-                }
-            }
-
-            errorElement.style.display = 'none';
-            document.getElementById('endDate').classList.remove('input-error');
-            document.getElementById('endTime').classList.remove('input-error');
-            return true;
-        }
-
-        // Add blacklist
-        async function addToBlacklist() {
-            if (!validateTimes()) {
-                alert('The decapsulating time must be later than the masking time！');
-                return;
-            }
-
-            const userId = document.getElementById('userId').value;
-            const startDate = document.getElementById('startDate').value;
-            const startTime = document.getElementById('startTime').value;
-            const endDate = document.getElementById('endDate').value;
-            const endTime = document.getElementById('endTime').value;
-            const reason = document.getElementById('reason').value;
-
-            if (userId && startDate && startTime && endDate && endTime && reason) {
-                const requestBody = {
-                    user_id: parseInt(userId, 10),
-                    added_by: 1, // Assume that the current user ID is 1
-                    start_date: startDate,
-                    start_time: startTime,
-                    end_date: endDate,
-                    end_time: endTime,
-                    reason: reason
-                };
-
-                try {
-                    const response = await fetch('http://127.0.0.1:8000/insert-blacklist', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(requestBody),
-                    });
-
-                    if (response.ok) {
-                        alert('successfully added！');
-                        loadBlacklist();
-                    } else {
-                        const errorData = await response.json();
-                        alert(`fail to add：${errorData.message}`);
-                    }
-                } catch (error) {
-                    console.error('Request failed：', error);
-                    alert('Network error, please try again later');
-                }
-
-                // Clear input field
-                document.getElementById('userId').value = '';
-                document.getElementById('startDate').value = '';
-                document.getElementById('startTime').value = '';
-                document.getElementById('endDate').value = '';
-                document.getElementById('endTime').value = '';
-                document.getElementById('reason').value = '';
-            } else {
-                alert('Please fill in all required fields (User ID, start date, start time, end date, end time, reason)');
-            }
-        }
-
-
-        // Remove blacklist
-        async function removeFromBlacklist(button, blacklistId) {
-            if (confirm('Are you sure you want to unblock this user？')) {
-                try {
-                    const response = await fetch(`/api/remove-from-blacklist/${blacklistId}`, {
-                        method: 'DELETE',
-                    });
-
-                    if (response.ok) {
-                        alert('Successfully unsealed！');
-                        loadBlacklist();
-                    } else {
-                        const errorData = await response.json();
-                        alert(`Unseal failure：${errorData.message}`);
-                    }
-                } catch (error) {
-                    console.error('Request failed：', error);
-                    alert('Network error, please try again later.');
-                }
-            }
-        }
-
-
-        // Load blacklist data
-        async function loadBlacklist() {
-            try {
-                const response = await fetch('http://127.0.0.1:8000/get-blacklist');
-                if (response.ok) {
-                    const result = await response.json();
-                    renderBlacklist(result.blacklists);
-                }
-            } catch (error) {
-                console.error('Request failed：', error);
-            }
-        }
-
-        // Render blacklist table
-        function renderBlacklist(data) {
-            const tableBody = document.querySelector('#blacklistTable tbody');
-            tableBody.innerHTML = '';
-
-            data.forEach(user => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${user.username}</td>
-                    <td>${user.user_id}</td>
-                    <td class="time-cell">${user.start_date} ${user.start_time}</td>
-                    <td class="time-cell">${user.end_date} ${user.end_time}</td>
-                    <td title="${user.reason}">${user.reason}</td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="btn btn-danger" onclick="removeFromBlacklist(this, '${user.blacklist_id}')">
-                                <i class="fas fa-user-check"></i>
-                                Unban
-                            </button>
-                        </div>
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
-
-
-        // The data is initialized when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            loadBlacklist();
-        });
-
-    </script>
+    <script src="{{ url_for('static', filename='js/blacklist.js') }}"></script>
 </body>
 </html>

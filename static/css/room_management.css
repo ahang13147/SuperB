@@ -1,4 +1,3 @@
-
 * {
     box-sizing: border-box;
     margin: 0;
@@ -6,275 +5,284 @@
 }
 
 body {
-
     line-height: 1.6;
     padding: 20px;
     background-color: #f5f5f5;
 }
-.main-container {
-  display: flex;
-  min-height: 100vh;
-  padding-left: 200px; /* 新增：为侧边栏腾出空间 */
-  box-sizing: border-box; /* 确保padding不增加容器总宽度 */
-}
+
 .container {
     max-width: 1200px;
     margin: 0 auto;
 }
 
 .content-area {
-  flex: 1;
-  padding: 30px;
-  background-color: #f7f7f7;
+    flex: 1;
+    padding: 30px;
+    background-color: #f7f7f7;
 }
 
+h1 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 30px;
+    font-size: 2.5em;
+}
 
-        /* 主要内容区域 */
+.room-list-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    max-height: 600px;
+    overflow-y: auto;
+}
 
-        h1 {
-            text-align: center;
-            color: #2c3e50;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-        }
+.room-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
 
-        /* 房间管理样式 */
-        .room-list-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            max-height: 600px;
-            overflow-y: auto;
-        }
+.room-info div {
+    margin: 8px 0;
+    display: flex;
+    align-items: baseline;
+}
 
-        .room-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            background: #fff;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        }
+.room-info label {
+    min-width: 100px;
+    font-weight: 600;
+    color: #4a5568;
+}
 
-        .room-info div {
-            margin: 8px 0;
-            display: flex;
-            align-items: baseline;
-        }
+.room-actions {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
 
-        .room-info label {
-            min-width: 100px;
-            font-weight: 600;
-            color: #4a5568;
-        }
+button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
 
-        .room-actions {
-            display: flex;
-            gap: 10px;
-            flex-shrink: 0;
-        }
+.edit-btn {
+    background: #4299e1;
+    color: white;
+}
 
-        button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+.delete-btn {
+    background: #f56565;
+    color: white;
+}
 
-        .edit-btn {
-            background: #4299e1;
-            color: white;
-        }
+.add-room-form {
+    max-width: 1000px;
+    margin: 30px auto;
+    padding: 25px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
 
-        .delete-btn {
-            background: #f56565;
-            color: white;
-        }
+.add-room-form input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 1em;
+}
 
-        /* 添加表单样式 */
-        .add-room-form {
-            max-width: 1000px;
-            margin: 30px auto;
-            padding: 25px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
+.add-room-form button {
+    background: #48bb78;
+    color: white;
+    padding: 12px 24px;
+    width: 100%;
+}
 
-        .add-room-form input {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            font-size: 1em;
-        }
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
 
-        .add-room-form button {
-            background: #48bb78;
-            color: white;
-            padding: 12px 24px;
-            width: 100%;
-        }
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+}
 
-        /* 模态框样式 */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
+.success-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
 
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 500px;
-        }
+.success-modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
 
-        /* 成功提示弹窗样式 */
-        .success-modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
+.success-modal-content i {
+    color: #48bb78;
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
 
-        .success-modal-content i {
-            color: #48bb78;
-            font-size: 3rem;
-            margin-bottom: 20px;
-        }
+.success-modal-content h2 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
 
-        .success-modal-content h2 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-        }
+.success-modal-content button {
+    background: #48bb78;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 20px;
+    width: 100%;
+}
 
-        .success-modal-content button {
-            background: #48bb78;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 20px;
-            width: 100%;
-        }
+@media (max-width: 768px) {
+  body {
+    padding: 0 !important;
+     font-size: 14px;
+  }
 
-        /* 响应式设计 */
-        @media (max-width: 1024px) {
-            .content-area {
-                padding: 30px;
-            }
+    h1 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
 
-            .room-item {
-                flex-direction: column;
-                gap: 15px;
-            }
+    .room-item {
+        flex-direction: column;
+        padding: 15px;
+        margin-bottom: 12px;
+    }
 
-            .room-actions {
-                width: 100%;
-                justify-content: flex-end;
-            }
-        }
+    .room-info div {
+        flex-wrap: wrap;
+        margin: 6px 0;
+    }
 
-        @media (max-width: 768px) {
-            .main-container {
-                flex-direction: column;
-            }
+    .room-info label {
+        min-width: 80px;
+        font-size: 0.9em;
+        margin-bottom: 2px;
+    }
 
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-                padding: 20px;
-            }
+    .room-actions {
+        width: 100%;
+        margin-top: 12px;
+        justify-content: space-between;
+    }
 
-            .nav-item {
-                margin: 8px;
-                padding: 12px 15px;
-            }
+    .room-actions button {
+        flex: 1;
+        padding: 10px;
+        font-size: 0.9em;
+    }
 
-            .nav-icon {
-                margin-right: 10px;
-            }
+    .add-room-form {
+        margin: 20px auto;
+        padding: 15px;
+    }
 
-            .content-area {
-                padding: 25px;
-            }
+    .add-room-form input {
+        padding: 10px;
+        font-size: 0.95em;
+        margin: 8px 0;
+    }
 
-            h1 {
-                font-size: 2em;
-            }
-        }
+    .add-room-form button {
+        padding: 12px;
+        font-size: 1em;
+    }
 
-        @media (max-width: 480px) {
-            .content-area {
-                padding: 15px;
-            }
+    .modal-content {
+        width: 95%;
+        padding: 20px;
+    }
 
-            .room-info label {
-                min-width: 80px;
-                font-size: 0.9em;
-            }
+    .room-info div {
+        word-break: break-word;
+    }
 
-            .room-info div {
-                flex-direction: column;
-                align-items: flex-start;
-            }
+    h1 {
+        font-size: 1.8em;
+        margin-bottom: 20px;
+    }
 
-            button {
-                padding: 8px 12px;
-                font-size: 0.9em;
-            }
+    .add-room-form input {
+        width: 100%;
+        display: block;
+    }
 
-            .add-room-form {
-                padding: 20px;
-            }
+    .room-actions {
+        gap: 8px;
+    }
 
-            .modal-content {
-                padding: 20px;
-            }
-        }
+    .content-area {
+        width: 100vw !important;
+        margin-left: 0 !important;
+        overflow-x: hidden;
+    }
 
-        .mobile-menu {
-            display: none;
-            padding: 15px;
-            background: #2b5876;
-            color: white;
-            cursor: pointer;
-        }
+    html {
+        overflow-x: hidden;
+    }
+}
 
-        @media (max-width: 768px) {
-            .mobile-menu {
-                display: block;
-            }
+@media (max-width: 480px) {
+    .room-info label {
+        min-width: 70px;
+        font-size: 0.85em;
+    }
 
-            .sidebar {
-                position: fixed;
-                height: 100%;
-                left: -250px;
-                z-index: 1000;
-            }
+    .room-actions button {
+        font-size: 0.85em;
+        padding: 8px;
+    }
 
-            .sidebar.active {
-                left: 0;
-            }
-        }
+    .add-room-form {
+        margin: 15px auto;
+    }
+
+    h1 {
+        font-size: 1.6em;
+    }
+}
