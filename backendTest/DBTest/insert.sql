@@ -1,6 +1,5 @@
--- @version: 3/13/2025
+-- @version: 3/11/2025
 -- @author: Xin Yu, Siyan Guo, Zibang Nie
--- @editor: Guanhang Zhang
 -- @description: This SQL script creates a booking system database, which includes tables for Users, Rooms, Bookings, Approvals, Notifications, and Reports.
 -- It provides a structure to manage users, room bookings, approval processes, notifications, and report generation.
 -- ADD: new field of room
