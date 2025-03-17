@@ -1,4 +1,3 @@
-
 * {
     box-sizing: border-box;
     margin: 0;
@@ -6,34 +5,29 @@
 }
 
 body {
-
     line-height: 1.6;
     padding: 20px;
     background-color: #f5f5f5;
 }
-.main-container {
-  display: flex;
-  min-height: 100vh;
-  padding-left: 200px; /* 新增：为侧边栏腾出空间 */
-  box-sizing: border-box; /* 确保padding不增加容器总宽度 */
-}
+
 .container {
     max-width: 1200px;
     margin: 0 auto;
 }
 
 .content-area {
-  flex: 1;
-  padding: 30px;
-  background-color: #f7f7f7;
+    flex: 1;
+    padding: 30px;
+    background-color: #f7f7f7;
 }
 
-header h1 {
-  margin-bottom: 20px;
-  color: #2c3e50;
-  font-size: 28px;
-  font-weight: 600;
+h1 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 30px;
+    font-size: 2.5em;
 }
+
 
 .profile-container {
   background-color: #fff;
@@ -172,34 +166,64 @@ header h1 {
 }
 
 @media (max-width: 768px) {
-  .main-container {
-    flex-direction: column;
-  }
+    .modal-content h2 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        padding-bottom: 0.7rem;
+        border-bottom: 2px solid #3498db;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1.3rem !important;
+    }
+    h1 {
+        font-size: 24px;
+        margin-bottom: 20px;
+        padding: 0 10px;
+        line-height: 1.3;
+        white-space: nowrap;
+        text-align: center;
+        width: 100%;
+    }
 
-  .sidebar {
-    width: 100%;
-    height: auto;
-    padding: 15px;
-  }
+    .content-area {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 30px 0 15px !important;
+        display: flex !important;
+        flex-direction: column;
+        align-items: center;
+    }
 
-  .content-area {
-    padding: 20px;
-  }
 
-  .profile-container {
-    padding: 20px;
-  }
+    .container {
+        width: 100%;
+        max-width: 100%;
+        padding: 0 15px;
+    }
 
-  .profile-picture img {
-    width: 120px;
-    height: 120px;
-  }
 
-  #username {
-    font-size: 22px;
-  }
+    body {
 
-  #role-type {
-    font-size: 14px;
-  }
+        font-size: 14px;
+    }
+
+
+
+    h1 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+
+    .profile-container {
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      min-width: 300px;
+      margin: 0 auto;
+    }
+
+
 }
