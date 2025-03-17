@@ -88,7 +88,7 @@ function handleApproval(action, card) {
 
   console.log(`Attempting to ${action} booking ID: ${bookingId}`);
 
-  fetch(`http://127.0.0.1:5000/update-booking-status/${bookingId}`, {
+  fetch(`http://127.0.0.1:8000/update-booking-status/${bookingId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status: newStatus })
@@ -214,4 +214,26 @@ function initTabs() {
 document.addEventListener('DOMContentLoaded', () => {
 
   initTabs();
+});
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const hamburger = document.querySelector('.hamburger-menu');
+    const sidebar = document.querySelector('.sidebar');
+
+    hamburger.addEventListener('click', function() {
+        sidebar.classList.toggle('active');
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+            sidebar.classList.remove('active');
+        }
+    });
+
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            sidebar.classList.remove('active');
+        }
+    });
 });
