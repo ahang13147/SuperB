@@ -19,11 +19,11 @@ async function initializeProfile() {
 async function fetchUserData() {
     try {
         const response = await fetch(`${API_BASE}/get_user`, {
-            method: 'POST',
+            method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ user_id: DEFAULT_USER_ID }),
+            // body: JSON.stringify({ user_id: DEFAULT_USER_ID }),
         });
 
         if (!response.ok) {
