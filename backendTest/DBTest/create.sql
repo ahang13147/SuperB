@@ -28,13 +28,15 @@ CREATE TABLE Users (
 );
 
 -- 1.2 Rooms Table (Stores room details)
+-- todo: add new field of roomstatus
 CREATE TABLE Rooms (
     room_id INT AUTO_INCREMENT PRIMARY KEY,    -- Room ID, auto-incremented
     room_name VARCHAR(255) NOT NULL,            -- Room name
     capacity INT NOT NULL,                      -- Room capacity
     equipment TEXT,                             -- Equipment available in the room
     location VARCHAR(255),                       -- Room's physical location
-    room_type INT                         -- Whether the room is normal      0: available for all staff and students   1: staff only   2: trusted user only
+    room_type INT,                         -- Whether the room is normal      0: available for all staff and students   1: staff only   2: trusted user only
+    room_status INT     -- Room status: 0: available, 1: issue（可以定), 2: unavailable(不可以定）
 );
 
 -- 1.3 Room Availability Table (Stores room availability information for specific times)
@@ -48,6 +50,7 @@ CREATE TABLE Room_availability (
     FOREIGN KEY (room_id) REFERENCES Rooms(room_id) -- Foreign key constraint referencing the Rooms table
 );
 
+-- todo: add new field of changed
 -- 1.4 Bookings Table (Stores booking information for each booking request)
 CREATE TABLE Bookings (
     booking_id INT AUTO_INCREMENT PRIMARY KEY,  -- Booking ID, auto-incremented
@@ -56,7 +59,7 @@ CREATE TABLE Bookings (
     start_time TIME NOT NULL,                   -- Start time of the booking
     end_time TIME NOT NULL,
     booking_date DATE,                          -- End time of the booking
-    status ENUM('pending', 'approved', 'canceled', 'rejected','failed') NOT NULL,  -- Booking status
+    status ENUM('pending', 'approved', 'canceled', 'rejected','failed','changed') NOT NULL,  -- Booking status
 	reason TEXT,
 
     FOREIGN KEY (user_id) REFERENCES Users(user_id),  -- Foreign key referencing Users table
