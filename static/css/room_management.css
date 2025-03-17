@@ -1,10 +1,13 @@
+
 * {
-    box-sizing: border-box;
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', 'PingFang SC', system-ui;
 }
 
 body {
+
     line-height: 1.6;
     padding: 20px;
     background-color: #f5f5f5;
@@ -13,12 +16,15 @@ body {
 .container {
     max-width: 1200px;
     margin: 0 auto;
+
 }
 
 .content-area {
     flex: 1;
+
     padding: 30px;
     background-color: #f7f7f7;
+
 }
 
 h1 {
@@ -28,6 +34,7 @@ h1 {
     font-size: 2.5em;
 }
 
+
 .room-list-container {
     max-width: 1000px;
     margin: 0 auto;
@@ -35,8 +42,10 @@ h1 {
     padding: 20px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+
     max-height: 600px;
     overflow-y: auto;
+
 }
 
 .room-item {
@@ -121,7 +130,9 @@ button {
     background: rgba(0,0,0,0.5);
     justify-content: center;
     align-items: center;
+
     z-index: 1000;
+
 }
 
 .modal-content {
@@ -142,7 +153,9 @@ button {
     background: rgba(0,0,0,0.5);
     justify-content: center;
     align-items: center;
+
     z-index: 1000;
+
 }
 
 .success-modal-content {
@@ -154,6 +167,7 @@ button {
     text-align: center;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
+
 
 .success-modal-content i {
     color: #48bb78;
@@ -286,3 +300,4 @@ button {
         font-size: 1.6em;
     }
 }
+

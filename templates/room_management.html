@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="../static/css/sidebar.css">
-    <link rel="stylesheet" href="../static/css/room_management.css">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <title>Room Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/room_management.css') }}">
 </head>
 <body>
 <div class="hamburger-menu">
@@ -58,11 +59,16 @@
     <div class="content-area">
         <h1>Room Management</h1>
 
-        <div class="room-list">
-            <div class="room-list-container">
+
+            <div class="room-list">
+                <div class="room-list-container">
+                    <!-- 动态加载房间数据 -->
+                </div>
+            </div>
 
             </div>
         </div>
+
 
         <div class="add-room-form">
             <h2>Add New Room</h2>

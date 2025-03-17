@@ -1,9 +1,28 @@
 // Configures constants
-const API_BASE = 'http://127.0.0.1:8000';
-const DEFAULT_USER_ID = 3;
+const API_BASE = 'http://localhost:8000';
+const DEFAULT_USER_ID = 1;
 
 // Initialize the page
-document.addEventListener('DOMContentLoaded', initializeProfile);
+document.addEventListener('DOMContentLoaded', () => {
+    initializeProfile();
+
+    // 确保在DOM加载完成后才绑定事件
+    const form = document.getElementById('profile-form');
+    if (form) {
+        form.addEventListener('submit', handleFormSubmit);
+    } else {
+        console.error('无法找到profile-form表单元素');
+    }
+});
+
+async function handleFormSubmit(e) {
+    e.preventDefault();
+    try {
+        await updateUserProfile();
+    } catch (error) {
+        showError(error.message);
+    }
+}
 
 // Main initialization function
 async function initializeProfile() {
@@ -19,11 +38,11 @@ async function initializeProfile() {
 async function fetchUserData() {
     try {
         const response = await fetch(`${API_BASE}/get_user`, {
-            method: 'POST',
+            method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ user_id: DEFAULT_USER_ID }),
+//            body: JSON.stringify({ user_id: DEFAULT_USER_ID }),
         });
 
         if (!response.ok) {
@@ -54,14 +73,16 @@ function updateProfileUI(user) {
 
 // Edit mode switch
 function toggleEditMode() {
-    const inputs = document.querySelectorAll('#profile-form input:not([disabled])');
-    inputs.forEach(input => input.disabled = false);
-
+    const inputs = document.querySelectorAll('#profile-form input');
+    inputs.forEach(input => {
+        if (input.id !== 'email') { // 跳过邮箱输入框
+            input.disabled = false;
+        }
+    });
     document.getElementById('edit-btn').style.display = 'none';
     document.getElementById('save-btn').style.display = 'inline-block';
     document.getElementById('cancel-btn').style.display = 'inline-block';
 }
-
 // Cancel the edit
 function cancelEditMode() {
     document.querySelectorAll('#profile-form input').forEach(input => {
@@ -76,15 +97,21 @@ function cancelEditMode() {
     initializeProfile();
 }
 
-// Form submission processing
-document.getElementById('profile-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    try {
-        await updateUserProfile();
-    } catch (error) {
-        showError(error.message);
-    }
-});
+//document.addEventListener('DOMContentLoaded', function() {
+//    const profileForm = document.getElementById('profile-form');
+//    if (profileForm) {
+//        profileForm.addEventListener('submit', async (e) => {
+//            e.preventDefault();
+//            try {
+//                await updateUserProfile();
+//            } catch (error) {
+//                showError(error.message);
+//            }
+//        });
+//    } else {
+//        console.error('Profile form not found!');
+//    }
+//});
 
 // Update user profile
 async function updateUserProfile() {

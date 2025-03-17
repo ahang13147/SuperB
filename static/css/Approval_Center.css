@@ -107,14 +107,25 @@ h1 {
 }
 
 .status-indicator {
-  background-color: #4CAF50 !important;
-  position: static !important;
+  /* 移除固定的背景颜色 */
+  position: static;
   margin-left: 15px;
   order: 99;
   padding: 3px 8px;
   border-radius: 12px;
   font-size: 12px;
   color: #fff;
+  text-align: center;
+  min-width: 80px;
+}
+
+/* 添加状态颜色 */
+.status-indicator.approved {
+  background-color: #4CAF50;
+}
+
+.status-indicator.rejected {
+  background-color: #f44336;
 }
 
 /* Approval_Center.css 修改部分 */
