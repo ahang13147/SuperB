@@ -1,4 +1,3 @@
-
 * {
     box-sizing: border-box;
     margin: 0;
@@ -6,31 +5,29 @@
 }
 
 body {
-
     line-height: 1.6;
     padding: 20px;
     background-color: #f5f5f5;
 }
-.main-container {
-  display: flex;
-  min-height: 100vh;
-  padding-left: 200px; /* 新增：为侧边栏腾出空间 */
-  box-sizing: border-box; /* 确保padding不增加容器总宽度 */
-}
+
 .container {
     max-width: 1200px;
     margin: 0 auto;
 }
 
 .content-area {
-  flex: 1;
-  padding: 30px;
-  background-color: #f7f7f7;
+    flex: 1;
+    padding: 30px;
+    background-color: #f7f7f7;
 }
 
-header h1 {
-  margin-bottom: 20px;
+h1 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 30px;
+    font-size: 2.5em;
 }
+
 
 .approval-tabs {
   margin-bottom: 20px;
@@ -120,13 +117,93 @@ header h1 {
   color: #fff;
 }
 
+/* Approval_Center.css 修改部分 */
 @media (max-width: 768px) {
+  body {
+    padding: 0 !important;
+     font-size: 14px;
+  }
+
+    h1 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+
+  .content-area {
+    padding: 15px;
+    width: 100vw !important;
+    margin-left: 0 !important;
+    overflow-x: hidden;
+  }
+
+  .approval-card {
+    flex-direction: column;
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
   .reservation-info {
     flex: 1 1 100%;
+
+    padding: 8px 0;
+    flex-wrap: wrap;
   }
+
+  .reservation-info label {
+    min-width: 80px;
+    font-size: 0.9em;
+    margin-right: 5px;
+  }
+
   .approval-actions {
     flex: 1 1 100%;
-    justify-content: flex-start;
+    justify-content: space-between;
     margin-top: 10px;
+    gap: 8px;
   }
+
+  .approval-actions button {
+    flex: 1;
+    padding: 10px;
+    font-size: 0.9em;
+  }
+
+  .status-indicator {
+    order: 0;
+    margin: 10px 0 0 0;
+    align-self: flex-start;
+  }
+
+  .approval-tabs .tab {
+    flex: 1;
+    margin-right: 5px;
+    padding: 8px 12px;
+    font-size: 0.9em;
+  }
+      h1 {
+        font-size: 1.6em;
+    }
+}
+
+@media (max-width: 480px) {
+  .reservation-info label {
+    min-width: 70px;
+    font-size: 0.85em;
+  }
+
+  .approval-actions button {
+    font-size: 0.85em;
+    padding: 8px;
+  }
+
+  header h1 {
+    font-size: 1.6em;
+    margin-bottom: 15px;
+  }
+
+  .content-area {
+    padding: 10px;
+  }
+
 }
