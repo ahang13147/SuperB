@@ -8,16 +8,17 @@
 USE `booking_system_db`;
 
 INSERT INTO Users (username, email, phone_number, role) VALUES
-('admin1', 'admin1@example.com', 'hash1', 'admin'),
+('admin1', 'diicsupriority@outlook.com', 'hash1', 'admin'),
 ('prof1', 'prof1@example.com', 'hash2', 'professor'),
-('student1', 'student1@example.com', 'hash3', 'student'),
+('student1', 'diicsu_client@outlook.com', 'hash3', 'student'),
 ('tutor1', 'tutor1@example.com', 'hash4', 'tutor'),
 ('admin2', 'admin2@example.com', 'hash5', 'admin'),
 ('prof2', 'prof2@example.com', 'hash6', 'professor'),
 ('student2', 'student2@example.com', 'hash7', 'student'),
 ('tutor2', 'tutor2@example.com', 'hash8', 'tutor'),
 ('student3', 'student3@example.com', 'hash9', 'student'),
-('prof3', 'prof3@example.com', 'hash10', 'professor');
+('prof3', 'prof3@example.com', 'hash10', 'professor'),
+('Zibang Nie', '2542881@dundee.ac.uk','17375819888','student');
 
 INSERT INTO Rooms (room_name, capacity, equipment, location, room_type)
 VALUES
@@ -38,25 +39,25 @@ VALUES
 ('informal meeting room', 12, 'Projector,Open Configuration', 'DIICSU Ground Floor',1),
 ('634', 10, 'Projector,Board Room Configuration', 'DIICSU 634',2);
 
-INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, availability) VALUES
-(1, '09:00:00', '12:00:00', '2025-03-05', 0),
-(1, '13:00:00', '17:00:00', '2025-03-05', 1),
-(2, '10:00:00', '14:00:00', '2025-03-05', 0),
-(2, '15:00:00', '18:00:00', '2025-03-05', 2),
-(3, '08:00:00', '10:00:00', '2025-03-06', 0),
-(3, '11:00:00', '13:00:00', '2025-03-06', 1),
-(4, '09:00:00', '12:00:00', '2025-03-06', 0),
-(4, '14:00:00', '16:00:00', '2025-03-06', 2),
-(12, '10:00:00', '12:00:00', '2025-03-07', 0),
-(5, '13:00:00', '15:00:00', '2025-03-07', 1);
+# INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, availability) VALUES
+# (1, '09:00:00', '12:00:00', '2025-03-05', 0),
+# (1, '13:00:00', '17:00:00', '2025-03-05', 1),
+# (2, '10:00:00', '14:00:00', '2025-03-05', 0),
+# (2, '15:00:00', '18:00:00', '2025-03-05', 2),
+# (3, '08:00:00', '10:00:00', '2025-03-06', 0),
+# (3, '11:00:00', '13:00:00', '2025-03-06', 1),
+# (4, '09:00:00', '12:00:00', '2025-03-06', 0),
+# (4, '14:00:00', '16:00:00', '2025-03-06', 2),
+# (12, '10:00:00', '12:00:00', '2025-03-07', 0),
+# (5, '13:00:00', '15:00:00', '2025-03-07', 1);
 
 
 INSERT INTO Bookings (user_id, room_id, start_time, end_time, booking_date, status, reason)
 VALUES
 (2, 1, '10:00:00', '11:00:00', '2025-03-05', 'approved', 'Regular class'),
 (3, 2, '14:00:00', '15:00:00', '2025-03-05', 'pending', 'Study group'),
-(4, 3, '16:00:00', '17:00:00', '2025-03-05', 'rejected', 'Insufficient equipment');
-
+(4, 3, '16:00:00', '17:00:00', '2025-03-05', 'rejected', 'Insufficient equipment'),
+(11,4,'16:00:00','17:00:00','2025-3-18','approved','Regular class');
 
 INSERT INTO Notifications (user_id, message, notification_type, status)
 VALUES

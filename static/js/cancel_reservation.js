@@ -70,10 +70,12 @@ function renderReservation(reservation) {
             const response = await fetch(`http://127.0.0.1:8000/bookings`);
             const { bookings } = await response.json();
 
+
 //            // Filter bookings to only show approved and future ones
 //            const filteredBookings = bookings.filter(booking =>
 //                (booking.status === 'approved' || booking.status === 'canceled') && isBookingInFuture(booking)
 //            );
+
 
             reservationsContainer.innerHTML = bookings
                 .map(reservation => renderReservation(reservation))
@@ -141,4 +143,26 @@ function renderReservation(reservation) {
 
     closeModalBtn.addEventListener('click', () => modal.style.display = 'none');
     window.addEventListener('click', (e) => e.target === modal && (modal.style.display = 'none'));
+});
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const hamburger = document.querySelector('.hamburger-menu');
+    const sidebar = document.querySelector('.sidebar');
+
+    hamburger.addEventListener('click', function() {
+        sidebar.classList.toggle('active');
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+            sidebar.classList.remove('active');
+        }
+    });
+
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            sidebar.classList.remove('active');
+        }
+    });
 });

@@ -9,6 +9,9 @@
     <title>Cancel Reservation</title>
 </head>
 <body>
+<div class="hamburger-menu">
+        <i class="fas fa-bars"></i>
+ </div>
     <div class="main-container">
         <div class="sidebar">
 
@@ -48,8 +51,12 @@
             <i class="fas fa-user-circle nav-icon"></i>
             My Profile
           </a>
+            <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+            </div>
         </div>
-        <!-- 侧边栏脚本需要放在body内 -->
+
+
         <script src="{{ url_for('static', filename='js/cancel_reservation.js') }}"></script>
         <div class="content-area">
             <header>
@@ -62,7 +69,6 @@
         </div>
     </div>
 
-    <!-- 模态框 -->
     <div class="modal" id="cancelModal">
         <div class="modal-content">
             <h3>Confirm Cancellation</h3>

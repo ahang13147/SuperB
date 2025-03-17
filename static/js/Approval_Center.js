@@ -87,6 +87,7 @@ function handleApproval(action, card) {
 
   console.log(`Attempting to ${action} booking ID: ${bookingId}`);
 
+
   // 修正模板字符串用法
   fetch(`http://localhost:8000/update-booking-status/${bookingId}`, {
     method: 'PUT',
@@ -214,4 +215,26 @@ function initTabs() {
 document.addEventListener('DOMContentLoaded', () => {
 
   initTabs();
+});
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    const hamburger = document.querySelector('.hamburger-menu');
+    const sidebar = document.querySelector('.sidebar');
+
+    hamburger.addEventListener('click', function() {
+        sidebar.classList.toggle('active');
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+            sidebar.classList.remove('active');
+        }
+    });
+
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            sidebar.classList.remove('active');
+        }
+    });
 });

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创建 Outlook 事件</title>
+    <script>
+        // 提交表单数据到后端
+        function createEvent(event) {
+            event.preventDefault();  // 防止表单默认提交行为
+
+            // 获取表单数据
+            const subject = document.getElementById('subject').value;
+            const start = document.getElementById('start').value;  // "2022-06-05T10:10"
+            const end = document.getElementById('end').value;      // "2022-06-05T10:10"
+            const busy = parseInt(document.getElementById('busy').value);
+            const location = document.getElementById('location').value;
+            const reminder_minutes = parseInt(document.getElementById('reminder_minutes').value);
+
+            // 创建请求数据对象
+            const data = {
+                subject: subject,
+                start: start,  // 格式： "2022-06-05T10:10"
+                end: end,      // 格式： "2022-06-05T10:10"
+                busy: busy,
+                location: location,
+                reminder_minutes: reminder_minutes
+            };
+
+            // 发送POST请求到后端
+            fetch('http://localhost:5000/create_event', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);  // 成功提示
+                } else if (data.error) {
+                    alert('发生错误: ' + data.error);  // 错误提示
+                }
+            })
+            .catch(error => {
+                alert('请求失败: ' + error);  // 请求失败提示
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>创建 Outlook 事件</h1>
+    <form id="eventForm" onsubmit="createEvent(event)">
+        <label for="subject">主题:</label><br>
+        <input type="text" id="subject" name="subject" required><br><br>
+
+        <label for="start">开始时间:</label><br>
+        <input type="datetime-local" id="start" name="start" required><br><br>
+
+        <label for="end">结束时间:</label><br>
+        <input type="datetime-local" id="end" name="end" required><br><br>
+
+        <label for="busy">忙碌状态:</label><br>
+        <select id="busy" name="busy" required>
+            <option value="2">忙碌</option>
+            <option value="0">空闲</option>
+        </select><br><br>
+
+        <label for="location">地点:</label><br>
+        <input type="text" id="location" name="location"><br><br>
+
+        <label for="reminder_minutes">提前提醒 (分钟):</label><br>
+        <input type="number" id="reminder_minutes" name="reminder_minutes" min="1" value="15"><br><br>
+
+        <button type="submit">创建事件</button>
+    </form>
+</body>
+</html>

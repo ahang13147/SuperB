@@ -7,7 +7,7 @@ Version 3.0.2
 -->
 
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -19,24 +19,10 @@ Version 3.0.2
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 
-    <script>
-        // 打印所有URL参数
-        const urlParams = new URLSearchParams(window.location.search);
-        const userInfo = {
-            name: decodeURIComponent(urlParams.get('name') || ''),
-            email: decodeURIComponent(urlParams.get('email') || ''),
-            id: decodeURIComponent(urlParams.get('id') || '')
-        };
-
-        console.log('[浏览器控制台] 微软返回的用户信息:', {
-            DisplayName: userInfo.name,
-            Email: userInfo.email,
-            AzureID: userInfo.id,
-            FullParams: Object.fromEntries(urlParams.entries())
-        });
-    </script>
 <body>
-
+<div class="hamburger-menu">
+        <i class="fas fa-bars"></i>
+ </div>
     <div id="bookingModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
@@ -84,10 +70,13 @@ Version 3.0.2
             <i class="fas fa-user-circle nav-icon"></i>
             My Profile
           </a>
+            <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+            </div>
         </div>
 
         <!-- Content Area -->
-        <div class="content-area">
+
             <div class="container">
                 <h1>Classroom reservation system</h1>
 
@@ -120,10 +109,9 @@ Version 3.0.2
                     </div>
                 </div>
 
-                <!-- 教室列表 -->
                 <div id="classroomList" class="classroom-grid"></div>
             </div>
-        </div>
+
     </div>
 <!--    <script src="../static/js/booking_centre_admin.js"></script>-->
       <script src="{{ url_for('static', filename='js/booking_centre_admin.js') }}"></script>

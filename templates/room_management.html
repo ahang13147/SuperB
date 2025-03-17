@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -9,52 +10,55 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/room_management.css') }}">
 </head>
 <body>
-    <div class="main-container">
-        <div class="mobile-menu">
-            <i class="fas fa-bars"></i> Menu
-        </div>
+<div class="hamburger-menu">
+    <i class="fas fa-bars"></i>
+</div>
+<div class="main-container">
+    <div class="sidebar">
+        <a class="nav-item" href="{{ url_for('booking_centre_admin') }}">
+            <i class="fas fa-calendar-alt nav-icon"></i>
+            Booking Center
+        </a>
+        <a class="nav-item" href="{{ url_for('my_reservation_admin') }}">
+            <i class="fas fa-list-ul nav-icon"></i>
+            My Bookings
+        </a>
+        <a class="nav-item" href="{{ url_for('Approval_Center') }}">
+            <i class="fas fa-check-circle nav-icon"></i>
+            Approval Management
+        </a>
+        <a class="nav-item" href="{{ url_for('cancel_reservation') }}">
+            <i class="fas fa-calendar-times nav-icon"></i>
+            Cancel Reservation
+        </a>
+        <a class="nav-item active" href="{{ url_for('room_management') }}">
+            <i class="fas fa-door-open nav-icon"></i>
+            Room Management
+        </a>
+        <a class="nav-item" href="{{ url_for('notice_admin') }}">
+            <i class="fas fa-bell nav-icon"></i>
+            Notifications
+        </a>
+        <a class="nav-item" href="{{ url_for('blacklist') }}">
+            <i class="fas fa-ban nav-icon"></i>
+            Black List
+        </a>
+        <a class="nav-item" href="{{ url_for('trust_list') }}">
+            <i class="fas fa-shield-alt nav-icon"></i>
+            Trust List
+        </a>
+        <a class="nav-item" href="{{ url_for('my_profile_admin') }}">
+            <i class="fas fa-user-circle nav-icon"></i>
+            My Profile
+        </a>
+            <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+            </div>
+    </div>
 
-        <div class="sidebar">
-            <a class="nav-item" href="{{ url_for('booking_centre_admin') }}">
-                <i class="fas fa-calendar-alt nav-icon"></i>
-                Booking Center
-            </a>
-            <a class="nav-item" href="{{ url_for('my_reservation_admin') }}">
-                <i class="fas fa-list-ul nav-icon"></i>
-                My Bookings
-            </a>
-            <a class="nav-item" href="{{ url_for('Approval_Center') }}">
-                <i class="fas fa-check-circle nav-icon"></i>
-                Approval Management
-            </a>
-            <a class="nav-item" href="{{ url_for('cancel_reservation') }}">
-                <i class="fas fa-calendar-times nav-icon"></i>
-                Cancel Reservation
-            </a>
-            <a class="nav-item active" href="{{ url_for('room_management') }}">
-                <i class="fas fa-door-open nav-icon"></i>
-                Room Management
-            </a>
-            <a class="nav-item" href="{{ url_for('notice_admin') }}">
-                <i class="fas fa-bell nav-icon"></i>
-                Notifications
-            </a>
-            <a class="nav-item" href="{{ url_for('blacklist') }}">
-                <i class="fas fa-ban nav-icon"></i>
-                Black List
-            </a>
-            <a class="nav-item" href="{{ url_for('trust_list') }}">
-                <i class="fas fa-shield-alt nav-icon"></i>
-                Trust List
-            </a>
-            <a class="nav-item" href="{{ url_for('my_profile_admin') }}">
-                <i class="fas fa-user-circle nav-icon"></i>
-                My Profile
-            </a>
-        </div>
+    <div class="content-area">
+        <h1>Room Management</h1>
 
-        <div class="content-area">
-            <h1>Room Management</h1>
 
             <div class="room-list">
                 <div class="room-list-container">
@@ -62,41 +66,51 @@
                 </div>
             </div>
 
-            <div class="add-room-form">
-                <h2>Add New Room</h2>
-                <input type="text" id="roomName" placeholder="Room Name" required>
-                <input type="number" id="capacity" placeholder="Capacity" required>
-                <input type="text" id="location" placeholder="Location" required>
-                <input type="text" id="equipment" placeholder="Equipment" required>
-                <button onclick="addRoom()">Add Room</button>
             </div>
+        </div>
 
-            <!-- 编辑房间的弹窗 -->
-            <div id="editModal" class="modal">
-                <div class="modal-content">
-                    <h2>Edit Room</h2>
-                    <input type="text" id="editRoomId" disabled>
-                    <input type="text" id="editRoomName" placeholder="Room Name">
-                    <input type="number" id="editCapacity" placeholder="Capacity">
-                    <input type="text" id="editLocation" placeholder="Location">
-                    <input type="text" id="editEquipment" placeholder="Equipment">
-                    <div style="margin-top: 20px; display: flex; gap: 10px;">
-                        <button onclick="saveRoom()" style="flex:1;">Save</button>
-                        <button onclick="closeEditModal()" class="cancel-btn" style="flex:1;">Cancel</button>
-                    </div>
-                </div>
-            </div>
 
-            <!-- 成功提示弹窗 -->
-            <div id="deleteSuccessModal" class="success-modal">
-                <div class="success-modal-content">
-                    <h2>Success!</h2>
-                    <p>Room added successfully.</p>
+        <div class="add-room-form">
+            <h2>Add New Room</h2>
+            <input type="text" id="roomName" placeholder="Room Name" required>
+            <input type="number" id="capacity" placeholder="Capacity" required>
+            <input type="text" id="location" placeholder="Location" required>
+            <input type="text" id="equipment" placeholder="Equipment" required>
+            <button onclick="addRoom()">Add Room</button>
+        </div>
+
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <h2>Edit Room</h2>
+                <input type="text" id="editRoomId" disabled>
+                <input type="text" id="editRoomName" placeholder="Room Name">
+                <input type="number" id="editCapacity" placeholder="Capacity">
+                <input type="text" id="editLocation" placeholder="Location">
+                <input type="text" id="editEquipment" placeholder="Equipment">
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button onclick="saveRoom()" style="flex:1;">Save</button>
+                    <button onclick="closeEditModal()" class="cancel-btn" style="flex:1;">Cancel</button>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script src="{{ url_for('static', filename='js/room_management.js') }}"></script>
+
+        <div id="addSuccessModal" class="success-modal">
+            <div class="success-modal-content">
+                <h2>Success!</h2>
+                <p>Room added successfully.</p>
+            </div>
+        </div>
+
+        <div id="deleteSuccessModal" class="success-modal">
+            <div class="success-modal-content">
+                <h2>Success!</h2>
+                <p>Room deleted successfully.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/room_management.js') }}"></script>
 </body>
 </html>
