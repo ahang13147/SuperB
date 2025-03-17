@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/trust_list.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <title>Trusted List Management</title>
+</head>
+<body>
+    <div class="main-container">
+        <div class="content-area">
+            <h1>Trusted List Management</h1>
+
+            <!-- Search Term  -->
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search by Room ID" oninput="searchTrustedList()">
+            </div>
+
+            <!-- Room List -->
+            <div class="room-container" id="roomContainer">
+                <!-- Dynamically loaded content -->
+            </div>
+
+            <!-- Add Form -->
+            <div class="add-trusted-form">
+                <h2>Add Trusted User</h2>
+                <div class="input-group">
+                    <div>
+                        <input type="number" id="roomId" placeholder="Room ID *" min="1">
+                    </div>
+                    <div>
+                        <input type="number" id="userId" placeholder="User ID *" min="1">
+                    </div>
+                    <div class="notes-input">
+                        <input type="text" id="notes" placeholder="Notes *">
+                    </div>
+                </div>
+                <button onclick="addTrustedUser()">Add User</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 统一加载JavaScript -->
+    <script src="{{ url_for('static', filename='js/adminSidebar.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/trust_list.js') }}"></script>
+</body>
+</html>

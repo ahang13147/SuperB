@@ -6,7 +6,7 @@ function renderApprovalCards() {
   const container = document.querySelector('.approvals-container');
   container.innerHTML = ''; // Clear existing content
 
-  
+
   if (!Array.isArray(bookings)) {
     console.error('bookings is not an array:', bookings);
     bookings = [];
@@ -69,7 +69,7 @@ function handleReasonOverflow() {
         showFullText(reason);
       });
 
-      span.innerHTML = reason.substring(0, 50) + " "; 
+      span.innerHTML = reason.substring(0, 50) + " ";
       span.appendChild(ellipsis);
     }
   });
@@ -77,7 +77,7 @@ function handleReasonOverflow() {
 
 // Display full text (can be replaced with Modal)
 function showFullText(fullText) {
-  alert(fullText); // 
+  alert(fullText); //
 }
 
 // Process approval operation
@@ -89,7 +89,7 @@ function handleApproval(action, card) {
   console.log(`Attempting to ${action} booking ID: ${bookingId}`);
 
   fetch(`http://127.0.0.1:5000/update-booking-status/${bookingId}`, {
-    method: 'PUT', 
+    method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status: newStatus })
   })
@@ -122,8 +122,6 @@ function handleApproval(action, card) {
     });
 }
 
-
-
 // Bind button event
 function bindButtonEvents() {
   document.querySelectorAll('.accept-btn, .reject-btn').forEach(btn => {
@@ -136,10 +134,9 @@ function bindButtonEvents() {
   });
 }
 
-
 //Get a completed workflow reservation
 function fetchFinishedBookings() {
-  fetch('http://127.0.0.1:5000/finished-workflow-bookings')
+  fetch('http://127.0.0.1:8000/finished-workflow-bookings')
     .then(response => {
       if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
       return response.json();
@@ -163,7 +160,7 @@ function fetchFinishedBookings() {
 
 // Get a pending reservation
 function fetchPendingBookings() {
-  fetch('http://127.0.0.1:5000/pending-bookings')
+  fetch('http://127.0.0.1:8000/pending-bookings')
     .then(response => {
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -173,7 +170,7 @@ function fetchPendingBookings() {
     .then(data => {
       // Make sure that data.bookings is an array
       if (data && Array.isArray(data.bookings)) {
-        bookings = data.bookings; 
+        bookings = data.bookings;
       } else {
         console.error('Invalid data format:', data);
         bookings = []; // Set to an empty array to avoid errors
@@ -182,7 +179,7 @@ function fetchPendingBookings() {
     })
     .catch(error => {
       console.error('Error fetching pending bookings:', error);
-      bookings = []; 
+      bookings = [];
       renderApprovalCards(); // Even if something goes wrong, try to render empty data
     });
 }
@@ -191,12 +188,12 @@ function fetchPendingBookings() {
 function initTabs() {
   const tabs = document.querySelectorAll('.approval-tabs .tab');
 
-  
+
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       tabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-      
+
 
       if (tab.dataset.tab === 'pending') {
         fetchPendingBookings();
@@ -208,7 +205,7 @@ function initTabs() {
     });
   });
 
-  //load pending 
+  //load pending
   fetchPendingBookings();
 }
 

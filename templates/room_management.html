@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/room_management.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <title>Room Management</title>
+  <script src="{{ url_for('static', filename='js/adminSidebar.js') }}"></script>
+
+</head>
+<body>
+    <div class="main-container">
+        <div class="mobile-menu">
+            <i class="fas fa-bars"></i> Menu
+        </div>
+
+
+        <div class="content-area">
+            <h1>Room Management</h1>
+
+            <div class="room-list-container">
+                <div class="room-list">
+                    <!-- 动态加载房间数据 -->
+                </div>
+            </div>
+
+            <div class="add-room-form">
+                <h2>Add New Room</h2>
+                <input type="text" id="roomName" placeholder="Room Name" required>
+                <input type="number" id="capacity" placeholder="Capacity" required>
+                <input type="text" id="location" placeholder="Location" required>
+                <input type="text" id="equipment" placeholder="Equipment" required>
+                <button onclick="addRoom()">Add Room</button>
+            </div>
+
+            <!-- 编辑模态框 -->
+            <div id="editModal" class="modal">
+                <div class="modal-content">
+                    <h2>Edit Room</h2>
+                    <input type="text" id="editRoomId" disabled>
+                    <input type="text" id="editRoomName" placeholder="Room Name">
+                    <input type="number" id="editCapacity" placeholder="Capacity">
+                    <input type="text" id="editLocation" placeholder="Location">
+                    <input type="text" id="editEquipment" placeholder="Equipment">
+                    <div style="margin-top: 20px; display: flex; gap: 10px;">
+                        <button onclick="saveRoom()" style="flex:1;">Save</button>
+                        <button onclick="closeEditModal()" class="cancel-btn" style="flex:1;">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 成功提示弹窗 -->
+            <div id="successModal" class="modal">
+                <div class="success-modal-content">
+                    <i class="fas fa-check-circle"></i>
+                    <h2>Success!</h2>
+                    <p>New room has been added successfully.</p>
+                    <button onclick="closeSuccessModal()">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 假数据
+        const mockRooms = [
+            {
+                room_id: 101,
+                room_name: "Conference Room A",
+                capacity: 30,
+                location: "Building A, 2nd Floor",
+                equipment: "Projector, Whiteboard, 30 Chairs"
+            },
+            {
+                room_id: 102,
+                room_name: "Training Room B",
+                capacity: 50,
+                location: "Building B, 1st Floor",
+                equipment: "Projector, Whiteboard, 50 Chairs, Sound System"
+            },
+            {
+                room_id: 103,
+                room_name: "Meeting Room C",
+                capacity: 20,
+                location: "Building C, 3rd Floor",
+                equipment: "TV, Whiteboard, 20 Chairs"
+            },
+            {
+                room_id: 104,
+                room_name: "Board Room D",
+                capacity: 15,
+                location: "Building D, 4th Floor",
+                equipment: "Projector, Whiteboard, 15 Chairs"
+            },
+            {
+                room_id: 105,
+                room_name: "Seminar Room E",
+                capacity: 100,
+                location: "Building E, Ground Floor",
+                equipment: "Projector, Sound System, 100 Chairs"
+            }
+        ];
+
+        // 移动端菜单切换
+        document.querySelector('.mobile-menu').addEventListener('click', () => {
+            document.querySelector('.sidebar').classList.toggle('active');
+        });
+
+        // 窗口大小变化监听
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                document.querySelector('.sidebar').classList.remove('active');
+            }
+        });
+
+        // 房间管理功能
+        let currentEditingRoomId = null;
+
+        function loadRooms() {
+            const roomList = document.querySelector('.room-list');
+            roomList.innerHTML = mockRooms.map(room => `
+                <div class="room-item" data-room-id="${room.room_id}">
+                    <div class="room-info">
+                        <div><label>Room ID:</label> ${room.room_id}</div>
+                        <div><label>Name:</label> ${room.room_name}</div>
+                        <div><label>Capacity:</label> ${room.capacity}</div>
+                        <div><label>Location:</label> ${room.location}</div>
+                        <div><label>Equipment:</label> ${room.equipment}</div>
+                    </div>
+                    <div class="room-actions">
+                        <button class="edit-btn" onclick="openEditModal(${room.room_id})">Edit</button>
+                        <button class="delete-btn" onclick="deleteRoom(${room.room_id})">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openEditModal(roomId) {
+            const room = mockRooms.find(r => r.room_id === roomId);
+            if (room) {
+                currentEditingRoomId = roomId;
+                document.getElementById('editRoomId').value = room.room_id;
+                document.getElementById('editRoomName').value = room.room_name;
+                document.getElementById('editCapacity').value = room.capacity;
+                document.getElementById('editLocation').value = room.location;
+                document.getElementById('editEquipment').value = room.equipment;
+                document.getElementById('editModal').style.display = 'flex';
+            }
+        }
+
+        function saveRoom() {
+            const room = mockRooms.find(r => r.room_id === currentEditingRoomId);
+            if (room) {
+                room.room_name = document.getElementById('editRoomName').value;
+                room.capacity = document.getElementById('editCapacity').value;
+                room.location = document.getElementById('editLocation').value;
+                room.equipment = document.getElementById('editEquipment').value;
+                loadRooms();
+                closeEditModal();
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        function deleteRoom(roomId) {
+            if (confirm(`Delete room ${roomId}?`)) {
+                const index = mockRooms.findIndex(r => r.room_id === roomId);
+                if (index !== -1) {
+                    mockRooms.splice(index, 1);
+                    loadRooms();
+                }
+            }
+        }
+
+        // 成功提示弹窗功能
+        function showSuccessModal() {
+            document.getElementById('successModal').style.display = 'flex';
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').style.display = 'none';
+        }
+
+        function addRoom() {
+            const roomName = document.getElementById('roomName').value;
+            const capacity = document.getElementById('capacity').value;
+            const location = document.getElementById('location').value;
+            const equipment = document.getElementById('equipment').value;
+
+            if (!roomName || !capacity || !location || !equipment) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const newRoom = {
+                room_id: mockRooms.length + 101,
+                room_name: roomName,
+                capacity: capacity,
+                location: location,
+                equipment: equipment
+            };
+
+            mockRooms.push(newRoom);
+            document.querySelectorAll('.add-room-form input').forEach(input => input.value = '');
+            loadRooms();
+            showSuccessModal();
+        }
+
+        // 初始化加载
+        document.addEventListener('DOMContentLoaded', loadRooms);
+    </script>
+</body>
+</html>
