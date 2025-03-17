@@ -18,24 +18,24 @@ INSERT INTO Users (username, email, phone_number, role) VALUES
 ('student3', 'student3@example.com', 'hash9', 'student'),
 ('prof3', 'prof3@example.com', 'hash10', 'professor');
 
-INSERT INTO Rooms (room_name, capacity, equipment, location, room_type)
+INSERT INTO Rooms (room_name, capacity, equipment, location, room_type,room_status)
 VALUES
-('101', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
-('102', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
-('103', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
-('104', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
-('105', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
-('106', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
-('107', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
-('108', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
-('109', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
-('110', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
-('111', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0),
-('635', 60, 'Projector, Whiteboard', 'DIICSU SIX Floor',1),
-('622', 42, 'Projector, Whiteboard', 'DIICSU SIX Floor',1),
-('formal meeting room', 14, 'Projector,Board Room Configuration', 'DIICSU Ground Floor',1),
-('informal meeting room', 12, 'Projector,Open Configuration', 'DIICSU Ground Floor',1),
-('634', 10, 'Projector,Board Room Configuration', 'DIICSU 634',2);
+('101', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0,0),
+('102', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0,0),
+('103', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0,0),
+('104', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0,0),
+('105', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0,0),
+('106', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0,0),
+('107', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0,0),
+('108', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0,0),
+('109', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0,0),
+('110', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0,0),
+('111', 30, 'Projector, Whiteboard', 'DIICSU Ground Floor',0,0),
+('635', 60, 'Projector, Whiteboard', 'DIICSU SIX Floor',1,0),
+('622', 42, 'Projector, Whiteboard', 'DIICSU SIX Floor',1,0),
+('formal meeting room', 14, 'Projector,Board Room Configuration', 'DIICSU Ground Floor',1,0),
+('informal meeting room', 12, 'Projector,Open Configuration', 'DIICSU Ground Floor',1,0),
+('634', 10, 'Projector,Board Room Configuration', 'DIICSU 634',2,0);
 
 SET @current_date = CURRENT_DATE();
 
