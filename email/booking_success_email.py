@@ -87,8 +87,8 @@ def send_email(to_email, subject, body):
         print(f'发送邮件失败: {e}')
 
 
-@app.route('/send_email/remind', methods=['POST'])
-def send_reminder():
+@app.route('/send_email/booking_success', methods=['POST'])
+def send_booking_success():
     """根据 booking_id 发送房间预定提醒邮件"""
     # 从前端表单获取 booking_id
     booking_id = request.form.get('booking_id', type=int)
@@ -103,11 +103,11 @@ def send_reminder():
         booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
 
         # 准备邮件内容
-        subject = f"提醒: 预定房间 {room_name} 时间将至"
+        subject = f"提醒: 预定房间 {room_name} 已经成功！"
         body = f"""
         尊敬的{user_email}, 
 
-        您的房间预定即将开始！以下是您的预定信息：
+        您的房间预定已经成功！以下是您的预定信息：
 
         预定ID: {booking_id}
         房间名称: {room_name}
@@ -133,7 +133,7 @@ def send_reminder():
 @app.route('/')
 def index():
     """渲染主页面"""
-    return render_template('remind_email.html')
+    return render_template('booking_success_email.html')
 
 
 if __name__ == '__main__':
