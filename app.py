@@ -1,9 +1,10 @@
-#  @version: 3/12/2025
+#  @version: 3/16/2025
 #  @author: Xin Yu, Siyan Guo, Zibang Nie
 # add: finished-workflow-booking get api
 from contextlib import closing
 
 from flask import Flask, redirect, request, session, url_for, render_template, jsonify
+from functools import wraps
 from flask_cors import CORS
 import mysql.connector
 import requests
@@ -16,8 +17,12 @@ import yaml
 import msal
 
 app = Flask(__name__)
+# 设置 session 持久化
+app.config['SESSION_PERMANENT'] = True  # 启用持久会话
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=3)  # Set session duration to 3 hours
 CORS(app)  # 允许所有来源访问
 app.secret_key = 'your-secret-key-here'
+
 
 
 # ---------------------------- import config----------------------------
@@ -129,11 +134,36 @@ def get_room_id(room_name):
             conn.close()
 
 
+# 查询用户ID
+def get_user_id_by_email():
+    user_email = session.get('user_email')
+
+    if not user_email:
+        return None  # 如果 session 中没有 user_email，返回 None
+
+    try:
+        with closing(get_db_connection()) as conn:
+            with conn.cursor(dictionary=True) as cursor:
+                # 根据 email 查询 user_id
+                cursor.execute("SELECT user_id FROM Users WHERE email = %s", (user_email,))
+                user = cursor.fetchone()
+
+                if user:
+                    return user['user_id']  # 返回 user_id
+                else:
+                    return None  # 如果没有找到对应的用户，返回 None
+    except Exception as e:
+        print(f"Database error: {str(e)}")
+        return None  # 如果数据库查询出错，返回 None
+
+
 # ---------------------------- login ----------------------------
 
 
 @app.route('/')
 def index():
+    #todo
+    session.permanent = True  # 强制将 session 设置为持久化
     return redirect(url_for('login_page'))
 
 
@@ -177,6 +207,27 @@ def auth_callback():
         return f"认证错误：{result.get('error_description')}", 500
 
 
+
+#todo: add two new function
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_email' not in session:
+            return redirect(url_for('login'))  # 如果未登录，重定向到登录页面
+        return f(*args, **kwargs)
+    return decorated_function
+
+# 角色验证装饰器
+def role_required(role):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'user_role' not in session or session['user_role'] != role:
+                return redirect(url_for('login'))  # 如果不是指定角色，重定向到普通页面
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
 @app.route("/logout")
 def logout():
     return redirect(auth.log_out(url_for("index", _external=True)))
@@ -206,21 +257,27 @@ def logout():
 
 #路由：渲染 booking_centre.html
 @app.route('/booking_centre')
+@login_required 
+
 def booking_centre():
     return render_template('booking_centre.html')
 
 
 @app.route('/my_reservation')
+@login_required  
 def my_reservation():
     return render_template('my_reservation.html')
 
 
 @app.route('/user_profile')
+@login_required  
 def user_profile():
     return render_template('user_profile.html')
 
 
 @app.route('/my_notification')
+@login_required  
+
 def my_notification():
     return render_template('my_notification.html')
 
@@ -231,51 +288,71 @@ def error_page():
 
 
 @app.route('/adminSidebar')
+@login_required  # 确保用户已登录
+@role_required('admin')
 def adminSidebar():
     return render_template('adminSidebar.html')
 
 
 @app.route('/Approval_Center')
+@login_required  # 确保用户已登录
+@role_required('admin')
 def Approval_Center():
     return render_template('Approval_Center.html')
 
 
 @app.route('/blacklist')
+@login_required  # 确保用户已登录
+@role_required('admin')
 def blacklist():
     return render_template('blacklist.html')
 
 
 @app.route('/booking_centre_admin')
+@login_required  # 确保用户已登录
+@role_required('admin')
 def booking_centre_admin():
     return render_template('booking_centre_admin.html')
 
 
 @app.route('/cancel_reservation')
+@login_required  # 确保用户已登录
+@role_required('admin')
 def cancel_reservation():
     return render_template('cancel_reservation.html')
 
 
 @app.route('/my_profile_admin')
+@login_required  # 确保用户已登录
+@role_required('admin')
 def my_profile_admin():
     return render_template('my_profile_admin.html')
 
 
 @app.route('/my_reservation_admin')
+@login_required  # 确保用户已登录
+@role_required('admin')
 def my_reservation_admin():
     return render_template('my_reservation_admin.html')
 
 
 @app.route('/notice_admin')
+@login_required  # 确保用户已登录
+@role_required('admin')
 def notice_admin():
     return render_template('notice_admin.html')
 
 
 @app.route('/room_management')
+@login_required  # 确保用户已登录
+@role_required('admin')
 def room_management():
     return render_template('room_management.html')
 
 
 @app.route('/trust_list')
+@login_required  # 确保用户已登录
+@role_required('admin')
 def trust_list():
     return render_template('trust_list.html')
 
@@ -285,8 +362,10 @@ def trust_list():
 def login():
     return render_template('login.html')
 
+#TODO: 原函数
 
-# profile route
+#profile route
+
 @app.route('/profile')
 def profile():
     if 'access_token' not in session:
@@ -305,7 +384,8 @@ def profile():
         print(f"Microsoft API error: {str(e)}")
         return redirect(url_for('error_page'))
 
-    # 获取用户 email
+    # get email
+
     user_email = user_info.get('mail') or user_info.get('userPrincipalName')
     if not user_email:
         print("No email or userPrincipalName in Microsoft response")
@@ -325,7 +405,8 @@ def profile():
             user_role = role_data.get('role', 'user')
             session['user_role'] = user_role
 
-            # 根据角色重定向
+            # redirect the URL by the role of the user
+
             if user_role == 'admin':
                 print("User is admin, redirecting to booking_centre_admin")
                 return redirect(url_for('booking_centre_admin'))
@@ -361,6 +442,8 @@ def login_get_role():
     except Exception as e:
         print(f"Database error: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
+
+
 
 
 # ---------------------------- delete ----------------------------
@@ -706,14 +789,88 @@ def get_all_bookings():
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         query = """
-            SELECT 
-                b.booking_id, b.user_id, b.room_id, b.booking_date, b.start_time, b.end_time, b.status,
-                r.room_name, r.location, r.capacity, r.equipment
-            FROM Bookings b
-            JOIN Rooms r ON b.room_id = r.room_id
-            ORDER BY b.booking_date, b.start_time
+           SELECT 
+    b.booking_id, 
+    b.user_id, 
+    u.username,  -- todo: add username field
+    b.room_id, 
+    b.booking_date, 
+    b.start_time, 
+    b.end_time, 
+    b.status, 
+    b.reason,
+    r.room_name, 
+    r.location, 
+    r.capacity, 
+    r.equipment
+FROM Bookings b
+JOIN Rooms r ON b.room_id = r.room_id
+JOIN Users u ON b.user_id = u.user_id  -- JOIN Users 表，获取 username 和 user_id
+
+
         """
         cursor.execute(query)
+        bookings = cursor.fetchall()
+        for booking in bookings:
+            booking['start_time'] = format_time(booking['start_time'])
+            booking['end_time'] = format_time(booking['end_time'])
+            booking['booking_date'] = booking['booking_date'].strftime("%Y-%m-%d")
+        return jsonify({
+            "count": len(bookings),
+            "bookings": bookings
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+
+@app.route('/user-bookings', methods=['GET'])
+def get_user_bookings():
+    try:
+        # 从查询参数中获取user_id
+        # user_id = request.args.get('user_id')
+        #todo: 添加获取当前userid
+        user_id = get_user_id_by_email()
+        print(user_id)
+        print(session.get('user_email'))
+
+        if not user_id:
+            return jsonify({"error": "user_id parameter is required"}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT 
+                b.booking_id, 
+                b.user_id, 
+                u.username,  -- 添加了 username 字段
+                b.room_id, 
+                b.booking_date, 
+                b.start_time, 
+                b.end_time, 
+                b.status, 
+                b.reason,
+                r.room_name, 
+                r.location, 
+                r.capacity, 
+                r.equipment
+            FROM Bookings b
+            JOIN Rooms r ON b.room_id = r.room_id
+            JOIN Users u ON b.user_id = u.user_id  -- 添加了 JOIN 语句，连接 Users 表
+            WHERE b.user_id = %s
+            ORDER BY b.booking_date, b.start_time
+        """
+
+        cursor.execute(query, (user_id,))
         bookings = cursor.fetchall()
         for booking in bookings:
             booking['start_time'] = format_time(booking['start_time'])
@@ -816,10 +973,10 @@ def get_pending_bookings():
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # SQL 查询，获取状态为 'pending' 的预定记录，并连接 Users 和 Rooms 表
+        # todo : add user_id field
         query = """
             SELECT 
-                b.booking_id, b.booking_date, b.start_time, b.end_time, b.reason,b.status,
+                b.booking_id, b.booking_date, b.start_time, b.end_time, b.reason,b.status,u.user_id,
                 u.username AS user_name, r.room_name
             FROM Bookings b
             JOIN Users u ON b.user_id = u.user_id
@@ -864,10 +1021,11 @@ def get_Finished_Workflow_bookings():
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
+        # todo : add user_id field
         # SQL 查询，获取状态为 'pending' 的预定记录，并连接 Users 和 Rooms 表
         query = """
             SELECT 
-                b.booking_id, b.booking_date, b.start_time, b.end_time, b.reason,b.status,
+                b.booking_id, b.booking_date, b.start_time, b.end_time, b.reason,b.status,u.user_id,
                 u.username AS user_name, r.room_name
             FROM Bookings b
             JOIN Users u ON b.user_id = u.user_id
@@ -989,13 +1147,17 @@ def get_room_trusted_users():
             conn.close()
 
 
-@app.route('/get_user', methods=['POST'])
+#todo : change the method from post to GET
+@app.route('/get_user', methods=['GET'])
 def get_user():
-    data = request.get_json()
-    if not data or 'user_id' not in data:
-        return jsonify({"status": "error", "error": "Missing user_id parameter"}), 400
+    # data = request.get_json()
+    # if not data or 'user_id' not in data:
+    #     return jsonify({"status": "error", "error": "Missing user_id parameter"}), 400
 
-    user_id = data['user_id']
+    #todo : change user id (from current session)
+    user_id = get_user_id_by_email()
+
+
     conn = get_db_connection()
     if not conn:
         return jsonify({"status": "error", "error": "Database connection failed"}), 500
@@ -1262,19 +1424,22 @@ def cancel_booking(booking_id):
             conn.close()
 
 
+#todo :user id
 @app.route('/update_user', methods=['POST'])
 def update_user():
     data = request.get_json()
-    if not data or 'user_id' not in data:
-        return jsonify({"status": "error", "error": "Missing user_id parameter"}), 400
+    # if not data or 'user_id' not in data:
+    #     return jsonify({"status": "error", "error": "Missing user_id parameter"}), 400
 
-    user_id = data['user_id']
+    user_id = get_user_id_by_email()
+    print(user_id)
 
-    # 不能更新 user_id，所以将其从 data 中删除（如果存在其他更新项时也防止意外更改）
-    if 'user_id' in data:
-        data.pop('user_id')
+    # # user_id cannot be updated, so delete it from data (also prevent accidental changes if there are other updates)
+    # if 'user_id' in data:
+    #     data.pop('user_id')
 
-    # 提取允许更新的字段
+    # get the fields that are allow to update
+
     update_fields = {}
     for field in ['username', 'email', 'phone_number', 'role']:
         if field in data:
@@ -1330,7 +1495,10 @@ def update_user():
 def insert_booking():
     data = request.get_json()
     room_id = data.get('room_id')
-    user_id = data.get('user_id')
+
+    #todo: modify the user_id
+
+    user_id = get_user_id_by_email()
     booking_date = data.get('booking_date')
     start_time = data.get('start_time') + ":00"
     end_time = data.get('end_time') + ":00"
@@ -1350,11 +1518,11 @@ def insert_booking():
         room_type = room_info[0]
 
         cursor.execute("""
-            SELECT availability_id FROM Room_availability 
-            WHERE room_id = %s 
-            AND available_date = %s 
-            AND available_begin <= %s 
-            AND available_end >= %s 
+            SELECT availability_id FROM Room_availability
+            WHERE room_id = %s
+            AND available_date = %s
+            AND available_begin <= %s
+            AND available_end >= %s
             AND availability = 0
         """, (room_id, booking_date, start_time, end_time))
         if not cursor.fetchone():
@@ -1371,7 +1539,7 @@ def insert_booking():
                 requires_reason = True
         elif room_type == 2:
             cursor.execute("""
-                SELECT room_trusted_user_id FROM RoomTrustedUsers 
+                SELECT room_trusted_user_id FROM RoomTrustedUsers
                 WHERE room_id = %s AND user_id = %s
             """, (room_id, user_id))
             if not cursor.fetchone():
@@ -1405,12 +1573,15 @@ def insert_booking():
             conn.close()
 
 
+#todo: add check for the same insert
 @app.route('/insert_booking_with_reason', methods=['POST'])
 def insert_booking_with_reason():
     """前端输入 reason 后调用此 API 进行最终插入"""
     data = request.get_json()
     room_id = data.get('room_id')
-    user_id = data.get('user_id')
+
+    # 获取当前登录用户的 user_id
+    user_id = get_user_id_by_email()
     booking_date = data.get('booking_date')
     start_time = data.get('start_time') + ":00"
     end_time = data.get('end_time') + ":00"
@@ -1425,6 +1596,20 @@ def insert_booking_with_reason():
 
     try:
         cursor = conn.cursor()
+
+        # 检查是否已有相同的预定记录
+        check_query = """
+            SELECT * FROM Bookings 
+            WHERE room_id = %s AND user_id = %s AND booking_date = %s 
+            AND start_time = %s AND end_time = %s
+        """
+        cursor.execute(check_query, (room_id, user_id, booking_date, start_time, end_time))
+        existing_booking = cursor.fetchone()  # 如果有相同的记录，返回结果
+
+        if existing_booking:
+            return jsonify({"status": "error", "error": "Duplicate booking, the same booking already exists."}), 400
+
+        # 如果没有重复，执行插入操作
 
         query = """
             INSERT INTO Bookings (user_id, room_id, start_time, end_time, booking_date, status, reason)
@@ -1441,6 +1626,7 @@ def insert_booking_with_reason():
     finally:
         if conn:
             conn.close()
+
 
 
 @app.route('/insert_room', methods=['POST'])
@@ -1470,6 +1656,8 @@ def insert_room():
             conn.close()
 
 
+#todo: add- check if the user_id is the same
+
 @app.route('/insert-blacklist', methods=['POST'])
 def add_to_blacklist():
     """
@@ -1489,7 +1677,7 @@ def add_to_blacklist():
         data = request.json
 
         user_id = data.get('user_id')
-        added_by = data.get('added_by')
+        added_by = get_user_id_by_email()  # 获取当前登录用户的 user_id
         start_date_str = data.get('start_date')
         start_time_str = data.get('start_time')
         end_date_str = data.get('end_date')
@@ -1499,6 +1687,9 @@ def add_to_blacklist():
         if not all([user_id, added_by, start_date_str, start_time_str, end_date_str, end_time_str]):
             return jsonify({"error": "Missing required fields"}), 400
 
+
+        # Format the date and time
+
         try:
             start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
             start_time = datetime.strptime(start_time_str, "%H:%M").time()
@@ -1507,14 +1698,32 @@ def add_to_blacklist():
         except ValueError as e:
             return jsonify({"error": f"Invalid date/time format: {str(e)}"}), 400
 
+
+        # 设置添加日期和时间
         added_date = date.today()
         added_time = datetime.now().time()
+
+        # 连接数据库
 
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        # 检查该用户是否已经在黑名单中
+        check_query = "SELECT * FROM Blacklist WHERE user_id = %s"
+        cursor.execute(check_query, (user_id,))
+        existing_blacklist_entry = cursor.fetchall()  # 使用 fetchall 确保读取所有结果
+
+        # 确保关闭查询结果，防止 "Unread result found" 错误
+        if cursor.nextset():  # 消耗剩余的结果集
+            pass
+
+        if existing_blacklist_entry:
+            # 如果该用户已经在黑名单中
+            return jsonify({"error": "User is already in the blacklist"}), 400
+
+        # 否则执行插入操作
         insert_query = """
-            INSERT INTO Blacklist 
+            INSERT INTO Blacklist
             (user_id, added_by, added_date, added_time, start_date, start_time, end_date, end_time, reason)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
@@ -1533,6 +1742,7 @@ def add_to_blacklist():
 
         blacklist_id = cursor.lastrowid
 
+        # 返回成功的响应
         return jsonify({
             "message": "New blacklist entry created successfully",
             "blacklist_id": blacklist_id,
@@ -1565,7 +1775,7 @@ def insert_trusted_user():
     data = request.get_json()
     room_id = data['room_id']
     user_id = data['user_id']
-    added_by = data['added_by']
+    added_by = get_user_id_by_email()
     # 如果前端没有传入日期和时间，可以考虑自动生成当前日期和时间
     added_date = data.get('added_date')  # 格式应为 'YYYY-MM-DD'
     added_time = data.get('added_time')  # 格式应为 'HH:MM:SS'
