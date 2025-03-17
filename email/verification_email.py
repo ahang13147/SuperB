@@ -1,4 +1,4 @@
-# Open testing page from http://127.0.0.1:5000,don't open test.html page in browser directly
+# Open testing page from http://127.0.0.1:5000,don't open verification_email.html page in browser directly
 
 from flask import Flask, render_template, request, flash, redirect, url_for
 from flask_mail import Mail, Message
