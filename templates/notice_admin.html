@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DIICSU Intelligent Meeting Room Booking System</title>
+    <link rel="stylesheet" href="../static/css/notice_admin.css">
+  <script src="{{ url_for('static', filename='js/adminSidebar.js') }}"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="main-container">
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Notification Center Example -->
+            <div class="notification-panel" >
+                <div class="notification-item unread">
+                    <div class="notification-time">2023-10-01 09:00</div>
+                    <div class="notification-content">
+                        Your booking for "Innovation Room 101" has been confirmed (09:00-10:00)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Page switching functionality
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // Remove all active states
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+
+                // Switch content display
+                const panels = document.querySelectorAll('.search-container, .notification-panel');
+                panels.forEach(p => p.style.display = 'none');
+
+                if(this.querySelector('.fa-bell')) {
+                    document.querySelector('.notification-panel').style.display = 'block';
+                } else {
+                    document.querySelector('.search-container').style.display = 'block';
+                }
+            });
+        });
+    </script>
+    <script src="common.js"></script>
+</body>
+</html>

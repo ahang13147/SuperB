@@ -1,29 +1,9 @@
-
         :root {
             --primary-color: #2c3e50;
             --secondary-color: #3498db;
             --danger-color: #e74c3c;
             --success-color: #2ecc71;
-        }
-
-        header {
-            width: 100%;
-            max-width: 1200px;
-            background-color: var(--primary-color);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        /* 其他原有样式保持不变... */
-        :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --danger-color: #e74c3c;
-            --success-color: #2ecc71;
+            --pending-color: #f1c40f;
         }
 
         body {
@@ -50,24 +30,24 @@
         }
 
         .reservations-container {
-    display: grid;
-    gap: 1rem;
-    padding: 1rem;
-}
+            display: grid;
+            gap: 1rem;
+            padding: 1rem;
+        }
 
-.reservation-card {
-    background: white;
-    border-radius: 8px;
-    padding: 1rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
+        .reservation-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
 
-.status-indicator {
-    padding: 4px 8px;
-    border-radius: 4px;
-    color: white;
-    font-size: 0.8rem;
-}
+        .status-indicator {
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: white;
+            font-size: 0.8rem;
+        }
 
         .reservations-container {
             display: grid;
@@ -132,7 +112,6 @@
             background-color: #c0392b;
         }
 
-        /* 弹窗样式 */
         .modal {
             display: none;
             position: fixed;
@@ -156,8 +135,15 @@
         }
 
         @keyframes modalShow {
-            from { transform: scale(0.9); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         .modal-content h3 {
@@ -166,9 +152,10 @@
         }
 
         .modal-content p {
-        color: #666;
-        margin: 15px 0;
-}
+            color: #666;
+            margin: 15px 0;
+        }
+
         .modal-actions {
             display: flex;
             gap: 10px;
@@ -201,7 +188,23 @@
             background-color: #7f8c8d;
         }
 
-        /* 根据状态显示不同颜色 */
-.status-indicator[data-status="approved"] { background: var(--success-color); }
-.status-indicator[data-status="canceled"] { background: var(--danger-color); }
-.status-indicator[data-status="pending"] { background: var(--warning-color); }
+        #user-id {
+            text-align: center;
+            color: #666;
+            font-size: 16px;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+
+
+        .status-indicator[data-status="approved"] {
+            background: var(--success-color);
+        }
+
+        .status-indicator[data-status="canceled"] {
+            background: var(--danger-color);
+        }
+
+        .status-indicator[data-status="pending"] {
+            background: var(--pending-color);
+        }

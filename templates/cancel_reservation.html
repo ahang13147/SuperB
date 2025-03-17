@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/cancel_reservation.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <title>Cancel Reservation</title>
+        <script src="{{ url_for('static', filename='js/cancel_reservation.js') }}"></script>
+</head>
+<body>
+    <div class="main-container">
+        <!-- 侧边栏脚本需要放在body内 -->
+        <script src="{{ url_for('static', filename='js/adminSidebar.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/cancel_reservation.js') }}"></script>
+        <div class="content-area">
+            <header>
+                <h1>Cancel Reservation</h1>
+            </header>
+
+            <div class="reservations-container">
+                <!-- Reservations will be loaded here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框 -->
+    <div class="modal" id="cancelModal">
+        <div class="modal-content">
+            <h3>Confirm Cancellation</h3>
+            <p>Are you sure you want to cancel this reservation?</p>
+            <div class="modal-actions">
+                <button class="modal-btn close-btn" id="closeModal">Close</button>
+                <button class="modal-btn confirm-btn" id="confirmCancel">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
