@@ -6,31 +6,45 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.6;
+    background-color: #f5f6fa;
+    margin: 0;
     padding: 20px;
-    background-color: #f5f5f5;
 }
 
-h1 {
+header {
+    background-color: #2c3e50;
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 0.1px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     text-align: center;
-    color: #2c3e50;
-    margin-bottom: 30px;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2rem;
 }
 
 .filters {
     display: flex;
     gap: 15px;
-    margin-bottom: 30px;
+    margin-top: 0;
+    margin-bottom: 20px;
     flex-wrap: wrap;
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .filters input[type="text"],
 .filters select {
     padding: 10px;
     border: 1px solid #ddd;
-    border-radius: 4px;
+    border-radius: 5px;
     flex: 1 1 200px;
-    min-height: 40px;
+    font-size: 1rem;
 }
 
 .time-filter {
@@ -53,14 +67,20 @@ h1 {
 
 .classroom-card {
     background: white;
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 20px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: transform 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.classroom-card h3 {
+    margin-top: 0;
+    color: #2c3e50;
 }
 
 .classroom-card:hover {
-    transform: translateY(-3px);
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 .status {
@@ -86,15 +106,15 @@ button {
     color: white;
     border: none;
     padding: 10px 20px;
-    border-radius: 4px;
+    border-radius: 5px;
     cursor: pointer;
-    margin-top: 10px;
     width: 100%;
-    transition: opacity 0.2s;
+    font-size: 1rem;
+    transition: background-color 0.2s;
 }
 
-button:hover:not(:disabled) {
-    opacity: 0.9;
+button:hover {
+    background-color: #2980b9;
 }
 
 button:disabled {
@@ -103,9 +123,8 @@ button:disabled {
 }
 
 .details {
-    margin: 10px 0;
+    margin: 15px 0;
     color: #666;
-    line-height: 1.8;
 }
 
 .details p {
@@ -127,7 +146,7 @@ button:disabled {
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.4);
+    background-color: rgba(0, 0, 0, 0.4);
 }
 
 .modal-content {
@@ -152,28 +171,6 @@ button:disabled {
     color: black;
     text-decoration: none;
     cursor: pointer;
-}
-
-.modal-content {
-    background: #ffffff;
-    margin: 10vh auto;
-    padding: 30px;
-    width: 90%;
-    max-width: 600px;
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-    position: relative;
-}
-
-.modal-content h2 {
-    color: #2c3e50;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #3498db;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 1.8rem;
 }
 
 #availableTimes {
@@ -238,23 +235,6 @@ button:disabled {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
 }
-#availableTimes .time-slot.checked {
-    border-color: #3498db !important;
-    background: #e3f2fd !important;
-    box-shadow: 0 4px 6px rgba(52, 152, 219, 0.1);
-}
-.close {
-    color: #6c757d;
-    font-size: 32px;
-    transition: color 0.2s;
-    top: 15px;
-    right: 20px;
-    position: absolute;
-}
-
-.close:hover {
-    color: #2c3e50;
-}
 
 .time-slot-booked {
     position: relative;
@@ -303,28 +283,6 @@ button:disabled {
     margin-left: 5px;
 }
 
-button:disabled {
-    background-color: #95a5a6 !important;
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-.status.booked {
-    background-color: #e74c3c;
-}
-
-.time-slot-booked {
-    opacity: 0.6;
-    cursor: not-allowed;
-    background: #f8d7da !important;
-    border-color: #f5c6cb !important;
-}
-
-.time-slot-booked label {
-    color: #721c24 !important;
-    text-decoration: line-through;
-}
-
 .booking-feedback {
     position: fixed;
     bottom: 20px;
@@ -333,7 +291,7 @@ button:disabled {
     color: white;
     padding: 15px 25px;
     border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     animation: slideIn 0.3s ease-out;
 }
 
@@ -345,7 +303,7 @@ button:disabled {
 #reasonModal.modal {
     display: none;
     position: fixed;
-    z-index: 1002; 
+    z-index: 1002;
     left: 0;
     top: 0;
     width: 100%;
@@ -399,7 +357,6 @@ button:disabled {
     outline: none;
     box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 }
-
 
 #submitReason:hover {
     transform: translateY(-2px);

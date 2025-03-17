@@ -51,42 +51,41 @@ Version 4.0
         </div>
 
         <!-- Content Area -->
-        <div class="content-area">
-            <div class="container">
-                <h1>Classroom reservation system</h1>
-
-                <!-- Search and filter areas-->
-                <div class="filters">
-                    <input type="date" id="datePicker">
-
-                    <select id="equipmentFilter">
-                        <option value="">All Equipment</option>
-                        <option value="Projector">Projector</option>
-                        <option value="Whiteboard">Whiteboard</option>
+    <div class="content-area">
+        <header>
+            <h1>Classroom Reservation System</h1>
+        </header>
+        <div class="container">
+            <!-- 筛选栏 -->
+            <div class="filters">
+                <input type="date" id="datePicker">
+                <select id="equipmentFilter">
+                    <option value="">All Equipment</option>
+                    <option value="Projector">Projector</option>
+                    <option value="Whiteboard">Whiteboard</option>
+                </select>
+                <input type="text" id="searchKeyword" placeholder="Search classroom name...">
+                <select id="capacityFilter">
+                    <option value="0">All capacity</option>
+                    <option value="30">More than 30 people</option>
+                    <option value="50">More than 50 people</option>
+                    <option value="100">More than 100 people</option>
+                </select>
+                <div class="time-filter">
+                    <select id="startTime">
+                        <option value="">Select start time</option>
                     </select>
-
-                    <input type="text" id="searchKeyword" placeholder="Search classroom name...">
-                    <select id="capacityFilter">
-                        <option value="0">All capacity</option>
-                        <option value="30">More than 30 people</option>
-                        <option value="50">More than 50 people</option>
-                        <option value="100">More than 100 people</option>
+                    <span>to</span>
+                    <select id="endTime">
+                        <option value="">Select end time</option>
                     </select>
-                    <div class="time-filter">
-                        <select id="startTime">
-                            <option value="">Select start time</option>
-                        </select>
-                        <span>to</span>
-                        <select id="endTime">
-                            <option value="">Select end time</option>
-                        </select>
-                    </div>
                 </div>
-
-                <!-- rooms list -->
-                <div id="classroomList" class="classroom-grid"></div>
             </div>
+
+            <!-- classroom list -->
+            <div id="classroomList" class="classroom-grid"></div>
         </div>
+    </div>
         <!-- reason window -->
         <div id="reasonModal" class="modal">
             <div class="modal-content">
