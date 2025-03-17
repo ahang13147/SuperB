@@ -1,44 +1,53 @@
 import win32com.client
+import psutil
 import time
+import os
 
-# 初始化Outlook
-outlook = win32com.client.Dispatch("Outlook.Application")
+def close_outlook():
+    """关闭Outlook进程"""
+    for proc in psutil.process_iter(['pid', 'name']):
+        if proc.info['name'] == 'OUTLOOK.EXE':
+            print(f"正在关闭 Outlook (PID: {proc.info['pid']})...")
+            proc.terminate()
+            time.sleep(2)  # 等待2秒确保进程结束
+
+def start_outlook():
+    """重新启动Outlook应用"""
+    print("重新启动 Outlook...")
+    os.system('start outlook')  # 使用系统命令启动 Outlook
+    time.sleep(10)  # 等待10秒，确保Outlook完全启动
 
 def create_event(subject, start, end, busy, location='', reminder_minutes=15):
-    """
-    subject: 主题
-    start: 开始时间, 格式 "2022-06-05 10:10"
-    end: 结束时间, 格式 "2022-06-05 10:10"
-    busy: 是否忙碌的状态, 可选内容: 2: busy, 0: available
-    location: 事件地点
-    reminder_minutes: 提前几分钟提醒
-    """
-    # 记录开始时间
-    start_time = time.time()
-    print("开始创建事件...")
-
+    """创建日历事件"""
+    # 初始化Outlook
+    outlook = win32com.client.Dispatch("Outlook.Application")
     appt = outlook.CreateItem(1)    # 1 = AppointmentItem
-    print(f"创建Item时间：{time.time() - start_time:.2f}秒")
 
     appt.Start = start
     appt.Subject = subject
     appt.End = end
     appt.BusyStatus = busy
     appt.Location = location
-    appt.MeetingStatus = 0  # olNonMeeting, 非会议, 只是个人事件
+    appt.MeetingStatus = 0  # 非会议事件
 
     # 设置提醒
     appt.ReminderSet = True
     appt.ReminderMinutesBeforeStart = reminder_minutes
-    print(f"设置提醒时间：{time.time() - start_time:.2f}秒")
 
     # 保存事件
     appt.Save()
-    print(f"保存事件时间：{time.time() - start_time:.2f}秒")
 
-    # 展示事件：使用 Display() 打开事件详情
+    # 结束Outlook进程并重启
+    close_outlook()
+    start_outlook()
+
+    # 重新打开Outlook并等待其加载
+    time.sleep(5)  # 再次等待5秒钟，确保Outlook完全加载
+
+    # 显示事件
     appt.Display()
-    print("事件创建并显示完成!")
+    print(f"事件 '{subject}' 创建并显示完成!")
 
 if __name__ == '__main__':
-    create_event("A Good Event", "2025-03-15 11:00", "2025-03-15 11:30", 0, "Teams", reminder_minutes=10)
+    # 示例调用
+    create_event("Client Meeting", "2025-03-14 15:00", "2025-03-14 15:30", 0, "Teams", reminder_minutes=10)
