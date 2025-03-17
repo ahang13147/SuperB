@@ -1,7 +1,7 @@
 
 # Azure配置
-CLIENT_ID: "736efa73-315a-4b77-a273-0447f5e2a27d"
-CLIENT_SECRET: "SmK8Q~kGj~gKhSU0ZFE.Z0VC~6NMMvQ8qdBm4atq"
+CLIENT_ID: "a6865feb-cbfc-4ba6-b4e1-8a632a2c7dc5"
+CLIENT_SECRET: "JCN8Q~kSfZZDK6eZnE4qYjoJ0bRfK0ZdDBFgPc4q"
 AUTHORITY: "https://login.microsoftonline.com/common"
 REDIRECT_URI: "http://localhost:8000/auth_callback"
 
@@ -9,5 +9,5 @@ REDIRECT_URI: "http://localhost:8000/auth_callback"
 db_config:
   host: "localhost"
   user: "root"
-  password: "root"  # 注意：删除操作中使用的是1234，请保持一致
+  password: "zhang2004"  # 注意：删除操作中使用的是1234，请保持一致
   database: "booking_system_db"
