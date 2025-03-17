@@ -16,7 +16,8 @@ INSERT INTO Users (username, email, phone_number, role) VALUES
 ('student2', 'student2@example.com', 'hash7', 'student'),
 ('tutor2', 'tutor2@example.com', 'hash8', 'tutor'),
 ('student3', 'student3@example.com', 'hash9', 'student'),
-('prof3', 'prof3@example.com', 'hash10', 'professor');
+('prof3', 'prof3@example.com', 'hash10', 'professor'),
+('Zibang Nie', '2542881@dundee.ac.uk','17375819888','student');
 
 INSERT INTO Rooms (room_name, capacity, equipment, location, room_type)
 VALUES
@@ -54,8 +55,8 @@ INSERT INTO Bookings (user_id, room_id, start_time, end_time, booking_date, stat
 VALUES
 (2, 1, '10:00:00', '11:00:00', '2025-03-05', 'approved', 'Regular class'),
 (3, 2, '14:00:00', '15:00:00', '2025-03-05', 'pending', 'Study group'),
-(4, 3, '16:00:00', '17:00:00', '2025-03-05', 'rejected', 'Insufficient equipment');
-
+(4, 3, '16:00:00', '17:00:00', '2025-03-05', 'rejected', 'Insufficient equipment'),
+(11,4,'16:00:00','17:00:00','2025-3-18','approved','Regular class');
 
 INSERT INTO Notifications (user_id, message, notification_type, status)
 VALUES
