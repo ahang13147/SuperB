@@ -1,4 +1,4 @@
--- @version: 3/11/2025
+-- @version: 3/17/2025
 -- @author: Xin Yu, Siyan Guo, Zibang Nie
 -- @description: This SQL script creates a booking system database, which includes tables for Users, Rooms, Bookings, Approvals, Notifications, and Reports.
 -- It provides a structure to manage users, room bookings, approval processes, notifications, and report generation.
@@ -114,6 +114,23 @@ CREATE TABLE Blacklist (
     FOREIGN KEY (added_by) REFERENCES Users(user_id)  -- Foreign key referencing Users table (Admin)
 );
 
+-- 1.12 Issues Table (Stores reported room issues and their status)
+CREATE TABLE Issues (
+    issue_id INT AUTO_INCREMENT PRIMARY KEY,       -- Issue ID, auto-incremented
+    room_id INT NOT NULL,                         -- Room ID (Foreign key referencing Rooms table)
+    issue TEXT NOT NULL,                          -- Description of the issue
+    status ENUM('open', 'in_progress', 'resolved') DEFAULT 'open',  -- Issue status
+    start_date DATE NOT NULL,                     -- Start date of the issue occurrence
+    start_time TIME NOT NULL,                     -- Start time of the issue occurrence
+    end_date DATE,                                -- End date when the issue was resolved (nullable)
+    end_time TIME,                                -- End time when the issue was resolved (nullable)
+    added_by INT NOT NULL,                        -- Admin ID who reported the issue (Foreign key referencing Users table)
+    FOREIGN KEY (room_id) REFERENCES Rooms(room_id),       -- Foreign key constraint for room
+    FOREIGN KEY (added_by) REFERENCES Users(user_id)       -- Foreign key constraint for admin
+);
+
+-- Create index to optimize queries filtering by room_id
+CREATE INDEX idx_issues_room ON Issues(room_id);
 
 -- Create indexes to optimize query performance (optional)
 CREATE INDEX idx_booking_user ON Bookings(user_id);  -- Index on user_id in Bookings table
