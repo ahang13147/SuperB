@@ -5,13 +5,8 @@ import re
 import time
 import mysql.connector
 from datetime import datetime, timedelta
-from flask import Flask, jsonify
-from flask_cors import CORS
 
 
-
-app = Flask(__name__)
-CORS(app)
 # ============================ 数据库连接配置 ============================
 db_config = {
     "host": "localhost",
@@ -297,15 +292,6 @@ def main_scheduler():
     return "爬取并更新数据库成功！"
 
 
-# ============================ Flask API 端点 ============================
-@app.route('/run_scheduler', methods=['GET'])
-def run_scheduler():
-    try:
-        result = main_scheduler()
-        return jsonify({"message": result}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+# 直接运行主调度函数
+if __name__ == "__main__":
+    main_scheduler()
