@@ -1,8 +1,8 @@
 <!-- booking_centre.html -->
 <!--
-author: Guanhang Zhang  &Xin Yu &Siyan Guo
-this version add reason window
-Version 4.0
+author: Guanhang Zhang  &Xin Yu
+this version fix the notification,add room management pae
+Version 3.0.2
 
 -->
 
@@ -13,12 +13,28 @@ Version 4.0
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Classroom reservation system</title>
-    <script src="{{ url_for('static', filename='js/booking_centre.js') }}"></script>
-    <link rel="stylesheet" href="../static/css/booking_centre.css">
-    <link rel="stylesheet" href="../static/css/sidebar.css">
+    <link rel="stylesheet" href="../static/css/booking_centre_admin.css">
+  <script src="{{ url_for('static', filename='js/adminSidebar.js') }}"></script>
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 
+    <script>
+        // 打印所有URL参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const userInfo = {
+            name: decodeURIComponent(urlParams.get('name') || ''),
+            email: decodeURIComponent(urlParams.get('email') || ''),
+            id: decodeURIComponent(urlParams.get('id') || '')
+        };
+
+        console.log('[浏览器控制台] 微软返回的用户信息:', {
+            DisplayName: userInfo.name,
+            Email: userInfo.email,
+            AzureID: userInfo.id,
+            FullParams: Object.fromEntries(urlParams.entries())
+        });
+    </script>
 <body>
 
     <div id="bookingModal" class="modal">
@@ -30,33 +46,16 @@ Version 4.0
         </div>
     </div>
     <div class="main-container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <a class="nav-item active" href="{{ url_for('booking_centre') }}">
-                <i class="fas fa-calendar-alt nav-icon"></i>
-                Booking Center
-            </a>
-            <a class="nav-item" href="{{ url_for('my_reservation') }}">
-                <i class="fas fa-list-ul nav-icon"></i>
-                My Bookings
-            </a>
-            <a class="nav-item" href="{{ url_for('my_notification') }}">
-                <i class="fas fa-bell nav-icon"></i>
-                Notifications
-            </a>
-            <a class="nav-item" href="{{ url_for('user_profile') }}">
-                <i class="fas fa-user-circle nav-icon"></i>
-                My Profile
-            </a>
-        </div>
+
 
         <!-- Content Area -->
         <div class="content-area">
             <div class="container">
                 <h1>Classroom reservation system</h1>
 
-                <!-- Search and filter areas-->
+                <!-- 搜索和过滤区域 -->
                 <div class="filters">
+                    <!-- 在 filters div 中添加 -->
                     <input type="date" id="datePicker">
 
                     <select id="equipmentFilter">
@@ -83,24 +82,12 @@ Version 4.0
                     </div>
                 </div>
 
-                <!-- rooms list -->
+                <!-- 教室列表 -->
                 <div id="classroomList" class="classroom-grid"></div>
             </div>
         </div>
-        <!-- reason window -->
-        <div id="reasonModal" class="modal">
-            <div class="modal-content">
-                <span class="close-reason">&times;</span>
-                <h2>Please enter the reason for booking:</h2>
-                <textarea id="reasonInput" rows="4" placeholder="Enter your reason here..."></textarea>
-                <div class="button-container">
-                    <button id="submitReason">Submit</button>
-                </div>
-            </div>
-        </div>
     </div>
-
+      <script src="{{ url_for('static', filename='js/booking_centre_admin.js') }}"></script>
 </body>
-
 
 </html>

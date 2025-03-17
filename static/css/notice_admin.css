@@ -1,41 +1,27 @@
+
 * {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
-    font-family: 'Segoe UI', 'PingFang SC', system-ui;
 }
 
-/* Main container */
+body {
+    line-height: 1.6;
+    padding: 20px;
+    background-color: #f5f5f5;
+}
 .main-container {
-    width: 100%;
-    min-height: 1080px;
-    background: #f8f9fa;
-    position: relative;
-    overflow-x: hidden;
+    margin-left: 200px; /* 与侧边栏宽度一致 */
+    transition: margin-left 0.3s; /* 可选：侧边栏折叠动画 */
 }
 
-/* Sidebar */
-.sidebar {
-    position: fixed;
-    width: 200px;
-    height: 100vh;
-    left: 0;
-    top: 0;
-    background: linear-gradient(180deg, #2b5876 0%, #4e4376 100%);
-    padding: 30px 0;
-    box-shadow: 4px 0 15px rgba(0,0,0,0.1);
-    z-index: 1000;
-}
-
-/* Content area */
-.content-area {
-    margin-left: 200px;
-    width: calc(100% - 200px);
-    min-height: 1080px;
+.container {
+    max-width: calc(100% - 20px); /* 原1200px改为动态宽度 */
+    margin: 0 auto;
     padding: 40px;
     box-sizing: border-box;
-    background: #f8f9fa;
 }
+
 
 /* Navigation items */
 .nav-item {

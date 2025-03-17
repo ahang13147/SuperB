@@ -1,0 +1,280 @@
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+
+    line-height: 1.6;
+    padding: 20px;
+    background-color: #f5f5f5;
+}
+.main-container {
+  display: flex;
+  min-height: 100vh;
+  padding-left: 200px; /* 新增：为侧边栏腾出空间 */
+  box-sizing: border-box; /* 确保padding不增加容器总宽度 */
+}
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.content-area {
+  flex: 1;
+  padding: 30px;
+  background-color: #f7f7f7;
+}
+
+
+        /* 主要内容区域 */
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        /* 房间管理样式 */
+        .room-list-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .room-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+
+        .room-info div {
+            margin: 8px 0;
+            display: flex;
+            align-items: baseline;
+        }
+
+        .room-info label {
+            min-width: 100px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .room-actions {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .edit-btn {
+            background: #4299e1;
+            color: white;
+        }
+
+        .delete-btn {
+            background: #f56565;
+            color: white;
+        }
+
+        /* 添加表单样式 */
+        .add-room-form {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 25px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .add-room-form input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+
+        .add-room-form button {
+            background: #48bb78;
+            color: white;
+            padding: 12px 24px;
+            width: 100%;
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        /* 成功提示弹窗样式 */
+        .success-modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .success-modal-content i {
+            color: #48bb78;
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .success-modal-content h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .success-modal-content button {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .content-area {
+                padding: 30px;
+            }
+
+            .room-item {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .room-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                padding: 20px;
+            }
+
+            .nav-item {
+                margin: 8px;
+                padding: 12px 15px;
+            }
+
+            .nav-icon {
+                margin-right: 10px;
+            }
+
+            .content-area {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .content-area {
+                padding: 15px;
+            }
+
+            .room-info label {
+                min-width: 80px;
+                font-size: 0.9em;
+            }
+
+            .room-info div {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            button {
+                padding: 8px 12px;
+                font-size: 0.9em;
+            }
+
+            .add-room-form {
+                padding: 20px;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+        }
+
+        .mobile-menu {
+            display: none;
+            padding: 15px;
+            background: #2b5876;
+            color: white;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu {
+                display: block;
+            }
+
+            .sidebar {
+                position: fixed;
+                height: 100%;
+                left: -250px;
+                z-index: 1000;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+        }
