@@ -2,18 +2,63 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <script src="my_reservations.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../static/css/my_reservation_admin.css">
-  <script src="{{ url_for('static', filename='js/adminSidebar.js') }}"></script>
+    <link rel="stylesheet" href="../static/css/sidebar.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <title>My Reservations</title>
 
 </head>
 <body>
+<div class="hamburger-menu">
+        <i class="fas fa-bars"></i>
+</div>
     <div class="main-container">
-        <!-- 侧边栏 -->
 
+        <div class="sidebar">
+
+          <a class="nav-item" href="{{ url_for('booking_centre_admin') }}">
+            <i class="fas fa-calendar-alt nav-icon"></i>
+            Booking Center
+          </a>
+          <a class="nav-item active" href="{{ url_for('my_reservation_admin') }}">
+            <i class="fas fa-list-ul nav-icon"></i>
+            My Bookings
+          </a>
+          <a class="nav-item" href="{{ url_for('Approval_Center') }}">
+            <i class="fas fa-check-circle nav-icon"></i>
+            Approval Management
+          </a>
+          <a class="nav-item" href="{{ url_for('cancel_reservation') }}">
+            <i class="fas fa-calendar-times nav-icon"></i>
+            Cancel Reservation
+          </a>
+          <a class="nav-item" href="{{ url_for('room_management') }}">
+            <i class="fas fa-door-open nav-icon"></i>
+            Room Management
+          </a>
+          <a class="nav-item" href="{{ url_for('notice_admin') }}">
+            <i class="fas fa-bell nav-icon"></i>
+            Notifications
+          </a>
+          <a class="nav-item" href="{{ url_for('blacklist') }}">
+            <i class="fas fa-ban nav-icon"></i>
+            Black List
+          </a>
+          <a class="nav-item" href="{{ url_for('trust_list') }}">
+            <i class="fas fa-shield-alt nav-icon"></i>
+            Trust List
+          </a>
+          <a class="nav-item" href="{{ url_for('my_profile_admin') }}">
+            <i class="fas fa-user-circle nav-icon"></i>
+            My Profile
+          </a>
+
+            <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+            </div>
+
+        </div>
         <!-- 内容区域 -->
         <div class="content-area">
             <header>
@@ -42,7 +87,6 @@
                         <span>30 seats</span>
                     </div>
                     <button class="cancel-btn">Cancel Reservation</button>
-    <!-- ...其他内容保持不变... -->
 </div>
 
 
@@ -51,7 +95,6 @@
         </div>
     </div>
 
-<!-- 修改弹窗内容 -->
 <div class="modal" id="cancelModal">
     <div class="modal-content">
         <h3>Confirm Cancellation</h3>
@@ -62,6 +105,7 @@
         </div>
     </div>
 </div>
+
       <script src="{{ url_for('static', filename='js/my_reservation_admin.js') }}"></script>
 </body>
 </html>

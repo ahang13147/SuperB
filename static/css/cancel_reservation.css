@@ -10,12 +10,7 @@ body {
     background-color: #f5f5f5;
 }
 
-.main-container {
-    display: flex;
-    min-height: 100vh;
-    padding-left: 200px;
-    box-sizing: border-box;
-}
+
 
 .container {
     max-width: 1200px;
@@ -36,16 +31,11 @@ body {
     --pending-color: #f1c40f;
 }
 
-header {
-    width: 100%;
-    max-width: 1200px;
-    background-color: var(--primary-color);
-    color: white;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 30px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+h1 {
     text-align: center;
+    color: #2c3e50;
+    margin-bottom: 30px;
+    font-size: 2.5em;
 }
 
 .reservations-container {
@@ -81,6 +71,10 @@ header {
     font-weight: 600;
     min-width: 100px;
     color: var(--primary-color);
+}
+
+.reservation-info span {
+    color: #555;
 }
 
 .status-indicator {
@@ -206,3 +200,105 @@ header {
 .status-indicator[data-status="pending"] {
     background: var(--pending-color);
 }
+
+.status-indicator[data-status="canceled"] { background: var(--danger-color); }
+
+
+@media (max-width: 768px) {
+  body {
+    padding: 0 !important;
+     font-size: 14px;
+  }
+
+    h1 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+  .content-area {
+    padding: 15px;
+    width: 100vw !important;
+    margin-left: 0 !important;
+    overflow-x: hidden;
+  }
+
+  .reservations-container {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .reservation-card {
+    padding: 15px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .reservation-info {
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+
+  .reservation-info label {
+    min-width: 70px;
+    font-size: 0.9em;
+    margin-bottom: 3px;
+  }
+
+  .status-indicator {
+    top: 10px;
+    right: 10px;
+    font-size: 0.8em;
+    padding: 4px 8px;
+  }
+
+  .cancel-btn {
+    padding: 12px;
+    font-size: 0.9em;
+    margin-top: 10px;
+  }
+
+  .modal-content {
+    width: 95%;
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .reservation-card {
+    padding: 12px;
+  }
+
+  .reservation-info label {
+    min-width: 60px;
+    font-size: 0.85em;
+  }
+
+  .status-indicator {
+    position: static;
+    order: -1;
+    margin-bottom: 10px;
+    width: fit-content;
+  }
+
+  .cancel-btn {
+    font-size: 0.85em;
+    padding: 10px;
+  }
+
+  header h1 {
+    font-size: 1.6em;
+    padding: 15px;
+  }
+
+  .modal-content {
+    padding: 15px;
+  }
+
+  .modal-btn {
+    padding: 8px 15px;
+    font-size: 0.9em;
+  }
+      h1 {
+        font-size: 1.6em;
+    }
+}
+

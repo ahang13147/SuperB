@@ -24,6 +24,23 @@
     padding: 30px 0;
     box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
     z-index: 1000;
+
+    /* 新增滚动条样式 */
+    overflow-y: auto;
+    scrollbar-width: thin; /* 火狐浏览器 */
+    scrollbar-color: rgba(255,255,255,0.2) transparent; /* 火狐浏览器 */
+}
+
+/* Chrome/Edge/Safari 滚动条样式 */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.sidebar::-webkit-scrollbar-thumb {
+    background-color: rgba(255,255,255,0.2);
+    border-radius: 3px;
 }
 
 .content-area {
@@ -39,8 +56,8 @@
     display: flex;
     align-items: center;
     color: rgba(255, 255, 255, 0.9);
-    padding: 18px 25px;
-    margin: 8px 15px;
+    padding: 18px 10px;
+    margin: 8px 10px;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
