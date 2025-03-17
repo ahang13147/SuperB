@@ -1,192 +1,214 @@
-        // Initializes the time selector
-        const startDatePicker = flatpickr("#startDate", {
-            dateFormat: "Y-m-d",
-            onChange: function(selectedDates) {
+// flatpickr 初始化
+const startDatePicker = flatpickr("#startDate", {
+    dateFormat: "Y-m-d",
+    onChange: function(selectedDates) {
+        endDatePicker.set('minDate', selectedDates[0] || new Date());
+        validateTimes();
+    }
+});
 
-                endDatePicker.set('minDate', selectedDates[0] || new Date());
-                validateTimes();
-            }
-        });
+const startTimePicker = flatpickr("#startTime", {
+    enableTime: true,
+    noCalendar: true,
+    dateFormat: "H:i",
+    time_24hr: true,
+    onChange: function() {
+        validateTimes();
+    }
+});
 
-        const startTimePicker = flatpickr("#startTime", {
-            enableTime: true,
-            noCalendar: true,
-            dateFormat: "H:i",
-            time_24hr: true,
+const endDatePicker = flatpickr("#endDate", {
+    dateFormat: "Y-m-d",
+    onChange: function() {
+        validateTimes();
+    }
+});
 
-            onChange: function() {
-                validateTimes();
-            }
-        });
+const endTimePicker = flatpickr("#endTime", {
+    enableTime: true,
+    noCalendar: true,
+    dateFormat: "H:i",
+    time_24hr: true,
+    onChange: function() {
+        validateTimes();
+    }
+});
 
-        const endDatePicker = flatpickr("#endDate", {
-            dateFormat: "Y-m-d",
+// 时间验证逻辑
+function validateTimes() {
+    const startDate = document.getElementById('startDate').value;
+    const startTime = document.getElementById('startTime').value;
+    const endDate = document.getElementById('endDate').value;
+    const endTime = document.getElementById('endTime').value;
+    const errorElement = document.getElementById('timeError');
 
-            onChange: function() {
+    if (startDate && startTime && endDate && endTime) {
+        const startDateTime = new Date(`${startDate}T${startTime}`);
+        const endDateTime = new Date(`${endDate}T${endTime}`);
 
-                validateTimes();
-            }
-        });
-
-        const endTimePicker = flatpickr("#endTime", {
-            enableTime: true,
-            noCalendar: true,
-            dateFormat: "H:i",
-            time_24hr: true,
-
-            onChange: function() {
-
-                validateTimes();
-            }
-        });
-
-        // proof time
-        function validateTimes() {
-            const startDate = document.getElementById('startDate').value;
-            const startTime = document.getElementById('startTime').value;
-            const endDate = document.getElementById('endDate').value;
-            const endTime = document.getElementById('endTime').value;
-            const errorElement = document.getElementById('timeError');
-
-            if (startDate && startTime && endDate && endTime) {
-                const startDateTime = new Date(`${startDate}T${startTime}`);
-                const endDateTime = new Date(`${endDate}T${endTime}`);
-
-                if (endDateTime <= startDateTime) {
-                    errorElement.style.display = 'block';
-                    document.getElementById('endDate').classList.add('input-error');
-                    document.getElementById('endTime').classList.add('input-error');
-                    return false;
-                }
-            }
-
-            errorElement.style.display = 'none';
-            document.getElementById('endDate').classList.remove('input-error');
-            document.getElementById('endTime').classList.remove('input-error');
-            return true;
+        if (endDateTime <= startDateTime) {
+            errorElement.style.display = 'block';
+            document.getElementById('endDate').classList.add('input-error');
+            document.getElementById('endTime').classList.add('input-error');
+            return false;
         }
+    }
 
-        // Add blacklist
-        async function addToBlacklist() {
-            if (!validateTimes()) {
-                alert('The decapsulating time must be later than the masking time！');
-                return;
-            }
+    errorElement.style.display = 'none';
+    document.getElementById('endDate').classList.remove('input-error');
+    document.getElementById('endTime').classList.remove('input-error');
+    return true;
+}
 
-            const userId = document.getElementById('userId').value;
-            const startDate = document.getElementById('startDate').value;
-            const startTime = document.getElementById('startTime').value;
-            const endDate = document.getElementById('endDate').value;
-            const endTime = document.getElementById('endTime').value;
-            const reason = document.getElementById('reason').value;
+// 添加黑名单
+async function addToBlacklist() {
+    if (!validateTimes()) {
+        alert('The decapsulating time must be later than the masking time！');
+        return;
+    }
 
-            if (userId && startDate && startTime && endDate && endTime && reason) {
-                const requestBody = {
-                    user_id: parseInt(userId, 10),
-                    added_by: 1, // Assume that the current user ID is 1
-                    start_date: startDate,
-                    start_time: startTime,
-                    end_date: endDate,
-                    end_time: endTime,
-                    reason: reason
-                };
+    const userId = document.getElementById('userId').value;
+    const startDate = document.getElementById('startDate').value;
+    const startTime = document.getElementById('startTime').value;
+    const endDate = document.getElementById('endDate').value;
+    const endTime = document.getElementById('endTime').value;
+    const reason = document.getElementById('reason').value;
 
-                try {
-                    const response = await fetch('http://127.0.0.1:8000/insert-blacklist', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(requestBody),
-                    });
+    if (userId && startDate && startTime && endDate && endTime && reason) {
+        const requestBody = {
+            user_id: parseInt(userId, 10),
+            added_by: 1, // 假设当前用户ID为1
+            start_date: startDate,
+            start_time: startTime,
+            end_date: endDate,
+            end_time: endTime,
+            reason: reason
+        };
 
-                    if (response.ok) {
-                        alert('successfully added！');
-                        loadBlacklist();
-                    } else {
-                        const errorData = await response.json();
-                        alert(`fail to add：${errorData.message}`);
-                    }
-                } catch (error) {
-                    console.error('Request failed：', error);
-                    alert('Network error, please try again later');
-                }
-
-                // Clear input field
-                document.getElementById('userId').value = '';
-                document.getElementById('startDate').value = '';
-                document.getElementById('startTime').value = '';
-                document.getElementById('endDate').value = '';
-                document.getElementById('endTime').value = '';
-                document.getElementById('reason').value = '';
-            } else {
-                alert('Please fill in all required fields (User ID, start date, start time, end date, end time, reason)');
-            }
-        }
-
-
-        // Remove blacklist
-        async function removeFromBlacklist(button, blacklistId) {
-            if (confirm('Are you sure you want to unblock this user？')) {
-                try {
-                    const response = await fetch(`/api/remove-from-blacklist/${blacklistId}`, {
-                        method: 'DELETE',
-                    });
-
-                    if (response.ok) {
-                        alert('Successfully unsealed！');
-                        loadBlacklist();
-                    } else {
-                        const errorData = await response.json();
-                        alert(`Unseal failure：${errorData.message}`);
-                    }
-                } catch (error) {
-                    console.error('Request failed：', error);
-                    alert('Network error, please try again later.');
-                }
-            }
-        }
-
-
-        // Load blacklist data
-        async function loadBlacklist() {
-            try {
-                const response = await fetch('http://127.0.0.1:8000/get-blacklist');
-                if (response.ok) {
-                    const result = await response.json();
-                    renderBlacklist(result.blacklists);
-                }
-            } catch (error) {
-                console.error('Request failed：', error);
-            }
-        }
-
-        // Render blacklist table
-        function renderBlacklist(data) {
-            const tableBody = document.querySelector('#blacklistTable tbody');
-            tableBody.innerHTML = '';
-
-            data.forEach(user => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${user.username}</td>
-                    <td>${user.user_id}</td>
-                    <td class="time-cell">${user.start_date} ${user.start_time}</td>
-                    <td class="time-cell">${user.end_date} ${user.end_time}</td>
-                    <td title="${user.reason}">${user.reason}</td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="btn btn-danger" onclick="removeFromBlacklist(this, '${user.blacklist_id}')">
-                                <i class="fas fa-user-check"></i>
-                                Unban
-                            </button>
-                        </div>
-                    </td>
-                `;
-                tableBody.appendChild(row);
+        try {
+            const response = await fetch('http://127.0.0.1:8000/insert-blacklist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody),
             });
+
+            if (response.ok) {
+                alert('successfully added！');
+                loadBlacklist();
+            }
+            else {
+                const errorData = await response.json();
+                alert(`fail to add：${errorData.message}`);
+            }
+        } catch (error) {
+            console.error('Request failed：', error);
+            alert('Network error, please try again later');
         }
 
+        // 清空输入框
+        document.getElementById('userId').value = '';
+        document.getElementById('startDate').value = '';
+        document.getElementById('startTime').value = '';
+        document.getElementById('endDate').value = '';
+        document.getElementById('endTime').value = '';
+        document.getElementById('reason').value = '';
+    } else {
+        alert('Please fill in all required fields (User ID, start date, start time, end date, end time, reason)');
+    }
+}
 
-        // The data is initialized when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            loadBlacklist();
-        });
+// 移除黑名单
+async function removeFromBlacklist(button, blacklistId) {
+    if (confirm('Are you sure to unban the user？')) {
+        try {
+            const response = await fetch('http://localhost:8000/delete_blacklist', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ blacklist_id: blacklistId })
+            });
+
+            const responseData = await response.json();
+
+            if (response.ok) {
+                const row = button.closest('tr');
+                if (row) row.remove();
+                showNotification('Delete successfully！', 'success');
+            } else {
+                showNotification(`Failed to delete：${responseData.error}`, 'error');
+            }
+        } catch (error) {
+            console.error('Failed to request：', error);
+            showNotification('Network error', 'error');
+        }
+    }
+}
+
+// 显示通知
+function showNotification(message, type = 'info') {
+    const colors = {
+        success: '#2ecc71',
+        error: '#e74c3c',
+        info: '#3498db'
+    };
+
+    const notification = document.createElement('div');
+    notification.style = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        background: ${colors[type]};
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+        z-index: 1000;
+    `;
+    notification.textContent = message;
+
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+}
+
+// 加载黑名单数据
+async function loadBlacklist() {
+    try {
+        const response = await fetch('http://localhost:8000/get-blacklist');
+        if (response.ok) {
+            const result = await response.json();
+            renderBlacklist(result.blacklists);
+        }
+    } catch (error) {
+        console.error('Request failed：', error);
+    }
+}
+
+// 渲染表格
+function renderBlacklist(data) {
+    const tableBody = document.querySelector('#blacklistTable tbody');
+    tableBody.innerHTML = '';
+
+    data.forEach(user => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${user.username}</td>
+            <td>${user.user_id}</td>
+            <td class="time-cell">${user.start_date} ${user.start_time}</td>
+            <td class="time-cell">${user.end_date} ${user.end_time}</td>
+            <td title="${user.reason}">${user.reason}</td>
+            <td>
+                <div class="action-buttons">
+                    <button class="btn btn-danger" onclick="removeFromBlacklist(this, '${user.blacklist_id}')">
+                        <i class="fas fa-user-check"></i>
+                        Unban
+                    </button>
+                </div>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+// 初始化加载
+document.addEventListener('DOMContentLoaded', () => {
+    loadBlacklist();
+});

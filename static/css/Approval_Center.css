@@ -11,12 +11,7 @@ body {
     padding: 20px;
     background-color: #f5f5f5;
 }
-.main-container {
-  display: flex;
-  min-height: 100vh;
-  padding-left: 200px; /* 新增：为侧边栏腾出空间 */
-  box-sizing: border-box; /* 确保padding不增加容器总宽度 */
-}
+
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -110,14 +105,25 @@ header h1 {
 }
 
 .status-indicator {
-  background-color: #4CAF50 !important;
-  position: static !important;
+  /* 移除固定的背景颜色 */
+  position: static;
   margin-left: 15px;
   order: 99;
   padding: 3px 8px;
   border-radius: 12px;
   font-size: 12px;
   color: #fff;
+  text-align: center;
+  min-width: 80px;
+}
+
+/* 添加状态颜色 */
+.status-indicator.approved {
+  background-color: #4CAF50;
+}
+
+.status-indicator.rejected {
+  background-color: #f44336;
 }
 
 @media (max-width: 768px) {

@@ -83,6 +83,10 @@ header {
     color: var(--primary-color);
 }
 
+.reservation-info span {
+    color: #555;
+}
+
 .status-indicator {
     position: absolute;
     top: 15px;
@@ -206,3 +210,4 @@ header {
 .status-indicator[data-status="pending"] {
     background: var(--pending-color);
 }
+.status-indicator[data-status="canceled"] { background: var(--danger-color); }

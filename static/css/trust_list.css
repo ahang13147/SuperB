@@ -7,7 +7,6 @@
 }
 
 body {
-
     line-height: 1.6;
     padding: 20px;
     background-color: #f5f5f5;
@@ -89,7 +88,7 @@ body {
             background-color: #c0392b;
         }
         .add-trusted-form {
-            max-width: 800px;
+            max-width: 1200px;
             margin: 20px auto;
             padding: 20px;
             background-color: white;
@@ -170,4 +169,6 @@ body {
         .notification.error {
             background-color: #e74c3c;
         }
+        /* 成功弹窗样式 */
+
     </style>

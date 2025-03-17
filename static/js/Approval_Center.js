@@ -83,12 +83,12 @@ function showFullText(fullText) {
 // Process approval operation
 function handleApproval(action, card) {
   const bookingId = card.dataset.reservationId;
-
   const newStatus = action.toLowerCase();
 
   console.log(`Attempting to ${action} booking ID: ${bookingId}`);
 
-  fetch(`http://127.0.0.1:5000/update-booking-status/${bookingId}`, {
+  // 修正模板字符串用法
+  fetch(`http://localhost:8000/update-booking-status/${bookingId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status: newStatus })
@@ -136,7 +136,7 @@ function bindButtonEvents() {
 
 //Get a completed workflow reservation
 function fetchFinishedBookings() {
-  fetch('http://127.0.0.1:8000/finished-workflow-bookings')
+  fetch('http://localhost:8000/finished-workflow-bookings')
     .then(response => {
       if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
       return response.json();
@@ -160,7 +160,7 @@ function fetchFinishedBookings() {
 
 // Get a pending reservation
 function fetchPendingBookings() {
-  fetch('http://127.0.0.1:8000/pending-bookings')
+  fetch('http://localhost:8000/pending-bookings')
     .then(response => {
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);

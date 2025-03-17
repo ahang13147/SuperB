@@ -1,9 +1,10 @@
+let pendingBookingData = null;
 let classrooms = [];
-let currentClassroom = null; // 添加在文件顶部，与classrooms变量并列
+let currentClassroom = null;
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('The document is loaded and initialization begins...');
 
-    // 加载时间段配置
+
     let timeSlots = [
         "08:00-08:45",
         "08:55-09:40",
@@ -17,22 +18,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         "19:55-20:40"
     ];
 
-    // DOM元素引用
     const elements = {
         classroomList: document.getElementById('classroomList'),
         searchInput: document.getElementById('searchKeyword'),
         capacityFilter: document.getElementById('capacityFilter'),
         startSelect: document.getElementById('startTime'),
         endSelect: document.getElementById('endTime'),
-        datePicker: document.getElementById('datePicker'), // 确保HTML中存在此ID
-        equipmentFilter: document.getElementById('equipmentFilter'), // 确保HTML中存在此ID
+        datePicker: document.getElementById('datePicker'),
+        equipmentFilter: document.getElementById('equipmentFilter'),
         modal: document.getElementById('bookingModal'),
         closeModal: document.querySelector('.close'),
         availableTimesContainer: document.getElementById('availableTimes'),
         confirmBookingButton: document.getElementById('confirmBooking')
     };
 
-    // 初始化时间选择器
+    // Initializes the time selector
     function initTimeSelectors() {
         elements.startSelect.innerHTML = '<option value="">Select start time</option>';
         elements.endSelect.innerHTML = '<option value="">Select end time</option>';
@@ -44,23 +44,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 获取教室数据
+    // Get classroom data
     async function fetchClassrooms() {
-        console.log(elements.datePicker.value);  // 应该直接输出"2025-03-05"
+        console.log(elements.datePicker.value);
         const requestData = {
             capacity: parseInt(elements.capacityFilter.value) || undefined,
             room_name: elements.searchInput.value.trim() || undefined,
             date: elements.datePicker?.value || undefined,
-            start_time: elements.startSelect.value || undefined, // 直接使用HH:MM格式
-            end_time: elements.endSelect.value || undefined,     // 直接使用HH:MM格式
+            start_time: elements.startSelect.value || undefined,
+            end_time: elements.endSelect.value || undefined,
             equipment: elements.equipmentFilter?.value || undefined
         };
 
-        // 清除undefined值
         Object.keys(requestData).forEach(key => requestData[key] === undefined && delete requestData[key]);
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/search-rooms', {
+            const response = await fetch('http://localhost:8000/search-rooms', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestData)
@@ -70,14 +69,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const responseData = await response.json();
             console.log('Response data:', responseData);
 
-            // 合并同一教室的多个时间段
             const classroomMap = new Map();
-            // 修改这部分代码
+
             responseData.results.forEach(room => {
                 if (!classroomMap.has(room.room_id)) {
                     classroomMap.set(room.room_id, {
                         id: room.room_id,
                         name: room.room_name,
+                        type: room.room_type,
                         capacity: room.capacity,
                         equipment: room.equipment ? room.equipment.split(', ') : [],
                         availableTimes: []
@@ -86,8 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const classroom = classroomMap.get(room.room_id);
                 classroom.availableTimes.push({
                     time: `${room.available_begin}-${room.available_end}`,
-                    // 修改这里：根据availability判断是否被预定
-                    booked: room.availability === 2 // 当availability等于2时设为true
+                    booked: room.availability === 2
                 });
             });
 
@@ -99,7 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 渲染教室列表（修正版）
+    //  Rendering Classroom List
     function renderClassrooms() {
         elements.classroomList.innerHTML = classrooms.map(classroom => `
         <div class="classroom-card" data-classroom="${classroom.name}">
@@ -123,7 +121,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
     `).join('');
 
-        // 绑定事件监听器
         document.querySelectorAll('.classroom-card button').forEach(button => {
             button.addEventListener('click', function () {
                 const classroomName = this.closest('.classroom-card').dataset.classroom;
@@ -133,7 +130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 显示预定弹窗
+    // Shows the scheduled popup window
     function showBookingModal(classroom) {
         currentClassroom = classroom;
         elements.availableTimesContainer.innerHTML = classroom.availableTimes.map(timeSlot => `
@@ -153,13 +150,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
     `).join('');
 
-        // 新增：添加时间段选中样式交互
         elements.availableTimesContainer.querySelectorAll('.time-slot').forEach(slot => {
             const radio = slot.querySelector('input[type="radio"]');
             radio.addEventListener('change', () => {
-                // 移除所有槽的选中状态
                 document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('checked'));
-                // 添加当前选中槽的样式
                 if (radio.checked) slot.classList.add('checked');
             });
         });
@@ -167,7 +161,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.modal.style.display = 'block';
     }
 
-    // 初始化事件监听
+    // Initialize event listening
      function initEventListeners() {
         ['input', 'change'].forEach(eventType => {
             elements.searchInput.addEventListener(eventType, fetchClassrooms);
@@ -179,17 +173,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.confirmBookingButton.addEventListener('click', handleBookingConfirmation);
         });
 
-        // 关闭 Modal 的事件监听
+         // Disable Modal event listening
         elements.closeModal.onclick = () => elements.modal.style.display = 'none';
 
-        // 防止点击日期选择器时关闭 modal
+         // Prevents modal from closing when you click the date picker
         elements.datePicker.addEventListener('click', (event) => {
-            event.stopPropagation();  // 阻止点击事件传播到 window
+            event.stopPropagation();
+
+//        // Cause The pop-up closed event
+//        document.querySelector('.close-reason').onclick = () => {
+//            document.getElementById('reasonModal').style.display = 'none';
+//        };
+//
+//        // Added Cause The event was submitted
+//        document.getElementById('submitReason').addEventListener('click', handleReasonSubmit);
+//
 
 
         });
 
-        // 关闭 Modal 的事件监听：只有点击 modal 背景才关闭
+        // Turn off Modal event listening: It is only turned off by clicking on the modal background
         window.onclick = event => {
             if (event.target == elements.modal) {
                 elements.modal.style.display = 'none';
@@ -197,6 +200,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
+    // The modified handleBookingConfirmation function:
     async function handleBookingConfirmation() {
         const selectedTime = document.querySelector('input[name="timeSlot"]:checked');
         if (!selectedTime) {
@@ -214,40 +218,84 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // 获取用户ID（这里暂时硬编码为1，实际项目应从登录状态获取）
-        const userId = 1;
+        const userId = 3;
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/insert_booking', {
+            const response = await fetch('http://localhost:8000/insert_booking', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    room_name: currentClassroom.name,
+                    room_id: currentClassroom.id,
                     user_id: userId,
                     booking_date: bookingDate,
                     start_time: startTime,
-                    end_time: endTime
+                    end_time: endTime,
+                    reason: ''
                 })
             });
 
             const data = await response.json();
-            if (!response.ok) throw new Error(data.message || 'Booking failed');
+            if (!response.ok) {
+                if (data.status === 'require_reason') {
+                    pendingBookingData = {
+                        room_id: currentClassroom.id,
+                        user_id: userId,
+                        booking_date: bookingDate,
+                        start_time: startTime,
+                        end_time: endTime
+                    };
+                    elements.modal.style.display = 'none';
+                    document.getElementById('reasonModal').style.display = 'block';
+                    return;
+                }
+                throw new Error(data.error || 'Booking failed');
+            }
 
             alert('Booking successful!');
             elements.modal.style.display = 'none';
-            await fetchClassrooms(); // 刷新教室列表
+            await fetchClassrooms();
         } catch (error) {
             console.error('Booking Error:', error);
             alert(`Booking failed: ${error.message}`);
         }
     }
 
+    // Function that handles the cause of submission
+    async function handleReasonSubmit() {
+        const reason = document.getElementById('reasonInput').value.trim();
+        if (!reason) {
+            alert('Please enter booking reason');
+            return;
+        }
 
-    // 初始化流程
+        try {
+            const response = await fetch('http://localhost:8000/insert_booking_with_reason', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...pendingBookingData,
+                    reason: reason
+                })
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Booking failed');
+
+            alert('Booking request submitted, awaiting approval.');
+            document.getElementById('reasonModal').style.display = 'none';
+            pendingBookingData = null;
+            await fetchClassrooms();
+        } catch (error) {
+            console.error('Reason Submit Error:', error);
+            alert(`Submission failed: ${error.message}`);
+        }
+    }
+
+
+    // Initialization process
     try {
         initTimeSelectors();
         initEventListeners();
-        // 设置中国本地日期（新增代码）
         const today = new Date();
         elements.datePicker.value =
             `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;

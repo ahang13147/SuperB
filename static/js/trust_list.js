@@ -81,7 +81,7 @@
             const result = await response.json();
             if (!response.ok) throw new Error(result.message);
 
-            showNotification(result.message, 'success');
+            showSuccessModal('User added successfully!');
             clearForm();
             await loadData();
         } catch (error) {
@@ -169,3 +169,23 @@
             box.style.display = roomId.includes(query) ? 'block' : 'none';
         });
     }
+
+    function showSuccessModal(message) {
+    // 创建弹窗元素
+    const modal = document.createElement('div');
+    modal.className = 'success-modal';
+    modal.innerHTML = `
+        <div class="success-modal-content">
+            <h2>Success!</h2>
+            <p>${message}</p>
+        </div>
+    `;
+
+    // 将弹窗添加到页面
+    document.body.appendChild(modal);
+
+    // 3秒后自动关闭弹窗
+    setTimeout(() => {
+        modal.remove();
+    }, 3000);
+}
