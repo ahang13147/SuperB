@@ -1,4 +1,4 @@
--- @version: 3/17/2025
+-- @version: 3/18/2025
 -- @author: Xin Yu, Siyan Guo, Zibang Nie
 -- @description: This SQL script creates a booking system database, which includes tables for Users, Rooms, Bookings, Approvals, Notifications, and Reports.
 -- It provides a structure to manage users, room bookings, approval processes, notifications, and report generation.
@@ -22,7 +22,7 @@ USE `booking_system_db`;
 CREATE TABLE Users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,    -- User ID, auto-incremented
     username VARCHAR(255) NOT NULL,             -- Username
-    email VARCHAR(255) NOT NULL UNIQUE,         -- User's email, must be unique
+    user_email VARCHAR(255) NOT NULL UNIQUE,         -- User's email, must be unique
     phone_number VARCHAR(255) NOT NULL,        -- Hashed password for security
     role ENUM('admin', 'professor', 'student', 'tutor') NOT NULL  -- User's role in the system
 );

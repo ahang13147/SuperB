@@ -6,7 +6,7 @@
 
 USE `booking_system_db`;
 
-INSERT INTO Users (username, email, phone_number, role) VALUES
+INSERT INTO Users (username, user_email, phone_number, role) VALUES
 ('admin1', 'admin1@example.com', 'hash1', 'admin'),
 ('prof1', 'prof1@example.com', 'hash2', 'professor'),
 ('student1', 'student1@example.com', 'hash3', 'student'),
