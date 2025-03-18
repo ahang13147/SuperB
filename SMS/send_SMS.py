@@ -20,8 +20,8 @@ import json
 
 # Create a client instance using AccessKey ID and AccessKey Secret
 def create_client():
-    access_key_id = 'LTAI5tAFj9BGeb2YrisDDk6h'  # Replace with your AccessKey ID
-    access_key_secret = 'eKzoL4xrHMpr2BuqMHPiPolTl9ddGN'  # Replace with your AccessKey Secret
+    access_key_id = ''  # Replace with your AccessKey ID
+    access_key_secret = ''  # Replace with your AccessKey Secret
 
     # Create the AcsClient instance with the provided AccessKey and Secret
     client = AcsClient(access_key_id, access_key_secret, "cn-hangzhou")
