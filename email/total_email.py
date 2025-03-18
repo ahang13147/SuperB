@@ -101,6 +101,7 @@ def send_email(to_email, subject, body):
     except Exception as e:
         print(f'Failed to send email: {e}')
 
+# Updated email body formatting
 
 @app.route('/send_email/success', methods=['POST'])
 def send_success_email():
@@ -122,18 +123,19 @@ def send_success_email():
     if booking_info:
         booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
 
-        # Email content
+        # Updated Email content with improved formatting
         subject = f"Booking Successful: Room {room_name}"
         body = f"""
         Dear {user_email},
 
         Congratulations! Your room booking has been successfully confirmed. Below are your booking details:
 
-        Booking ID: {booking_id}
-        Room Name: {room_name}
-        Room Location: {room_location}
-        Start Time: {start_time}
-        End Time: {end_time}
+        <br><br>
+        <strong>Booking ID:</strong> {booking_id}<br>
+        <strong>Room Name:</strong> {room_name}<br>
+        <strong>Room Location:</strong> {room_location}<br>
+        <strong>Start Time:</strong> {start_time}<br>
+        <strong>End Time:</strong> {end_time}<br>
 
         Thank you for using our system, and we hope you enjoy your booking!
         """
@@ -163,17 +165,18 @@ def send_rejected_email():
     if booking_info:
         booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
 
-        # Email content
+        # Updated Email content with improved formatting
         subject = f"Booking Rejected: Room {room_name}"
         body = f"""
         Dear {user_email},
 
         We regret to inform you that your room booking request has been rejected by the administrator. Below are your booking details:
 
-        Booking ID: {booking_id}
-        Room Name: {room_name}
-        Room Location: {room_location}
-        Booking Time: {start_time} - {end_time}
+        <br><br>
+        <strong>Booking ID:</strong> {booking_id}<br>
+        <strong>Room Name:</strong> {room_name}<br>
+        <strong>Room Location:</strong> {room_location}<br>
+        <strong>Booking Time:</strong> {start_time} - {end_time}<br>
 
         Please contact the administrator for further clarification.
         """
@@ -203,17 +206,18 @@ def send_cancelled_email():
     if booking_info:
         booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
 
-        # Email content
+        # Updated Email content with improved formatting
         subject = f"Booking Cancelled: Room {room_name}"
         body = f"""
         Dear {user_email},
 
         We regret to inform you that your room booking has been cancelled. Below are your booking details:
 
-        Booking ID: {booking_id}
-        Room Name: {room_name}
-        Room Location: {room_location}
-        Booking Time: {start_time} - {end_time}
+        <br><br>
+        <strong>Booking ID:</strong> {booking_id}<br>
+        <strong>Room Name:</strong> {room_name}<br>
+        <strong>Room Location:</strong> {room_location}<br>
+        <strong>Booking Time:</strong> {start_time} - {end_time}<br>
 
         Thank you for your understanding.
         """
@@ -243,17 +247,18 @@ def send_failed_email():
     if booking_info:
         booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
 
-        # Email content
+        # Updated Email content with improved formatting
         subject = f"Booking Failed: Room {room_name}"
         body = f"""
         Dear {user_email},
 
         We regret to inform you that your room booking has failed. Below are your booking details:
 
-        Booking ID: {booking_id}
-        Room Name: {room_name}
-        Room Location: {room_location}
-        Booking Time: {start_time} - {end_time}
+        <br><br>
+        <strong>Booking ID:</strong> {booking_id}<br>
+        <strong>Room Name:</strong> {room_name}<br>
+        <strong>Room Location:</strong> {room_location}<br>
+        <strong>Booking Time:</strong> {start_time} - {end_time}<br>
 
         Please check your booking details or contact the administrator for further assistance.
         """
@@ -283,18 +288,19 @@ def send_remind_email():
     if booking_info:
         booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
 
-        # Email content
+        # Updated Email content with improved formatting
         subject = f"Reminder: Your Booking for Room {room_name} is Approaching"
         body = f"""
         Dear {user_email},
 
         This is a reminder that your room booking is about to begin. Below are your booking details:
 
-        Booking ID: {booking_id}
-        Room Name: {room_name}
-        Room Location: {room_location}
-        Start Time: {start_time}
-        End Time: {end_time}
+        <br><br>
+        <strong>Booking ID:</strong> {booking_id}<br>
+        <strong>Room Name:</strong> {room_name}<br>
+        <strong>Room Location:</strong> {room_location}<br>
+        <strong>Start Time:</strong> {start_time}<br>
+        <strong>End Time:</strong> {end_time}<br>
 
         Please head to the room in time. Thank you.
         """
@@ -302,6 +308,7 @@ def send_remind_email():
         return jsonify({'status': 'success', 'message': 'Reminder email sent!'})
     else:
         return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.'})
+
 
 
 @app.route('/')
