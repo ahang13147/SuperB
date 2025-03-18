@@ -158,8 +158,6 @@ def get_user_id_by_email():
 
 
 # ---------------------------- login ----------------------------
-
-
 @app.route('/')
 def index():
     #todo
@@ -1130,6 +1128,41 @@ def get_user():
         return jsonify({"status": "error", "error": str(err)}), 400
     finally:
         if conn:
+            conn.close()
+
+
+#todo: add new function(03180117)
+@app.route('/notifications', methods=['GET'])
+def get_notifications():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT 
+                notification_id,
+                user_id,
+                message,
+                notification_action,
+                created_at
+            FROM Notifications
+        """
+        cursor.execute(query)
+        notifications = cursor.fetchall()
+        return jsonify({
+            "count": len(notifications),
+            "notifications": notifications
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
             conn.close()
 
 

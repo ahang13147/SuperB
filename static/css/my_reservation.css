@@ -9,7 +9,7 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             min-height: 100vh;
             background-color: #f5f6fa;
             display: flex;
@@ -19,7 +19,6 @@
 
         header {
             width: 100%;
-            max-width: 1200px;
             background-color: var(--primary-color);
             color: white;
             padding: 20px;
@@ -208,3 +207,77 @@
         .status-indicator[data-status="pending"] {
             background: var(--pending-color);
         }
+
+        .main-content {
+            width: calc(100% - 200px); /* 扣除侧边栏宽度 */
+            margin-left: 200px;        /* 与侧边栏对齐 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;       /* 子元素居中 */
+        }
+
+        /*change the title*/
+@media (max-width: 768px) {
+    .main-content {
+        width: 100% !important;     /* 移动端全宽度 */
+        justify-content: center;      /* 子元素居中 */
+
+    }
+    /*this is the most important part to keep the content to be center */
+    .content-area {
+        margin-left: 0 !important;    /* 强制移除侧边栏占位 */
+        width: 100% !important;       /* 全屏宽度 */
+        padding: 30px 0 15px !important; /* 顶部留出汉堡菜单空间 */
+        display: flex !important;     /* 启用弹性布局 */
+        flex-direction: column;       /* 垂直排列子元素 */
+        align-items: center;          /* 水平居中 */
+    }
+    .reservations-container {
+        max-width: 100% !important; /* 恢复全宽度 */
+        padding: 0 15px;
+        margin-left: 15px
+    }
+
+    .reservation-card {
+        width: 100% !important;     /* 卡片占满容器 */
+    }
+    header {
+        margin-top: 25px!important; /* 统一上下边距 */
+        min-width: 270px;
+        max-height: 70px;
+        width: calc(100% - 100px); /* 减去侧边栏宽度 */
+        margin-left: 200px;        /* 与侧边栏宽度对齐 */
+        background-color: var(--primary-color);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        max-width: 320px;
+    }
+    h1 {
+        font-size: 24px;
+        margin-bottom: 20px;
+        padding: 0 10px;
+        line-height: 1.3;
+        white-space: nowrap;
+        text-align: center;
+        width: 100%;
+    }
+    header {
+        margin-left: 35px; /* 移除侧边栏偏移 */
+        width: 100%; /* 全宽度 */
+    }
+
+    /*.reservations-container {*/
+    /*    padding: 0 10px; !* 减少内边距 *!*/
+    /*}*/
+
+    /*.reservation-card {*/
+    /*    max-width: none; !* 移除最大宽度限制 *!*/
+    /*    width: calc(100% - 20px); !* 保留呼吸空间 *!*/
+    /*}*/
+
+
+}

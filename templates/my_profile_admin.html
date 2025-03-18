@@ -68,7 +68,7 @@
       <div class="profile-container">
         <div class="profile-header">
             <div class="profile-picture">
-                <img src="profile_photo.png" alt="Profile Picture" id="profile-image">
+                <img src="{{ url_for('static', filename='images/default_avatar.png') }}" alt="Profile Picture" id="profile-image">
                 <button class="edit-picture-btn" onclick="triggerFileInput()">
                     <i class="fas fa-camera"></i>
                 </button>
