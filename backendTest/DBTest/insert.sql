@@ -63,14 +63,12 @@ VALUES
 (6, 15, '14:00:00', '16:00:00', DATE_ADD(@current_date, INTERVAL 3 DAY), 'pending', 'Research discussion');
 
 
-INSERT INTO Notifications (user_id, message, notification_type, status)
-VALUES
-(1, 'Your booking for Room A has been approved.', 'confirmation', 'unread'),
-(2, 'Reminder: Your booking for Room B is starting soon.', 'reminder', 'unread'),
-(3, 'Your booking for Room C has been canceled.', 'cancellation', 'read'),
-(1, 'Reminder: Your booking for Room A is starting soon.', 'reminder', 'unread'),
-(2, 'Your booking for Room B has been approved.', 'confirmation', 'read'),
-(3, 'Your booking for Room C has been rejected.', 'cancellation', 'unread');
+-- Insert sample data into Notifications table
+INSERT INTO Notifications (user_id, message, notification_action) VALUES
+(3, 'Your booking for Room A has been approved.', 'confirmation'),
+(2, 'Your booking for Room B has been approved.', 'confirmation'),
+(4, 'Your booking for Room C is pending reassignment.', 'reminder'),
+(3, 'Your booking for Room D has been approved.', 'confirmation');
 
 INSERT INTO Reports (admin_id, report_type, generated_at, data)
 VALUES
