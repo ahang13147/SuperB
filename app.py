@@ -1,4 +1,4 @@
-#  @version: 3/16/2025
+#  @version: 3/12/2025
 #  @author: Xin Yu, Siyan Guo, Zibang Nie
 # add: finished-workflow-booking get api
 from contextlib import closing
@@ -156,10 +156,7 @@ def get_user_id_by_email():
         print(f"Database error: {str(e)}")
         return None  # 如果数据库查询出错，返回 None
 
-
 # ---------------------------- login ----------------------------
-
-
 @app.route('/')
 def index():
     #todo
@@ -207,7 +204,6 @@ def auth_callback():
         return f"认证错误：{result.get('error_description')}", 500
 
 
-
 #todo: add two new function
 def login_required(f):
     @wraps(f)
@@ -227,6 +223,7 @@ def role_required(role):
             return f(*args, **kwargs)
         return decorated_function
     return decorator
+
 
 @app.route("/logout")
 def logout():
@@ -257,27 +254,25 @@ def logout():
 
 #路由：渲染 booking_centre.html
 @app.route('/booking_centre')
-@login_required 
-
+@login_required  # 确保用户已登录
 def booking_centre():
     return render_template('booking_centre.html')
 
 
 @app.route('/my_reservation')
-@login_required  
+@login_required  # 确保用户已登录
 def my_reservation():
     return render_template('my_reservation.html')
 
 
 @app.route('/user_profile')
-@login_required  
+@login_required  # 确保用户已登录
 def user_profile():
     return render_template('user_profile.html')
 
 
 @app.route('/my_notification')
-@login_required  
-
+@login_required  # 确保用户已登录
 def my_notification():
     return render_template('my_notification.html')
 
@@ -356,6 +351,11 @@ def room_management():
 def trust_list():
     return render_template('trust_list.html')
 
+@app.route('/room_issue_management')
+@login_required  # 确保用户已登录
+@role_required('admin')
+def room_issue_management():
+    return render_template('room_issue_management.html')
 
 # 路由：渲染 login.html
 @app.route('/login')
@@ -365,7 +365,6 @@ def login():
 #TODO: 原函数
 
 #profile route
-
 @app.route('/profile')
 def profile():
     if 'access_token' not in session:
@@ -385,7 +384,6 @@ def profile():
         return redirect(url_for('error_page'))
 
     # get email
-
     user_email = user_info.get('mail') or user_info.get('userPrincipalName')
     if not user_email:
         print("No email or userPrincipalName in Microsoft response")
@@ -406,7 +404,6 @@ def profile():
             session['user_role'] = user_role
 
             # redirect the URL by the role of the user
-
             if user_role == 'admin':
                 print("User is admin, redirecting to booking_centre_admin")
                 return redirect(url_for('booking_centre_admin'))
@@ -692,6 +689,8 @@ def delete_blacklist():
     finally:
         if conn:
             conn.close()
+
+
 
 
 # ---------------------------- search/display ----------------------------
@@ -1113,7 +1112,6 @@ def get_user():
     #todo : change user id (from current session)
     user_id = get_user_id_by_email()
 
-
     conn = get_db_connection()
     if not conn:
         return jsonify({"status": "error", "error": "Database connection failed"}), 500
@@ -1132,6 +1130,137 @@ def get_user():
         if conn:
             conn.close()
 
+from datetime import timedelta
+
+@app.route('/display-issues', methods=['GET'])
+def get_all_issues():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)  # 使用字典游标
+
+        # 获取查询参数
+        status = request.args.get('status')
+        room_id = request.args.get('room_id')
+
+        # 构建查询条件和参数
+        conditions = []
+        params = []
+
+        if status:
+            conditions.append("i.status = %s")
+            params.append(status)
+        
+        if room_id:
+            # 验证room_id是否为有效整数
+            if not room_id.isdigit():
+                return jsonify({"error": "room_id must be a valid integer"}), 400
+            conditions.append("i.room_id = %s")
+            params.append(int(room_id))
+
+        # 构建基础SQL查询
+        base_query = """
+            SELECT 
+                i.issue_id,
+                i.room_id,
+                r.room_name,
+                i.issue,
+                i.status,
+                i.start_date,
+                i.start_time,
+                i.end_date,
+                i.end_time,
+                i.added_by,
+                u.username AS reporter_name
+            FROM Issues i
+            LEFT JOIN Rooms r ON i.room_id = r.room_id
+            LEFT JOIN Users u ON i.added_by = u.user_id
+        """
+
+        # 添加WHERE条件
+        if conditions:
+            base_query += " WHERE " + " AND ".join(conditions)
+
+        # 添加排序
+        base_query += " ORDER BY i.start_date DESC"
+
+        # 执行查询
+        cursor.execute(base_query, tuple(params))
+        issues = cursor.fetchall()
+        
+        # 统一格式化时间字段
+        for issue in issues:
+            # 处理日期
+            for date_field in ['start_date', 'end_date']:
+                if issue[date_field]:
+                    issue[date_field] = issue[date_field].strftime("%Y-%m-%d")
+            
+            # 处理时间
+            for time_field in ['start_time', 'end_time']:
+                time_value = issue[time_field]
+                if time_value:
+                    if isinstance(time_value, timedelta):  # 处理timedelta类型
+                        # 将timedelta转换为时间字符串 (HH:MM:SS)
+                        total_seconds = int(time_value.total_seconds())
+                        hours, remainder = divmod(total_seconds, 3600)
+                        minutes, seconds = divmod(remainder, 60)
+                        issue[time_field] = f"{hours:02}:{minutes:02}:{seconds:02}"
+                    elif isinstance(time_value, str):  # 如果已经是字符串
+                        issue[time_field] = time_value
+                    else:  # 处理datetime.time类型
+                        issue[time_field] = time_value.strftime("%H:%M:%S")
+                else:
+                    issue[time_field] = None
+
+        return jsonify({
+            "count": len(issues),
+            "issues": issues
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+#todo: add new function(03180117)
+@app.route('/notifications', methods=['GET'])
+def get_notifications():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT 
+                notification_id,
+                user_id,
+                message,
+                notification_action,
+                created_at
+            FROM Notifications
+        """
+        cursor.execute(query)
+        notifications = cursor.fetchall()
+        return jsonify({
+            "count": len(notifications),
+            "notifications": notifications
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
 
 # ---------------------------- update ----------------------------
 
@@ -1395,7 +1524,6 @@ def update_user():
     #     data.pop('user_id')
 
     # get the fields that are allow to update
-
     update_fields = {}
     for field in ['username', 'email', 'phone_number', 'role']:
         if field in data:
@@ -1444,6 +1572,75 @@ def update_user():
         if conn:
             conn.close()
 
+# 2. Update existing issue (Admin only)
+@app.route('/update-issues/<int:issue_id>', methods=['PUT'])
+def update_issue(issue_id):
+    try:
+        data = request.get_json()
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 获取现有问题记录
+        cursor.execute("SELECT * FROM Issues WHERE issue_id = %s", (issue_id,))
+        raw_issue = cursor.fetchone()
+
+        if not raw_issue:
+            conn.close()
+            return jsonify({'error': 'Issue not found'}), 404
+
+        # 将元组转换为字典（修复字段访问问题）
+        columns = [col[0] for col in cursor.description]
+        issue = dict(zip(columns, raw_issue))
+
+        # 准备更新字段
+        update_fields = {
+            'issue': data.get('issue', issue['issue']),
+            'status': data.get('status', issue['status']),
+            'start_date': data.get('start_date', issue['start_date']),
+            'start_time': data.get('start_time', issue['start_time']),
+            'end_date': issue['end_date'],
+            'end_time': issue['end_time']
+        }
+
+        # 处理状态转换（修复日期调用问题）
+        if update_fields['status'] != issue['status']:
+            if update_fields['status'] == 'resolved':
+                # 使用正确导入的date和datetime对象
+                update_fields['end_date'] = date.today().strftime('%Y-%m-%d')  # 直接使用date
+                update_fields['end_time'] = datetime.now().strftime('%H:%M:%S')  # 直接使用datetime
+            elif issue['status'] == 'resolved' and update_fields['status'] != 'resolved':
+                update_fields['end_date'] = None
+                update_fields['end_time'] = None
+
+        # 执行更新
+        cursor.execute("""
+            UPDATE Issues SET
+                issue = %s,
+                status = %s,
+                start_date = %s,
+                start_time = %s,
+                end_date = %s,
+                end_time = %s
+            WHERE issue_id = %s
+        """, (
+            update_fields['issue'],
+            update_fields['status'],
+            update_fields['start_date'],
+            update_fields['start_time'],
+            update_fields['end_date'],
+            update_fields['end_time'],
+            issue_id
+        ))
+        
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'Issue updated successfully'}), 200
+
+    except Exception as e:
+        if 'conn' in locals():
+            conn.rollback()
+            conn.close()
+        return jsonify({'error': str(e)}), 500
 
 # ---------------------------- insert ----------------------------
 
@@ -1566,7 +1763,6 @@ def insert_booking_with_reason():
             return jsonify({"status": "error", "error": "Duplicate booking, the same booking already exists."}), 400
 
         # 如果没有重复，执行插入操作
-
         query = """
             INSERT INTO Bookings (user_id, room_id, start_time, end_time, booking_date, status, reason)
             VALUES (%s, %s, %s, %s, %s, 'pending', %s)
@@ -1583,6 +1779,45 @@ def insert_booking_with_reason():
         if conn:
             conn.close()
 
+
+# @app.route('/insert_booking_with_reason', methods=['POST'])
+# def insert_booking_with_reason():
+#     """前端输入 reason 后调用此 API 进行最终插入"""
+#     data = request.get_json()
+#     room_id = data.get('room_id')
+#     #todo: modify user_id
+#     user_id = get_user_id_by_email()
+#     booking_date = data.get('booking_date')
+#     start_time = data.get('start_time') + ":00"
+#     end_time = data.get('end_time') + ":00"
+#     reason = data.get('reason')
+#
+#
+#     if not reason.strip():
+#         return jsonify({"status": "error", "error": "Reason is required"}), 400
+#
+#     conn = get_db_connection()
+#     if not conn:
+#         return jsonify({"status": "error", "error": "Database connection failed"}), 500
+#
+#     try:
+#         cursor = conn.cursor()
+#
+#         query = """
+#             INSERT INTO Bookings (user_id, room_id, start_time, end_time, booking_date, status, reason)
+#             VALUES (%s, %s, %s, %s, %s, 'pending', %s)
+#         """
+#         cursor.execute(query, (user_id, room_id, start_time, end_time, booking_date, reason))
+#         conn.commit()
+#
+#         return jsonify({"status": "success", "message": "Booking request submitted, awaiting approval."})
+#
+#     except mysql.connector.Error as err:
+#         conn.rollback()
+#         return jsonify({"status": "error", "error": str(err)}), 400
+#     finally:
+#         if conn:
+#             conn.close()
 
 
 @app.route('/insert_room', methods=['POST'])
@@ -1762,6 +1997,67 @@ def insert_trusted_user():
     finally:
         if conn:
             conn.close()
+
+# 1. Insert new issue (Admin only)
+@app.route('/insert-issues', methods=['POST'])
+def add_issue():
+    try:
+        data = request.get_json()
+        required_fields = ['room_id', 'issue', 'start_date', 'start_time']
+        
+        # Validate required fields
+        if not all(field in data for field in required_fields):
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        # Get admin user_id by email
+        admin_id = get_user_id_by_email()
+        if not admin_id:
+            return jsonify({'error': 'Admin user not found'}), 404
+
+        # Check room existence
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 检查房间是否存在
+        cursor.execute("SELECT room_id FROM Rooms WHERE room_id = %s", (data['room_id'],))
+        if not cursor.fetchone():
+            conn.close()
+            return jsonify({'error': 'Room not found'}), 404
+
+        # Insert new issue with correct status
+        cursor.execute("""
+            INSERT INTO Issues (
+                room_id, 
+                issue, 
+                status, 
+                start_date, 
+                start_time, 
+                added_by
+            ) VALUES (
+                %s, %s, DEFAULT, %s, %s, %s
+            )
+        """, (
+            data['room_id'],
+            data['issue'],
+            data['start_date'],
+            data['start_time'],
+            admin_id
+        ))
+        
+        conn.commit()
+        new_issue_id = cursor.lastrowid
+        conn.close()
+        
+        return jsonify({
+            'message': 'Issue created successfully',
+            'issue_id': new_issue_id
+        }), 201
+
+    except Exception as e:
+        if 'conn' in locals(): 
+            conn.rollback()
+            conn.close()
+        return jsonify({'error': str(e)}), 500
 
 
 # if __name__ == '__main__':
