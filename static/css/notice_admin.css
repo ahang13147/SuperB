@@ -1,3 +1,4 @@
+/* 基础样式 */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -28,40 +29,37 @@ h1 {
     font-size: 2.5em;
 }
 
-/* Navigation items */
-.nav-item {
-    display: flex;
-    align-items: center;
-    color: rgba(255,255,255,0.9);
-    padding: 18px 25px;
-    margin: 8px 15px;
-    border-radius: 8px;
+/* 选项卡样式 */
+.notification-tabs {
+    margin-bottom: 20px;
+    border-bottom: 2px solid #eee;
+}
+
+.tab {
+    padding: 12px 25px;
+    border: none;
+    background: none;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 500;
+    color: #6c757d;
+    transition: all 0.3s;
 }
 
-.nav-item:hover {
-    background: rgba(255,255,255,0.1);
-    transform: translateX(5px);
+.tab.active {
+    color: #2c3e50;
+    border-bottom: 3px solid #00f2c3;
 }
 
-.nav-item.active {
-    background: rgba(255,255,255,0.15);
-    border-left: 3px solid #00f2c3;
-}
-
-.nav-icon {
-    font-size: 1.2rem;
-    width: 30px;
-    margin-right: 15px;
-}
-
-/* Notification panel */
+/* 通知面板 */
 .notification-panel {
+    display: none;
     background: white;
     padding: 30px;
     border-radius: 12px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+}
+.notification-panel.active {
+    display: block;
 }
 
 .notification-item {
@@ -77,10 +75,25 @@ h1 {
     background: rgba(0,242,195,0.03);
 }
 
+.notification-item.system {
+    border-left-color: #ff9f43;
+    background: rgba(255,159,67,0.03);
+}
+
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.notification-type {
+    font-weight: 600;
+    color: #ff9f43;
+}
+
 .notification-time {
     color: #6c757d;
     font-size: 0.9rem;
-    margin-bottom: 5px;
 }
 
 .notification-content {
@@ -88,123 +101,31 @@ h1 {
     line-height: 1.5;
 }
 
+/* 按钮样式 */
+.notification-content button {
+    margin-left: 10px;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
 
+.mark-read {
+    background: #00f2c3;
+    color: white;
+}
+
+.delete {
+    background: #ff4757;
+    color: white;
+}
+
+/* 移动端适配 */
 @media (max-width: 768px) {
-  body {
-    padding: 0 !important;
-     font-size: 14px;
-  }
-
-    h1 {
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
+    .notification-panel {
+        padding: 20px;
     }
-
-  .container {
-    max-width: 100%;
-    padding: 15px;
-  }
-
-  .content-area {
-    padding: 15px;
-    width: 100vw !important;
-    margin-left: 0 !important;
-    overflow-x: hidden;
-  }
-
-  .notification-panel {
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  }
-
-  .notification-item {
-    padding: 15px;
-    margin-bottom: 12px;
-    border-left-width: 3px;
-  }
-
-  .notification-time {
-    font-size: 0.85em;
-    margin-bottom: 8px;
-  }
-
-  .notification-content {
-    font-size: 0.95em;
-    line-height: 1.4;
-  }
-
-  .sidebar {
-    width: 240px;
-    transform: translateX(-100%);
-    transition: transform 0.3s;
-  }
-
-  .sidebar.active {
-    transform: translateX(0);
-  }
-
-  .nav-item {
-    padding: 14px 20px;
-    margin: 6px 10px;
-    border-radius: 6px;
-  }
-
-  .nav-icon {
-    font-size: 1.1em;
-    margin-right: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .notification-panel {
-    padding: 15px;
-  }
-
-  .notification-item {
-    padding: 12px;
-    border-left-width: 2px;
-  }
-
-  .notification-time {
-    font-size: 0.8em;
-  }
-
-  .notification-content {
-    font-size: 0.9em;
-  }
-
-
-  .hamburger-menu {
-    padding: 12px;
-    z-index: 100;
-  }
-
-  .nav-item:hover {
-    transform: none;
-    background: rgba(255,255,255,0.05);
-  }
-}
-
-.mobile-notification-badge {
-  display: none;
-  position: fixed;
-  top: 12px;
-  right: 12px;
-  background: #ff4757;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.8em;
-
-
-    h1 {
-        font-size: 1.6em;
+    .notification-item {
+        padding: 15px;
     }
-}
-
-@media (max-width: 768px) {
-  .mobile-notification-badge {
-    display: block;
-  }
 }
