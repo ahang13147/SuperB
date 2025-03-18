@@ -1,0 +1,69 @@
+/* 自定义简洁风格 */
+body {
+    background-color: #f8f9fa;
+    font-family: 'Arial', sans-serif;
+}
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.card-header {
+    background-color: #93c9ff;
+    color: white;
+    border-radius: 12px 12px 0 0;
+}
+.table {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.table th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+.btn-action {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    transition: background-color 0.3s;
+}
+.btn-edit {
+    background-color: #2ad289;
+    color: white;
+    border: none;
+}
+.btn-edit:hover {
+    background-color: #2ad289;
+}
+.btn-delete {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+}
+.btn-delete:hover {
+    background-color: #c82333;
+}
+.search-box {
+    max-width: 300px;
+}
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .search-box {
+        width: 100%;
+        max-width: none;
+        margin-top: 10px;
+    }
+    .table th, .table td {
+        padding: 8px;
+        font-size: 0.9em;
+    }
+    .btn-action {
+        padding: 4px 8px;
+        font-size: 0.8em;
+    }
+}
