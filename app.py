@@ -620,6 +620,39 @@ def delete_blacklist():
         if conn:
             conn.close()
 
+#todo : added new funtion0319
+@app.route('/delete_notification', methods=['POST'])
+def delete_notification():
+    data = request.get_json()
+    if not data or 'notification_id' not in data:
+        return jsonify({"error": "Missing notification_id parameter"}), 400
+
+    notification_id = data['notification_id']
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        query = "DELETE FROM Notifications WHERE notification_id = %s"
+        cursor.execute(query, (notification_id,))
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Notification record not found"}), 404
+
+        return jsonify({
+            "message": "Notification deleted successfully",
+            "notification_id": notification_id
+        })
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": "Failed to delete notification", "details": str(e)}), 500
+
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
 
 # ---------------------------- search/display ----------------------------
 
@@ -1644,6 +1677,40 @@ def update_issue(issue_id):
             conn.close()
         return jsonify({'error': str(e)}), 500
 
+
+#todo: new function for change unread to read for notification page
+@app.route('/update_notification_status', methods=['POST'])
+def update_notification_status():
+    data = request.get_json()
+    notification_id = data.get('notification_id')
+    new_status = data.get('status')
+
+    if not notification_id or new_status not in ('read', 'unread'):
+        return jsonify({"error": "Missing or invalid parameters — require notification_id and status ('read' or 'unread')"}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        query = "UPDATE Notifications SET status = %s WHERE notification_id = %s"
+        cursor.execute(query, (new_status, notification_id))
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Notification not found"}), 404
+
+        return jsonify({
+            "message": "Notification status updated successfully",
+            "notification_id": notification_id,
+            "new_status": new_status
+        }), 200
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": "Failed to update notification status", "details": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
 
 # ---------------------------- insert ----------------------------
 
