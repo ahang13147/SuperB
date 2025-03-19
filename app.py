@@ -166,15 +166,7 @@ def get_user_id_by_email():
 def index():
     # todo
     session.permanent = True  # 强制将 session 设置为持久化
-    return redirect(url_for('login_page'))
-
-@app.route('/login')
-def login_page():
-    return '''
-    <script>
-        window.location.href = "/auth";
-    </script>
-    '''
+    return redirect(url_for('login'))
 
 
 @app.route('/auth')
