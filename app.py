@@ -388,6 +388,7 @@ def is_user_blacklisted(email):
         query = "SELECT * FROM blacklist WHERE email = %s"
         cursor.execute(query, (email,))
         result = cursor.fetchone()
+        print('blacklist debug',result)
         return result is not None
     except Exception as e:
         print(f"Error checking blacklist: {str(e)}")
@@ -426,8 +427,7 @@ def profile():
     session['user_email'] = user_email
 
     # 新增：检查是否在黑名单中
-    if is_user_blacklisted(user_email):
-        return redirect(url_for('black'))
+
 
     try:
         print(f"Calling role API with email: {user_email}")
@@ -442,6 +442,8 @@ def profile():
             user_role = role_data.get('role', 'user')
             session['user_role'] = user_role
 
+            if is_user_blacklisted(user_email):
+                return redirect(url_for('black'))
             # redirect the URL by the role of the user
 
             if user_role == 'admin':
@@ -537,139 +539,70 @@ def delete_users():
         conn.close()
     return jsonify({"message": result}), status_code
 
+#
+# @app.route('/delete/rooms', methods=['POST'])
+# def delete_rooms():
+#     data = request.json
+#     room_id = data.get('room_id')
+#     room_name = data.get('room_name')
+#     capacity = data.get('capacity')
+#     location = data.get('location')
+#     # 先删除依赖数据：Room_availability、Bookings（依赖该房间）
+#     dependent_queries = [
+#         ("DELETE FROM Room_availability WHERE room_id = %s", (room_id,)),
+#         ("DELETE FROM Bookings WHERE room_id = %s", (room_id,))
+#     ]
+#     for q, p in dependent_queries:
+#         delete_record(q, p)
+#     query = """
+#     DELETE FROM Rooms
+#     WHERE (room_id = %s OR %s IS NULL)
+#       AND (room_name = %s OR %s IS NULL)
+#       AND (capacity = %s OR %s IS NULL)
+#       AND (location = %s OR %s IS NULL)
+#     """
+#     params = (room_id, room_id, room_name, room_name, capacity, capacity, location, location)
+#     result, status = delete_record(query, params)
+#     return jsonify({"message": result}), status
 
-@app.route('/delete/rooms', methods=['POST'])
-def delete_rooms():
-    data = request.json
+
+@app.route('/update_room_status', methods=['POST'])
+@login_required
+@role_required('admin')
+def update_room_status():
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': '没有收到任何 JSON 数据'}), 400
+
     room_id = data.get('room_id')
-    room_name = data.get('room_name')
-    capacity = data.get('capacity')
-    location = data.get('location')
-    # 先删除依赖数据：Room_availability、Bookings（依赖该房间）
-    dependent_queries = [
-        ("DELETE FROM Room_availability WHERE room_id = %s", (room_id,)),
-        ("DELETE FROM Bookings WHERE room_id = %s", (room_id,))
-    ]
-    for q, p in dependent_queries:
-        delete_record(q, p)
-    query = """
-    DELETE FROM Rooms
-    WHERE (room_id = %s OR %s IS NULL)
-      AND (room_name = %s OR %s IS NULL)
-      AND (capacity = %s OR %s IS NULL)
-      AND (location = %s OR %s IS NULL)
-    """
-    params = (room_id, room_id, room_name, room_name, capacity, capacity, location, location)
-    result, status = delete_record(query, params)
-    return jsonify({"message": result}), status
+    action = data.get('action')
 
+    if not room_id or not action:
+        return jsonify({'error': '缺少必要的参数'}), 400
 
-@app.route('/delete/room_availability', methods=['POST'])
-def delete_room_availability():
-    data = request.json
-    room_id = data.get('room_id')
-    available_date = data.get('available_date')
-    available_begin = data.get('available_begin')
-    available_end = data.get('available_end')
-    query = """
-    DELETE FROM Room_availability
-    WHERE (room_id = %s OR %s IS NULL)
-      AND (available_date = %s OR %s IS NULL)
-      AND (available_begin = %s OR %s IS NULL)
-      AND (available_end = %s OR %s IS NULL)
-    """
-    params = (
-        room_id, room_id, available_date, available_date, available_begin, available_begin, available_end,
-        available_end)
-    result, status = delete_record(query, params)
-    return jsonify({"message": result}), status
+    if action not in ['delete', 'restore']:
+        return jsonify({'error': '无效的操作类型'}), 400
 
+    new_status = 2 if action == 'delete' else 0
 
-@app.route('/delete/approvals', methods=['POST'])
-def delete_approvals():
-    data = request.json
-    approval_id = data.get('approval_id')
-    booking_id = data.get('booking_id')
-    admin_id = data.get('admin_id')
-    approval_status = data.get('approval_status')
-    query = """
-    DELETE FROM Approvals
-    WHERE (approval_id = %s OR %s IS NULL)
-      AND (booking_id = %s OR %s IS NULL)
-      AND (admin_id = %s OR %s IS NULL)
-      AND (approval_status = %s OR %s IS NULL)
-    """
-    params = (approval_id, approval_id, booking_id, booking_id, admin_id, admin_id, approval_status, approval_status)
-    result, status = delete_record(query, params)
-    return jsonify({"message": result}), status
-
-
-@app.route('/delete/notifications', methods=['POST'])
-def delete_notifications():
-    data = request.json
-    notification_id = data.get('notification_id')
-    user_id = data.get('user_id')
-    notification_type = data.get('notification_type')
-    status_val = data.get('status')
-    query = """
-    DELETE FROM Notifications
-    WHERE (notification_id = %s OR %s IS NULL)
-      AND (user_id = %s OR %s IS NULL)
-      AND (notification_type = %s OR %s IS NULL)
-      AND (status = %s OR %s IS NULL)
-    """
-    params = (
-        notification_id, notification_id, user_id, user_id, notification_type, notification_type, status_val,
-        status_val)
-    result, status = delete_record(query, params)
-    return jsonify({"message": result}), status
-
-
-@app.route('/delete/reports', methods=['POST'])
-def delete_reports():
-    data = request.json
-    report_id = data.get('report_id')
-    admin_id = data.get('admin_id')
-    report_type = data.get('report_type')
-    query = """
-    DELETE FROM Reports
-    WHERE (report_id = %s OR %s IS NULL)
-      AND (admin_id = %s OR %s IS NULL)
-      AND (report_type = %s OR %s IS NULL)
-    """
-    params = (report_id, report_id, admin_id, admin_id, report_type, report_type)
-    result, status = delete_record(query, params)
-    return jsonify({"message": result}), status
-
-
-@app.route('/delete/notifications_by_user', methods=['POST'])
-def delete_notifications_by_user():
-    data = request.json
-    user_id = data.get('user_id')
-    query = "DELETE FROM Notifications WHERE user_id = %s"
-    params = (user_id,)
-    result, status = delete_record(query, params)
-    return jsonify({"message": result}), status
-
-
-@app.route('/delete/approvals_by_booking', methods=['POST'])
-def delete_approvals_by_booking():
-    data = request.json
-    booking_id = data.get('booking_id')
-    query = "DELETE FROM Approvals WHERE booking_id = %s"
-    params = (booking_id,)
-    result, status = delete_record(query, params)
-    return jsonify({"message": result}), status
-
-
-@app.route('/delete/room_availability_by_room', methods=['POST'])
-def delete_room_availability_by_room():
-    data = request.json
-    room_id = data.get('room_id')
-    query = "DELETE FROM Room_availability WHERE room_id = %s"
-    params = (room_id,)
-    result, status = delete_record(query, params)
-    return jsonify({"message": result}), status
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        update_query = "UPDATE Rooms SET room_status = %s WHERE room_id = %s"
+        cursor.execute(update_query, (new_status, room_id))
+        conn.commit()
+        return jsonify({
+            'message': '房间状态更新成功',
+            'room_id': room_id,
+            'new_status': new_status
+        })
+    except Exception as e:
+        return jsonify({'error': '更新房间状态失败', 'details': str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
 
 
 @app.route('/delete_trusted_user', methods=['DELETE'])
@@ -1097,6 +1030,56 @@ def get_blacklist():
                 record['added_date'] = record['added_date'].strftime("%Y-%m-%d")
             if record['added_time']:
                 record['added_time'] = format_time(record['added_time'])
+            record['start_date'] = record['start_date'].strftime("%Y-%m-%d")
+            record['start_time'] = format_time(record['start_time'])
+            record['end_date'] = record['end_date'].strftime("%Y-%m-%d")
+            record['end_time'] = format_time(record['end_time'])
+
+        # 返回 JSON 格式数据
+        return jsonify({
+            "count": len(blacklists),
+            "blacklists": blacklists
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+
+@app.route('/get-blacklist-reason', methods=['GET'])
+def get_blacklist_reason():
+    try:
+        # 获取数据库连接
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # SQL 查询，连接 Blacklist 与 Users 表，获取黑名单记录和对应的 username
+        query = """
+            SELECT 
+                u.username,
+                b.start_date,
+                b.start_time,
+                b.end_date,
+                b.end_time,
+                b.reason
+            FROM Blacklist b
+            JOIN Users u ON b.user_id = u.user_id
+        """
+
+        # 执行查询
+        cursor.execute(query)
+        blacklists = cursor.fetchall()
+
+        # 格式化日期和时间字段
+        for record in blacklists:
             record['start_date'] = record['start_date'].strftime("%Y-%m-%d")
             record['start_time'] = format_time(record['start_time'])
             record['end_date'] = record['end_date'].strftime("%Y-%m-%d")
