@@ -69,7 +69,7 @@ def get_current_week(weeks):
     return None  # 如果日期不在任何一周内
 
 # 读取 weeks.csv 文件
-weeks = load_weeks('weeks.csv')
+weeks = load_weeks('data/weeks.csv')
 
 # 获取当前周次
 current_week = get_current_week(weeks)

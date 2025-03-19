@@ -16,4 +16,5 @@ crypto~=1.4.1
 azure-core~=1.32.0
 alibabacloud_dysmsapi20170525==3.1.1
 aliyun-python-sdk-core
+pymysql
 

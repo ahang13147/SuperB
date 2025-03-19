@@ -1,5 +1,4 @@
 import csv
-
 import requests
 from bs4 import BeautifulSoup
 import json
@@ -10,33 +9,35 @@ from datetime import datetime, timedelta
 from flask import Flask, jsonify
 from flask_cors import CORS
 
-# 创建 Flask 应用并启用 CORS 支持
+# ================================== Flask Application Setup ==================================
+# Create a Flask application and enable CORS support
 app = Flask(__name__)
-CORS(app)  # 启用跨域资源共享 (CORS)，避免跨域问题
+CORS(app)  # Enable Cross-Origin Resource Sharing (CORS) to avoid cross-domain issues
 
-# ============================ 数据库连接配置 ============================
+# ============================ Database Connection Configuration ============================
+# Database connection configuration
 db_config = {
     "host": "localhost",
     "user": "root",
-    "password": "1234",  # 替换为你的数据库密码
+    "password": "1234",  # Replace with your database password
     "database": "booking_system_db",
-    "ssl_disabled": True  # 禁用 SSL 连接
+    "ssl_disabled": True  # Disable SSL connection
 }
 
 def get_db_connection():
     return mysql.connector.connect(**db_config)
 
 
-# ============================ 工具函数 ============================
+# ============================ Utility Functions ============================
 def get_week_dates():
-    """计算本周每一天的日期（周一到周日）"""
+    """Calculate the dates for each day of the current week (from Monday to Sunday)"""
     today = datetime.today()
     start_of_week = today - timedelta(days=today.weekday())
     return [(start_of_week + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7)]
 
 
-# ============================ 全局变量 ============================
-# 初始化时间表：7列代表星期日（索引0）到星期六（索引6）
+# ============================ Global Variables ============================
+# Initialize timetable: 7 columns represent Sunday (index 0) to Saturday (index 6)
 timetable = {
     "1-2": [""] * 7,
     "3-4": [""] * 7,
@@ -47,7 +48,7 @@ timetable = {
     "Notes": [""] * 7
 }
 
-# 课时与时间映射（不做任何改动）
+# Mapping of class periods to time ranges (do not modify)
 class_periods = {
     "1-2": [("[08:00-08:45]", "[08:55-09:40]")],
     "3-4": [("[10:00-10:45]", "[10:55-11:40]")],
@@ -57,15 +58,15 @@ class_periods = {
     "11-12": [("[21:00-21:45]", "[21:55-22:40]")]
 }
 
-# 正则表达式，用于提取教室名称（例如：外语网络楼635）
+# Regular expression to extract classroom names (e.g., "Foreign Language Network Building 635")
 classroom_pattern = re.compile(r'外语网络楼(\d{3})')
 
 
 def extract_classrooms(course_text):
-    """从课程文本中提取教室名称"""
+    """Extract classroom names from course text"""
     return classroom_pattern.findall(course_text)
 
-# 读取CSV文件并存储周次与日期的对应关系
+# Read CSV file and store week-to-date mapping
 def load_weeks(file_path):
     weeks = []
     with open(file_path, mode='r') as file:
@@ -79,17 +80,18 @@ def load_weeks(file_path):
             weeks.append(week)
     return weeks
 
-# 计算当前日期属于哪一周
+# Calculate which week the current date belongs to
 def get_current_week(weeks):
     current_date = datetime.today()
     for week in weeks:
         if week["start_date"] <= current_date <= week["end_date"]:
             return week["week_number"]
-    return None  # 如果日期不在任何一周内
-# ============================ 爬取数据部分 (保持原样) ============================
+    return None  # If the date is not within any week
+
+# ============================ Data Scraping Functionality (Keep unchanged) ============================
 def crawl_data():
-    """爬取各学年的专业、班级和课程表数据"""
-    global timetable  # 使用全局 timetable
+    """Scrape data for majors, classes, and schedules for each academic year"""
+    global timetable  # Use global timetable
     class_usage = {}
     session = requests.Session()
     url_main = "http://csujwc.its.csu.edu.cn/jiaowu/pkgl/llsykb/llsykb_find_xx04.jsp?init=1&isview=1&xnxq01id=null"
@@ -99,31 +101,28 @@ def crawl_data():
     }
     session.get(url_main, headers=headers)
     current_date = datetime.today().date()
-    # current_year = current_date.today().year
-    # academic_years = ["2022", "2023", "2024"]
-    current_date = datetime.today().date()
-    # 获取当前年份
+    # Get the current year
     current_year = current_date.today().year
-    #通过文件读取当前周次
-    weeks = load_weeks('weeks.csv')
+    # Read the current week from the file
+    weeks = load_weeks('timetable/insert_room_availability_info/data/weeks.csv')
     current_week = get_current_week(weeks)
-    # 检查当前日期是否在9月1号之前
+    # Check if the current date is before September 1st
     if current_date.month < 9 or (current_date.month == 9 and current_date.day < 1):
-        # 当前日期在9月1号之前，academic_years不包括当前年
+        # If the date is before September 1st, academic_years do not include the current year
         start_year = max(2022, current_year - 3)
         academic_years = [str(year) for year in range(start_year, current_year)]
     else:
-        # 当前日期在9月1号之后，academic_years包括当前年
+        # If the date is after September 1st, academic_years include the current year
         start_year = max(2022, current_year - 3)
         academic_years = [str(year) for year in range(start_year, current_year + 1)]
 
     if (current_date.month >= 9 and current_date.month <= 12):
-        # 如果当前日期在9月1号到次年2月1号之间
+        # If the current date is between September 1st and February 1st next year
         semester_id = f"{current_year}-{current_year + 1}-1"
     elif (current_date.month == 1):
         semester_id = f"{current_year - 1}-{current_year}-1"
     elif (current_date.month >= 2 and current_date.month <= 8):
-        # 如果当前日期在2月2号到8月31号之间
+        # If the current date is between February 2nd and August 31st
         semester_id = f"{current_year - 1}-{current_year}-2"
     url_major = "http://csujwc.its.csu.edu.cn/KbctjcAction.do?method=queryzy"
     url_class = "http://csujwc.its.csu.edu.cn/KbctjcAction.do?method=querybj"
@@ -201,7 +200,7 @@ def crawl_data():
     return class_usage
 
 
-# ============================ 整合数据 ============================
+# ============================ Data Integration ============================
 def integrate_schedule(class_usage):
     classroom_schedule = {}
     for room, times in class_usage.items():
@@ -241,20 +240,20 @@ def format_schedule_data(new_room_2d_array):
     return formatted_schedule
 
 
-# ============================ 更新数据库 ============================
+# ============================ Update Database ============================
 def update_room_availability(formatted_schedule):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
     try:
         for entry in formatted_schedule:
-            room_name, available_date, available_begin, available_end = entry  # 解包数据
+            room_name, available_date, available_begin, available_end = entry  # Unpack data
             cursor.execute("SELECT room_id FROM Rooms WHERE room_name = %s", (room_name,))
             room_result = cursor.fetchone()
             if not room_result:
                 continue
             room_id = room_result["room_id"]
-            cursor.execute("""
-                SELECT availability_id FROM Room_availability
+            cursor.execute(""" 
+                SELECT availability_id FROM Room_availability 
                 WHERE room_id = %s AND available_date = %s 
                 AND available_begin = %s AND available_end = %s
             """, (room_id, available_date, available_begin, available_end))
@@ -262,7 +261,7 @@ def update_room_availability(formatted_schedule):
             if existing_availability:
                 cursor.execute("""
                     UPDATE Room_availability 
-                    SET availability = 1
+                    SET availability = 1 
                     WHERE availability_id = %s
                 """, (existing_availability["availability_id"],))
             else:
@@ -278,9 +277,9 @@ def update_room_availability(formatted_schedule):
         conn.close()
 
 
-# ============================ `split_time_slots` 函数 ============================
+# ============================ Split Time Slots ============================
 def split_time_slots(data):
-    """将存储的字符串数据拆分为单个时间段（去除所有中括号）"""
+    """Split stored string data into individual time slots (remove all brackets)"""
     new_data = {}
     for room, schedule in data.items():
         new_schedule = []
@@ -296,38 +295,38 @@ def split_time_slots(data):
                     else:
                         new_day.append(item)
                 else:
-                    new_day.append('')  # 处理空值的情况
+                    new_day.append('')  # Handle empty values
             new_schedule.append(new_day)
         new_data[room] = new_schedule
     return new_data
 
 
-# ============================ Flask API 端点 ============================
+# ============================ Flask API Endpoint ============================
 @app.route('/run_scheduler', methods=['GET'])
 def run_scheduler():
     try:
-        # 执行爬取并更新数据库
+        # Run the scraping and database update process
         result = main_scheduler()
         return jsonify({"message": result}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-# ============================ 主调度函数 ============================
+# ============================ Main Scheduler Function ============================
 def main_scheduler():
-    # 1. 爬取数据
+    # 1. Scrape data
     class_usage = crawl_data()
-    # 2. 整合数据到二维数组
+    # 2. Integrate data into 2D array
     room_2d_array = integrate_schedule(class_usage)
-    # 3. 拆分时间段，去除中括号
+    # 3. Split time slots and remove brackets
     new_room_2d_array = split_time_slots(room_2d_array)
-    # 4. 格式化数据，生成标准格式列表
+    # 4. Format data and generate the standard format list
     formatted_schedule = format_schedule_data(new_room_2d_array)
-    # 5. 更新数据库
+    # 5. Update database
     update_room_availability(formatted_schedule)
     return "Crawling and updating database successfully!"
 
 
-# 直接运行 Flask 应用
+# Run Flask application directly
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
