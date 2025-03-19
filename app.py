@@ -367,6 +367,11 @@ def trust_list():
 def room_issue_management():
     return render_template('room_issue_management.html')
 
+@app.route('/black')
+@login_required
+def black():
+    return render_template('black.html')
+
 
 # 路由：渲染 login.html
 @app.route('/login')
@@ -374,8 +379,24 @@ def login():
     return render_template('login.html')
 
 
-# TODO: 原函数
+#todo : add for check if the user is in blacklist
+def is_user_blacklisted(email):
+    """检查用户邮箱是否在 blacklist 表中"""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        query = "SELECT * FROM blacklist WHERE email = %s"
+        cursor.execute(query, (email,))
+        result = cursor.fetchone()
+        return result is not None
+    except Exception as e:
+        print(f"Error checking blacklist: {str(e)}")
+        return False
+    finally:
+        cursor.close()
+        conn.close()
 
+# TODO: 原函数
 # profile route
 @app.route('/profile')
 def profile():
@@ -403,6 +424,10 @@ def profile():
         return redirect(url_for('error_page'))
 
     session['user_email'] = user_email
+
+    # 新增：检查是否在黑名单中
+    if is_user_blacklisted(user_email):
+        return redirect(url_for('black'))
 
     try:
         print(f"Calling role API with email: {user_email}")
