@@ -1294,6 +1294,31 @@ def get_notifications():
             conn.close()
 
 
+
+@app.route('/get_all_users_admin', methods=['GET'])
+def get_users():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT user_id, username, email, phone_number, role FROM Users")
+        users = cursor.fetchall()
+
+        return jsonify({
+            "count": len(users),
+            "users": users
+        }), 200
+
+    except mysql.connector.Error as e:
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+
 # ---------------------------- update ----------------------------
 
 @app.route('/update-room/<int:room_id>', methods=['PUT'])
@@ -1712,6 +1737,66 @@ def update_notification_status():
         cursor.close()
         conn.close()
 
+
+
+@app.route('/update_user_admin', methods=['PUT'])
+def update_user_admin():
+    data = request.get_json() or {}
+    user_id = data.get('user_id')
+
+    if not user_id:
+        return jsonify({"error": "Missing user_id"}), 400
+    if 'email' in data:
+        return jsonify({"error": "Email cannot be modified"}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Fetch existing record
+        cursor.execute(
+            "SELECT username, phone_number, role FROM Users WHERE user_id = %s",
+            (user_id,)
+        )
+        existing = cursor.fetchone()
+        if not existing:
+            return jsonify({"error": "User not found"}), 404
+
+        # Determine which fields actually changed
+        updates = {}
+        for field in ('username', 'phone_number', 'role'):
+            if field in data and data[field] != existing[field]:
+                updates[field] = data[field]
+
+        if not updates:
+            return jsonify({"message": "No changes detected"}), 200
+
+        # Build dynamic UPDATE
+        set_clause = ", ".join(f"{k} = %s" for k in updates)
+        params = list(updates.values()) + [user_id]
+        cursor.execute(
+            f"UPDATE Users SET {set_clause} WHERE user_id = %s",
+            tuple(params)
+        )
+        conn.commit()
+
+        return jsonify({
+            "message": "User updated successfully",
+            "user_id": user_id,
+            **updates
+        }), 200
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": "Failed to update user", "details": str(e)}), 500
+
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+
 # ---------------------------- insert ----------------------------
 
 @app.route('/insert_booking', methods=['POST'])
@@ -2097,6 +2182,57 @@ def add_issue():
             conn.rollback()
             conn.close()
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/insert_users_admin', methods=['POST'])
+def insert_use_adminr():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Request body must be JSON"}), 400
+
+    # Required fields (user_id excluded)
+    required = ["username", "email", "phone_number", "role"]
+    missing = [f for f in required if not data.get(f)]
+    if missing:
+        return jsonify({"error": "Missing required fields", "missing_fields": missing}), 400
+
+    username = data["username"].strip()
+    email = data["email"].strip().lower()
+    phone = data["phone_number"].strip()
+    role = data["role"].strip()
+
+    # Validate role value
+    if role not in ("admin", "professor", "student", "tutor"):
+        return jsonify({"error": f"Invalid role '{role}'"}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check for duplicate email
+        cursor.execute("SELECT 1 FROM Users WHERE email = %s", (email,))
+        if cursor.fetchone():
+            return jsonify({"error": "Email already registered"}), 409
+
+        # Insert new user
+        cursor.execute(
+            "INSERT INTO Users (username, email, phone_number, role) VALUES (%s, %s, %s, %s)",
+            (username, email, phone, role)
+        )
+        conn.commit()
+
+        return jsonify({
+            "message": "User created successfully",
+            "user_id": cursor.lastrowid
+        }), 201
+
+    except mysql.connector.Error as e:
+        conn.rollback()
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
 
 
 # if __name__ == '__main__':
