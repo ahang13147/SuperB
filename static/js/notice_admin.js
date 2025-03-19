@@ -35,8 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Network response was not ok');
 
             const { notifications } = await response.json();
-            const systemData = notifications.filter(n => n.user_id === 0);
-            const personalData = notifications.filter(n => n.user_id !== 0);
+            const systemData = notifications.filter(n => n.user_id === null);
+            const personalData = notifications.filter(n => n.user_id !== null);
 
             renderNotifications(systemData, '.system-panel');
             renderNotifications(personalData, '.personal-panel');
@@ -56,13 +56,13 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="notification-item ${n.status === 'unread' ? 'unread' : ''}"
                  data-id="${n.notification_id}">
                 <div class="notification-header">
-                    <span class="notification-type">${n.user_id === 0 ? '🔔 System' : '👤 Personal'}</span>
+                    <span class="notification-type">${n.user_id === null ? '🔔 System' : '👤 Personal'}</span>
                     <span class="notification-time">${new Date(n.created_at).toLocaleString()}</span>
                 </div>
                 <div class="notification-content">
                     ${n.message}
-                    ${n.user_id !== 0 ? `<button class="mark-read">Mark Read</button>` : ''}
-                    <button class="delete">${n.user_id === 0 ? 'Dismiss' : 'Delete'}</button>
+                    ${n.user_id !== null ? `<button class="mark-read">Mark Read</button>` : ''}
+                    ${n.user_id !== null ? `<button class="delete">Delete</button>` : ''}
                 </div>
             </div>
         `).join('');
@@ -78,30 +78,57 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 标记已读处理
+     // 标记已读处理
     async function handleMarkRead(e) {
         const notificationId = e.target.closest('.notification-item').dataset.id;
+        const markReadButton = e.target; // 获取点击的按钮
+
         try {
-            const response = await fetch(`/api/notifications/${notificationId}/read`, {
-                method: 'PUT'
+            const response = await fetch('/update_notification_status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    notification_id: notificationId,
+                    status: 'read'
+                }),
+                credentials: 'include'
             });
+
             if (response.ok) {
+                // 标记为已读后，移除未读样式
                 e.target.closest('.notification-item').classList.remove('unread');
+
+                // 禁用按钮并更改文本为 "Read"
+                markReadButton.disabled = true;
+                markReadButton.textContent = 'Read';
+            } else {
+                console.error('Failed to mark notification as read');
             }
         } catch (error) {
             console.error('Update Error:', error);
         }
     }
-
     // 删除处理
     async function handleDelete(e) {
         const notificationId = e.target.closest('.notification-item').dataset.id;
         try {
-            const response = await fetch(`/api/notifications/${notificationId}`, {
-                method: 'DELETE'
+            const response = await fetch('/delete_notification', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    notification_id: notificationId
+                }),
+                credentials: 'include'
             });
+
             if (response.ok) {
                 e.target.closest('.notification-item').remove();
+            } else {
+                console.error('Failed to delete notification');
             }
         } catch (error) {
             console.error('Delete Error:', error);

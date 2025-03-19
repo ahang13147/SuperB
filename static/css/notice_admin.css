@@ -1,25 +1,28 @@
-/* 基础样式 */
+
 * {
     box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+
 }
 
 body {
     line-height: 1.6;
-    padding: 20px;
     background-color: #f5f5f5;
 }
 
 .container {
+    padding:50px;
     max-width: 1200px;
-    margin: 0 auto;
 }
 
 .content-area {
     flex: 1;
     padding: 30px;
     background-color: #f7f7f7;
+}
+.main-container {
+  min-height: 100vh;
+  padding-left: 200px;
+  box-sizing: border-box;
 }
 
 h1 {
@@ -120,12 +123,28 @@ h1 {
     color: white;
 }
 
-/* 移动端适配 */
-@media (max-width: 768px) {
+    /* 移动端适配 */
+    @media (max-width: 768px) {
+     .main-container {
+    padding-left: 0;
+    box-sizing: content-box;
+    }
     .notification-panel {
         padding: 20px;
+    }
+     html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        overflow-x: hidden;
+    }
+    h1 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 30px;
+    font-size: 1.5em;
     }
     .notification-item {
         padding: 15px;
     }
-}
+    }
