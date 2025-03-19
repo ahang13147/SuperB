@@ -123,7 +123,7 @@ BEGIN
           WHERE booking_id = v_booking_id;
 
           INSERT INTO Notifications(user_id, message, notification_action)
-          VALUES (v_user_id, CONCAT('Your booking has been reassigned to room ', @new_room_id, '.'), 'reminder');
+          VALUES (v_user_id, CONCAT('Due to problems with the original room,  your booking has been reassigned to room ', @new_room_id, '.'), 'reminder');
        ELSE
           -- If no suitable replacement room is found, mark the booking as 'failed'
           UPDATE Bookings
@@ -132,7 +132,7 @@ BEGIN
           WHERE booking_id = v_booking_id;
 
           INSERT INTO Notifications(user_id, message, notification_action)
-          VALUES (v_user_id, 'No suitable replacement room found. Your booking has been cancelled.', 'cancellation');
+          VALUES (v_user_id, 'Sorry,due to a problem with the original room, you will need to be moved to a new room.However, no suitable replacement room found. Your booking has been cancelled.', 'cancellation');
        END IF;
 
     END LOOP;
@@ -168,11 +168,16 @@ CREATE TRIGGER after_issue_insert
 AFTER INSERT ON Issues
 FOR EACH ROW
 BEGIN
-    -- 插入通知（保持原来的内容）
+        -- 插入通知（保持原来的内容）
     INSERT INTO Notifications (user_id, message, notification_action)
     VALUES (
         NULL,
-        CONCAT('New issue created for room ', NEW.room_id, ': ', NEW.issue, '. Status: ', NEW.status),
+        CONCAT(
+            'A new issue has been reported for room ', NEW.room_id, '. ',
+            'Issue Description: "', NEW.issue, '". ',
+            'Current Status: ', NEW.status, '. ',
+            'Please review the issue details in the system and take necessary actions promptly.'
+        ),
         'alert'
     );
 
@@ -192,13 +197,18 @@ CREATE TRIGGER after_issue_update
 AFTER UPDATE ON Issues
 FOR EACH ROW
 BEGIN
-    IF NEW.status <> OLD.status THEN
-        INSERT INTO Notifications (user_id, message, notification_action)
-        VALUES (
-            NULL,
-            CONCAT('Issue ', NEW.issue_id, ' status changed from ', OLD.status, ' to ', NEW.status),
-            'changed'
-        );
+    INSERT INTO Notifications (user_id, message, notification_action)
+    VALUES (
+        NULL,
+        CONCAT(
+            'Attention: Issue ', NEW.issue_id, ' has been updated. ',
+            'Previous status: ', OLD.status, '. ',
+            'Current status: ', NEW.status, '. ',
+            'Please log in to review the details of this issue and take appropriate action if necessary.'
+        ),
+        'changed'
+    );
+
 
         -- 根据新的 Issue 状态更新 Rooms 表的 room_status
         IF NEW.status = 'resolved' THEN
