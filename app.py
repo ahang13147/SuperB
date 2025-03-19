@@ -20,7 +20,7 @@ app = Flask(__name__)
 # 设置 session 持久化
 app.config['SESSION_PERMANENT'] = True  # 启用持久会话
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=3)  # Set session duration to 3 hours
-CORS(app,supports_credentials=True, origins=["http://localhost:8000"])  # 允许所有来源访问
+CORS(app,supports_credentials=True, origins=["https://101.200.197.132:8000"])  # 允许所有来源访问
 app.secret_key = 'your-secret-key-here'
 
 
@@ -135,23 +135,48 @@ def get_room_id(room_name):
 
 
 # 查询用户ID
+# def get_user_id_by_email():
+#     user_email = session.get('user_email')
+#
+#     if not user_email:
+#         return None  # 如果 session 中没有 user_email，返回 None
+#
+#     try:
+#         with closing(get_db_connection()) as conn:
+#             with conn.cursor(dictionary=True) as cursor:
+#                 # 根据 email 查询 user_id
+#                 cursor.execute("SELECT user_id FROM Users WHERE email = %s", (user_email,))
+#                 user = cursor.fetchone()
+#
+#                 if user:
+#                     return user['user_id']  # 返回 user_id
+#                 else:
+#                     return None  # 如果没有找到对应的用户，返回 None
+#     except Exception as e:
+#         print(f"Database error: {str(e)}")
+#         return None  # 如果数据库查询出错，返回 None
 def get_user_id_by_email():
     user_email = session.get('user_email')
-
     if not user_email:
         return None  # 如果 session 中没有 user_email，返回 None
 
     try:
-        with closing(get_db_connection()) as conn:
-            with conn.cursor(dictionary=True) as cursor:
-                # 根据 email 查询 user_id
-                cursor.execute("SELECT user_id FROM Users WHERE email = %s", (user_email,))
-                user = cursor.fetchone()
+        # 获取数据库连接
+        conn = get_db_connection()
+        # 手动创建 cursor（字典格式）
+        cursor = conn.cursor(dictionary=True)
+        try:
+            # 根据 email 查询 user_id
+            cursor.execute("SELECT user_id FROM Users WHERE email = %s", (user_email,))
+            user = cursor.fetchone()
+        finally:
+            cursor.close()  # 手动关闭 cursor
+        conn.close()
 
-                if user:
-                    return user['user_id']  # 返回 user_id
-                else:
-                    return None  # 如果没有找到对应的用户，返回 None
+        if user:
+            return user['user_id']  # 返回 user_id
+        else:
+            return None  # 如果没有找到对应的用户，返回 None
     except Exception as e:
         print(f"Database error: {str(e)}")
         return None  # 如果数据库查询出错，返回 None
@@ -1153,7 +1178,7 @@ def get_notifications():
                 notification_action,
                 created_at
             FROM Notifications
-            WHERE user_id = %s
+            WHERE user_id = %s OR user_id IS NULL
             ORDER BY created_at DESC
         """
         cursor.execute(query, (user_id,))

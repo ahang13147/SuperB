@@ -22,7 +22,7 @@ USE `booking_system_db`;
 CREATE TABLE Users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,    -- User ID, auto-incremented
     username VARCHAR(255) NOT NULL,             -- Username
-    user_email VARCHAR(255) NOT NULL UNIQUE,         -- User's email, must be unique
+    email VARCHAR(255) NOT NULL UNIQUE,         -- User's email, must be unique
     phone_number VARCHAR(255) NOT NULL,        -- Hashed password for security
     role ENUM('admin', 'professor', 'student', 'tutor') NOT NULL  -- User's role in the system
 );
@@ -72,6 +72,7 @@ CREATE TABLE Notifications (
     user_id INT NULL,                                -- User ID, 如果为 NULL 则表示全局系统公告
     message TEXT NOT NULL,                           -- Notification message
     notification_action ENUM('confirmation', 'reminder', 'cancellation', 'changed', 'failed', 'rejected', 'alert', 'info') NOT NULL,  -- 通知具体动作
+    status ENUM('read','unread')
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp of notification creation
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
@@ -121,7 +122,7 @@ CREATE TABLE Issues (
     issue_id INT AUTO_INCREMENT PRIMARY KEY,       -- Issue ID, auto-incremented
     room_id INT NOT NULL,                         -- Room ID (Foreign key referencing Rooms table)
     issue TEXT NOT NULL,                          -- Description of the issue
-    status ENUM('open', 'in_progress', 'resolved') DEFAULT 'open',  -- Issue status
+    status ENUM('fault', 'in_maintenance', 'resolved','severe') DEFAULT 'fault',-- Issue status
     start_date DATE NOT NULL,                     -- Start date of the issue occurrence
     start_time TIME NOT NULL,                     -- Start time of the issue occurrence
     end_date DATE,                                -- End date when the issue was resolved (nullable)
