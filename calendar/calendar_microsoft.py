@@ -3,8 +3,8 @@ import requests
 import urllib.parse
 
 # 直接硬编码 Azure 应用的配置
-client_id = 'a062851f-35e7-4b1d-aeb4-bd0e3f3726fa'  # 应用注册时获得的客户端ID
-client_secret = 'iSq8Q~L4dsgIvpxU3lA_CGOmxbwA9hB--xqnvb_w'  # 应用注册时获得的客户端密钥值
+client_id = 'f40296ef-9aca-48b4-9ca1-b02e6d690f7c'  # 应用注册时获得的客户端ID
+client_secret = 'JUV8Q~s~0D45yzMMLJmZuOT0hO53hwb84xHrebb~'  # 应用注册时获得的客户端密钥值
 tenant_id = '52ff27b4-1ebf-4510-a74f-8940dbf42624'  # 租户ID
 redirect_uri = 'https://101.200.197.132:8000/auth_callback'  # 设置为与Azure应用注册中的重定向URI相同
 
