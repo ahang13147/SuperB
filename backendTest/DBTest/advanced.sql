@@ -212,6 +212,7 @@ END;
 DELIMITER ;
 
 
+
 DELIMITER //
 
 CREATE TRIGGER trg_booking_status_change

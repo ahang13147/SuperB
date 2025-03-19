@@ -101,6 +101,7 @@ CREATE TABLE RoomTrustedUsers (
     FOREIGN KEY (added_by) REFERENCES Users(user_id)      -- Foreign key referencing Users table (Admin)
 );
 
+
 -- 1.11 Blacklist Table (Stores users who are banned or restricted from using the system)
 CREATE TABLE Blacklist (
     blacklist_id INT AUTO_INCREMENT PRIMARY KEY,    -- Blacklist ID, auto-incremented
