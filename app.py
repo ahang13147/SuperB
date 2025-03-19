@@ -380,13 +380,14 @@ def login():
 
 
 #todo : add for check if the user is in blacklist
-def is_user_blacklisted(email):
+def is_user_blacklisted( ):
     """检查用户邮箱是否在 blacklist 表中"""
     conn = get_db_connection()
+    user_id=get_user_id_by_email()
     try:
         cursor = conn.cursor()
-        query = "SELECT * FROM blacklist WHERE email = %s"
-        cursor.execute(query, (email,))
+        query = "SELECT * FROM blacklist WHERE user_id = %s"
+        cursor.execute(query, (user_id,))
         result = cursor.fetchone()
         print('blacklist debug',result)
         return result is not None
@@ -425,6 +426,9 @@ def profile():
         return redirect(url_for('error_page'))
 
     session['user_email'] = user_email
+    print('debugggg',get_user_id_by_email())
+    if is_user_blacklisted( ):
+        return redirect(url_for('black'))
 
     # 新增：检查是否在黑名单中
 
@@ -442,8 +446,6 @@ def profile():
             user_role = role_data.get('role', 'user')
             session['user_role'] = user_role
 
-            if is_user_blacklisted(user_email):
-                return redirect(url_for('black'))
             # redirect the URL by the role of the user
 
             if user_role == 'admin':
