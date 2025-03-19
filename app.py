@@ -1322,52 +1322,51 @@ def update_room(room_id):
     capacity = data.get('capacity')
     equipment = data.get('equipment')
     location = data.get('location')
-    room_type= data.get('type')
+    room_type = data.get('type')
 
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Retrieve existing room data by room_id
+        # 根据 room_id 查询当前房间数据
         cursor.execute("SELECT * FROM Rooms WHERE room_id = %s", (room_id,))
         existing_room = cursor.fetchone()
         if not existing_room:
             print(f"No room found with ID {room_id}.")
             return jsonify({"error": "Room not found"}), 404
 
-        # Check if the new data is exactly the same as the existing data.
-        # Assuming the order of fields is: room_id, room_name, capacity, equipment, location.
+        # 检查提交数据是否与现有数据完全一致
         if (room_name == existing_room[1] and
                 capacity == existing_room[2] and
                 equipment == existing_room[3] and
-                location == existing_room[4]):
+                location == existing_room[4] and
+                room_type == existing_room[5]):
             print("No changes detected.")
             return jsonify({"message": "No changes were made"}), 200
 
-        # Check for duplicate room name in other records.
+        # 检查其它记录中是否已经存在相同的房间名称（排除当前记录）
         cursor.execute("SELECT * FROM Rooms WHERE room_name = %s AND room_id != %s", (room_name, room_id))
         duplicate_room = cursor.fetchone()
         if duplicate_room:
             print(f"Room name '{room_name}' already exists.")
             return jsonify({"error": "Room name already exists"}), 400
 
-        # Proceed with update if there are changes.
+        # 执行更新操作
         update_query = """
             UPDATE Rooms
-            SET room_name = %s, capacity = %s, equipment = %s, location = %s,room_type =%s
+            SET room_name = %s, capacity = %s, equipment = %s, location = %s, room_type = %s
             WHERE room_id = %s
         """
-        update_params = (room_name, capacity, equipment, location, room_id)
+        update_params = (room_name, capacity, equipment, location, room_type, room_id)
         print(f"Executing update query: {update_query} with parameters: {update_params}")
         cursor.execute(update_query, update_params)
         conn.commit()
 
-        # In rare cases if rowcount is still 0 (but we already checked), we can respond accordingly.
         if cursor.rowcount == 0:
             print(f"No changes were made during update for room id {room_id}.")
             return jsonify({"message": "No changes were made"}), 200
 
-        # Return the updated room data.
+        # 查询并返回更新后的房间数据
         cursor.execute("SELECT * FROM Rooms WHERE room_id = %s", (room_id,))
         updated_room = cursor.fetchone()
         print(f"Updated room: {updated_room}")
@@ -1392,6 +1391,7 @@ def update_room(room_id):
             cursor.close()
         if 'conn' in locals():
             conn.close()
+
 
 
 @app.route('/update-booking-status/<int:booking_id>', methods=['PUT'])
