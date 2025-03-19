@@ -119,7 +119,7 @@ BEGIN
               reason = CONCAT('Room reassigned to room ID: ', @new_room_id)
           WHERE booking_id = v_booking_id;
 
-          INSERT INTO Notifications(user_id, message, notification_type)
+          INSERT INTO Notifications(user_id, message, notification_action)
           VALUES (v_user_id, CONCAT('Your booking has been reassigned to room ', @new_room_id, '.'), 'reminder');
        ELSE
           -- If no suitable replacement room is found, mark the booking as 'failed'
@@ -128,7 +128,7 @@ BEGIN
               reason = 'No suitable replacement room found'
           WHERE booking_id = v_booking_id;
 
-          INSERT INTO Notifications(user_id, message, notification_type)
+          INSERT INTO Notifications(user_id, message, notification_action)
           VALUES (v_user_id, 'No suitable replacement room found. Your booking has been cancelled.', 'cancellation');
        END IF;
 
@@ -140,13 +140,73 @@ DELIMITER ;
 
 
 
+DROP TRIGGER IF EXISTS trg_after_room_unavailable;
+
 DELIMITER //
+
 CREATE TRIGGER trg_after_room_unavailable
 AFTER UPDATE ON Rooms
 FOR EACH ROW
 BEGIN
-    IF NEW.room_status = 2 AND OLD.room_status <> 2 THEN
+    IF (NEW.room_status = 3 AND OLD.room_status <> 3)
+    OR (NEW.room_status = 2 AND OLD.room_status <> 2) THEN
          CALL reassignBookings(NEW.room_id);
     END IF;
 END //
+
+DELIMITER ;
+
+
+
+DELIMITER //
+
+-- 触发器：在插入一条 Issue 后自动发送通知，并根据 Issue 状态更新 Rooms 表的 room_status
+CREATE TRIGGER after_issue_insert
+AFTER INSERT ON Issues
+FOR EACH ROW
+BEGIN
+    -- 插入通知（保持原来的内容）
+    INSERT INTO Notifications (user_id, message, notification_action)
+    VALUES (
+        NULL,
+        CONCAT('New issue created for room ', NEW.room_id, ': ', NEW.issue, '. Status: ', NEW.status),
+        'alert'
+    );
+
+    -- 根据 Issue 的状态更新 Rooms 表的 room_status
+    IF NEW.status = 'resolved' THEN
+        UPDATE Rooms SET room_status = 0 WHERE room_id = NEW.room_id;
+    ELSEIF NEW.status IN ('fault', 'in_maintenance') THEN
+        UPDATE Rooms SET room_status = 1 WHERE room_id = NEW.room_id;
+    ELSEIF NEW.status = 'severe' THEN
+        UPDATE Rooms SET room_status = 2 WHERE room_id = NEW.room_id;
+    END IF;
+END;
+//
+
+-- 触发器：在更新 Issue 时，如果 status 发生变化，则自动发送通知，并根据新状态更新 Rooms 表的 room_status
+CREATE TRIGGER after_issue_update
+AFTER UPDATE ON Issues
+FOR EACH ROW
+BEGIN
+    IF NEW.status <> OLD.status THEN
+        INSERT INTO Notifications (user_id, message, notification_action)
+        VALUES (
+            NULL,
+            CONCAT('Issue ', NEW.issue_id, ' status changed from ', OLD.status, ' to ', NEW.status),
+            'changed'
+        );
+
+        -- 根据新的 Issue 状态更新 Rooms 表的 room_status
+        IF NEW.status = 'resolved' THEN
+            UPDATE Rooms SET room_status = 0 WHERE room_id = NEW.room_id;
+        ELSEIF NEW.status IN ('fault', 'in_maintenance') THEN
+            UPDATE Rooms SET room_status = 1 WHERE room_id = NEW.room_id;
+        ELSEIF NEW.status = 'severe' THEN
+            UPDATE Rooms SET room_status = 2 WHERE room_id = NEW.room_id;
+        END IF;
+    END IF;
+END;
+//
+
 DELIMITER ;

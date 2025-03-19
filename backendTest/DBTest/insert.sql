@@ -6,8 +6,8 @@
 
 USE `booking_system_db`;
 
-INSERT INTO Users (username, user_email, phone_number, role) VALUES
-('admin1', 'admin1@example.com', 'hash1', 'admin'),
+INSERT INTO Users (username, email, phone_number, role) VALUES
+('admin1', 'BookingSystem.SuperB@outlook.com', 'hash1', 'admin'),
 ('prof1', 'prof1@example.com', 'hash2', 'professor'),
 ('student1', 'student1@example.com', 'hash3', 'student'),
 ('tutor1', 'tutor1@example.com', 'hash4', 'tutor'),
@@ -40,17 +40,17 @@ VALUES
 SET @current_date = CURRENT_DATE();
 
 -- 更新Room_availability的日期为动态范围
-INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, availability) VALUES
--- 过去3天到未来7天的数据
-(1, '09:00:00', '12:00:00', DATE_SUB(@current_date, INTERVAL 3 DAY), 0),
-(1, '13:00:00', '17:00:00', DATE_SUB(@current_date, INTERVAL 2 DAY), 1),
-(2, '10:00:00', '14:00:00', DATE_SUB(@current_date, INTERVAL 1 DAY), 0),
-(2, '15:00:00', '18:00:00', @current_date, 2),
-(3, '08:00:00', '10:00:00', DATE_ADD(@current_date, INTERVAL 1 DAY), 0),
-(3, '11:00:00', '13:00:00', DATE_ADD(@current_date, INTERVAL 2 DAY), 1),
-(4, '09:00:00', '12:00:00', DATE_ADD(@current_date, INTERVAL 3 DAY), 0),
-(12, '10:00:00', '12:00:00', DATE_ADD(@current_date, INTERVAL 4 DAY), 0),
-(5, '13:00:00', '15:00:00', DATE_ADD(@current_date, INTERVAL 5 DAY), 1);
+# INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, availability) VALUES
+# -- 过去3天到未来7天的数据
+# (1, '09:00:00', '12:00:00', DATE_SUB(@current_date, INTERVAL 3 DAY), 0),
+# (1, '13:00:00', '17:00:00', DATE_SUB(@current_date, INTERVAL 2 DAY), 1),
+# (2, '10:00:00', '14:00:00', DATE_SUB(@current_date, INTERVAL 1 DAY), 0),
+# (2, '15:00:00', '18:00:00', @current_date, 2),
+# (3, '08:00:00', '10:00:00', DATE_ADD(@current_date, INTERVAL 1 DAY), 0),
+# (3, '11:00:00', '13:00:00', DATE_ADD(@current_date, INTERVAL 2 DAY), 1),
+# (4, '09:00:00', '12:00:00', DATE_ADD(@current_date, INTERVAL 3 DAY), 0),
+# (12, '10:00:00', '12:00:00', DATE_ADD(@current_date, INTERVAL 4 DAY), 0),
+# (5, '13:00:00', '15:00:00', DATE_ADD(@current_date, INTERVAL 5 DAY), 1);
 
 
 INSERT INTO Bookings (user_id, room_id, start_time, end_time, booking_date, status, reason)
@@ -64,11 +64,11 @@ VALUES
 
 
 -- Insert sample data into Notifications table
-INSERT INTO Notifications (user_id, message, notification_action) VALUES
-(3, 'Your booking for Room A has been approved.', 'confirmation'),
-(2, 'Your booking for Room B has been approved.', 'confirmation'),
-(4, 'Your booking for Room C is pending reassignment.', 'reminder'),
-(3, 'Your booking for Room D has been approved.', 'confirmation');
+INSERT INTO Notifications (user_id, message, notification_action,status) VALUES
+(3, 'Your booking for Room A has been approved.', 'confirmation','unread'),
+(2, 'Your booking for Room B has been approved.', 'confirmation','unread'),
+(4, 'Your booking for Room C is pending reassignment.', 'reminder','unread'),
+(3, 'Your booking for Room D has been approved.', 'confirmation','unread');
 
 INSERT INTO Reports (admin_id, report_type, generated_at, data)
 VALUES
