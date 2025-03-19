@@ -20,7 +20,7 @@ app = Flask(__name__)
 # 设置 session 持久化
 app.config['SESSION_PERMANENT'] = True  # 启用持久会话
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=3)  # Set session duration to 3 hours
-CORS(app)  # 允许所有来源访问
+CORS(app,supports_credentials=True, origins=["https://101.200.197.132:8000"])  # 允许所有来源访问
 app.secret_key = 'your-secret-key-here'
 
 
@@ -135,23 +135,48 @@ def get_room_id(room_name):
 
 
 # 查询用户ID
+# def get_user_id_by_email():
+#     user_email = session.get('user_email')
+#
+#     if not user_email:
+#         return None  # 如果 session 中没有 user_email，返回 None
+#
+#     try:
+#         with closing(get_db_connection()) as conn:
+#             with conn.cursor(dictionary=True) as cursor:
+#                 # 根据 email 查询 user_id
+#                 cursor.execute("SELECT user_id FROM Users WHERE email = %s", (user_email,))
+#                 user = cursor.fetchone()
+#
+#                 if user:
+#                     return user['user_id']  # 返回 user_id
+#                 else:
+#                     return None  # 如果没有找到对应的用户，返回 None
+#     except Exception as e:
+#         print(f"Database error: {str(e)}")
+#         return None  # 如果数据库查询出错，返回 None
 def get_user_id_by_email():
     user_email = session.get('user_email')
-
     if not user_email:
         return None  # 如果 session 中没有 user_email，返回 None
 
     try:
-        with closing(get_db_connection()) as conn:
-            with conn.cursor(dictionary=True) as cursor:
-                # 根据 email 查询 user_id
-                cursor.execute("SELECT user_id FROM Users WHERE email = %s", (user_email,))
-                user = cursor.fetchone()
+        # 获取数据库连接
+        conn = get_db_connection()
+        # 手动创建 cursor（字典格式）
+        cursor = conn.cursor(dictionary=True)
+        try:
+            # 根据 email 查询 user_id
+            cursor.execute("SELECT user_id FROM Users WHERE email = %s", (user_email,))
+            user = cursor.fetchone()
+        finally:
+            cursor.close()  # 手动关闭 cursor
+        conn.close()
 
-                if user:
-                    return user['user_id']  # 返回 user_id
-                else:
-                    return None  # 如果没有找到对应的用户，返回 None
+        if user:
+            return user['user_id']  # 返回 user_id
+        else:
+            return None  # 如果没有找到对应的用户，返回 None
     except Exception as e:
         print(f"Database error: {str(e)}")
         return None  # 如果数据库查询出错，返回 None
@@ -1132,9 +1157,17 @@ def get_user():
 
 
 #todo: add new function(03180117)
+
 @app.route('/notifications', methods=['GET'])
 def get_notifications():
     try:
+        # 1. 通过 session 获取当前用户的 user_id
+        user_id = get_user_id_by_email()
+        print(user_id)
+        if not user_id:
+            return jsonify({"error": "Not logged in or user not found"}), 401
+
+        # 2. 查询该用户的通知
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         query = """
@@ -1145,9 +1178,13 @@ def get_notifications():
                 notification_action,
                 created_at
             FROM Notifications
+            WHERE user_id = %s OR user_id IS NULL
+            ORDER BY created_at DESC
         """
-        cursor.execute(query)
+        cursor.execute(query, (user_id,))
         notifications = cursor.fetchall()
+
+        # 3. 返回该用户的通知列表
         return jsonify({
             "count": len(notifications),
             "notifications": notifications
@@ -1164,6 +1201,39 @@ def get_notifications():
             cursor.close()
         if 'conn' in locals():
             conn.close()
+
+# @app.route('/notifications', methods=['GET'])
+# def get_notifications():
+#     try:
+#         conn = get_db_connection()
+#         cursor = conn.cursor(dictionary=True)
+#         query = """
+#             SELECT
+#                 notification_id,
+#                 user_id,
+#                 message,
+#                 notification_action,
+#                 created_at
+#             FROM Notifications
+#         """
+#         cursor.execute(query)
+#         notifications = cursor.fetchall()
+#         return jsonify({
+#             "count": len(notifications),
+#             "notifications": notifications
+#         })
+#
+#     except mysql.connector.Error as e:
+#         print(f"Database error: {str(e)}")
+#         return jsonify({"error": "Database error", "details": str(e)}), 500
+#     except Exception as e:
+#         print(f"Unexpected error: {str(e)}")
+#         return jsonify({"error": "Internal server error", "details": str(e)}), 500
+#     finally:
+#         if 'cursor' in locals():
+#             cursor.close()
+#         if 'conn' in locals():
+#             conn.close()
 
 
 # ---------------------------- update ----------------------------
@@ -1645,6 +1715,117 @@ def insert_room():
             conn.close()
 
 #todo: add- check if the user_id is the same
+# @app.route('/insert-blacklist', methods=['POST'])
+# def add_to_blacklist():
+#
+#
+#     """
+#     向 Blacklist 表插入一条新的记录。
+#     示例请求体（JSON）:
+#     {
+#         "user_id": 2,           # 要被加入黑名单的目标用户
+#         "start_date": "2025-03-20",
+#         "start_time": "09:00",
+#         "end_date": "2025-03-22",
+#         "end_time": "18:00",
+#         "reason": "Violation of rules"
+#     }
+#     注意：added_by 将由当前登录用户自动获取
+#     """
+#     try:
+#         data = request.json
+#         # 前端传入要被黑名单的用户ID
+#         user_id = data.get('user_id')
+#         # 获取当前登录用户的ID，作为 added_by
+#         print("Session info at /insert-blacklist:", session)
+#         added_by = get_user_id_by_email()
+#         print("added_by:", added_by)
+#         start_date_str = data.get('start_date')
+#         start_time_str = data.get('start_time')
+#         end_date_str = data.get('end_date')
+#         end_time_str = data.get('end_time')
+#         reason = data.get('reason')
+#
+#         # 检查必要字段
+#         if not all([user_id, added_by, start_date_str, start_time_str, end_date_str, end_time_str]):
+#             return jsonify({"error": "Missing required fields"}), 400
+#
+#         # 如果目标用户和当前用户相同，则不允许（防止自己加入自己的黑名单）
+#         if user_id == added_by:
+#             return jsonify({"error": "You cannot add yourself to the blacklist."}), 400
+#
+#         # 格式化日期和时间
+#         try:
+#             start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+#             start_time = datetime.strptime(start_time_str, "%H:%M").time()
+#             end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+#             end_time = datetime.strptime(end_time_str, "%H:%M").time()
+#         except ValueError as e:
+#             return jsonify({"error": f"Invalid date/time format: {str(e)}"}), 400
+#
+#         # 设置记录添加的日期和时间
+#         added_date = date.today()
+#         added_time = datetime.now().time()
+#
+#         # 连接数据库
+#         conn = get_db_connection()
+#         cursor = conn.cursor()
+#
+#         # 检查该目标用户是否已经在黑名单中
+#         check_query = "SELECT * FROM Blacklist WHERE user_id = %s"
+#         cursor.execute(check_query, (user_id,))
+#         existing_blacklist_entry = cursor.fetchall()  # 获取所有结果
+#
+#         # 如果已经存在记录，则提示错误
+#         if existing_blacklist_entry:
+#             return jsonify({"error": "User is already in the blacklist"}), 400
+#
+#         # 执行插入操作
+#         insert_query = """
+#             INSERT INTO Blacklist
+#             (user_id, added_by, added_date, added_time, start_date, start_time, end_date, end_time, reason)
+#             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+#         """
+#         cursor.execute(insert_query, (
+#             user_id,
+#             added_by,
+#             added_date,
+#             added_time,
+#             start_date,
+#             start_time,
+#             end_date,
+#             end_time,
+#             reason
+#         ))
+#         conn.commit()
+#
+#         blacklist_id = cursor.lastrowid
+#
+#         return jsonify({
+#             "message": "New blacklist entry created successfully",
+#             "blacklist_id": blacklist_id,
+#             "user_id": user_id,
+#             "added_by": added_by,
+#             "added_date": added_date.strftime("%Y-%m-%d"),
+#             "added_time": added_time.strftime("%H:%M:%S"),
+#             "start_date": start_date_str,
+#             "start_time": start_time_str,
+#             "end_date": end_date_str,
+#             "end_time": end_time_str,
+#             "reason": reason
+#         }), 201
+#
+#     except mysql.connector.Error as e:
+#         conn.rollback()
+#         return jsonify({"error": "Database error", "details": str(e)}), 500
+#     except Exception as e:
+#         return jsonify({"error": "Internal server error", "details": str(e)}), 500
+#     finally:
+#         if 'cursor' in locals():
+#             cursor.close()
+#         if 'conn' in locals():
+#             conn.close()
+
 @app.route('/insert-blacklist', methods=['POST'])
 def add_to_blacklist():
     """
@@ -1666,7 +1847,9 @@ def add_to_blacklist():
         # 前端传入要被黑名单的用户ID
         user_id = data.get('user_id')
         # 获取当前登录用户的ID，作为 added_by
+        print("Session info at /insert-blacklist:", session)
         added_by = get_user_id_by_email()
+        print("added_by:", added_by)
         start_date_str = data.get('start_date')
         start_time_str = data.get('start_time')
         end_date_str = data.get('end_date')
@@ -1698,16 +1881,22 @@ def add_to_blacklist():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # 检查该目标用户是否已经在黑名单中
+        # 1. 检查目标用户是否存在于 Users 表中
+        cursor.execute("SELECT user_id FROM Users WHERE user_id = %s", (user_id,))
+        target_user = cursor.fetchone()
+        if not target_user:
+            return jsonify({"error": "Target user does not exist"}), 400
+
+        # 2. 检查该目标用户是否已经在黑名单中
         check_query = "SELECT * FROM Blacklist WHERE user_id = %s"
         cursor.execute(check_query, (user_id,))
-        existing_blacklist_entry = cursor.fetchall()  # 获取所有结果
+        existing_blacklist_entry = cursor.fetchall()  # 使用 fetchall 确保读取所有结果
 
-        # 如果已经存在记录，则提示错误
         if existing_blacklist_entry:
+            # 如果该用户已经在黑名单中
             return jsonify({"error": "User is already in the blacklist"}), 400
 
-        # 执行插入操作
+        # 3. 执行插入操作
         insert_query = """
             INSERT INTO Blacklist
             (user_id, added_by, added_date, added_time, start_date, start_time, end_date, end_time, reason)
@@ -1752,7 +1941,6 @@ def add_to_blacklist():
             cursor.close()
         if 'conn' in locals():
             conn.close()
-
 
 
 @app.route('/insert_trusted_user', methods=['POST'])

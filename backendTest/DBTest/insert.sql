@@ -6,8 +6,8 @@
 
 USE `booking_system_db`;
 
-INSERT INTO Users (username, user_email, phone_number, role) VALUES
-('admin1', 'admin1@example.com', 'hash1', 'admin'),
+INSERT INTO Users (username, email, phone_number, role) VALUES
+('admin1', 'BookingSystem.SuperB@outlook.com', 'hash1', 'admin'),
 ('prof1', 'prof1@example.com', 'hash2', 'professor'),
 ('student1', 'student1@example.com', 'hash3', 'student'),
 ('tutor1', 'tutor1@example.com', 'hash4', 'tutor'),
@@ -64,11 +64,11 @@ VALUES
 
 
 -- Insert sample data into Notifications table
-INSERT INTO Notifications (user_id, message, notification_action) VALUES
-(3, 'Your booking for Room A has been approved.', 'confirmation'),
-(2, 'Your booking for Room B has been approved.', 'confirmation'),
-(4, 'Your booking for Room C is pending reassignment.', 'reminder'),
-(3, 'Your booking for Room D has been approved.', 'confirmation');
+INSERT INTO Notifications (user_id, message, notification_action,status) VALUES
+(3, 'Your booking for Room A has been approved.', 'confirmation','unread'),
+(2, 'Your booking for Room B has been approved.', 'confirmation','unread'),
+(4, 'Your booking for Room C is pending reassignment.', 'reminder','unread'),
+(3, 'Your booking for Room D has been approved.', 'confirmation','unread');
 
 INSERT INTO Reports (admin_id, report_type, generated_at, data)
 VALUES
