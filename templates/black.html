@@ -4,38 +4,33 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Account Suspension Notice</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/black.css') }}">
+  <link rel="stylesheet" href="static/css/black.css">
+  <script defer src="static/js/black.js"></script>
 </head>
 <body>
-  <div id="app">
-    <div class="jail-notice">
-      <!-- Animated Lock -->
-      <div class="animated-lock">🔒</div>
+  <div class="jail-notice">
+    <!-- Animated Lock -->
+    <div class="animated-lock">🔒</div>
 
-      <!-- Title -->
-      <h1>💥 Oops, You've Been Caught!</h1>
+    <!-- Title -->
+    <h1>💥 Oops, You've Been Caught!</h1>
 
-      <!-- Reason for Ban -->
-      <div class="reason-bubble shake">
-        <p>🚫 Reason: <span class="highlight">{{ banReason }}</span></p>
-        <!-- 使用 Vue.js 的模板语法 -->
-        <div class="speech-bubble">{{ randomMessage }}</div>
-      </div>
-
-      <!-- Ban Duration -->
-      <div class="sentence-clock">
-        <p>⏳ Suspension Duration: <span class="countdown">{{ banDuration }}</span></p>
-      </div>
-
-      <!-- Fun Button -->
-      <button class="apology-button" @click="playSound">😭 I'm Sorry</button>
+    <!-- Reason for Ban -->
+    <div class="reason-bubble shake">
+      <p>🚫 Reason: <span class="highlight" id="banReason"></span></p>
+      <div class="speech-bubble" id="randomMessage"></div>
     </div>
 
-    <!-- Sound Effect -->
-    <audio id="soundEffect" src="{{ url_for('static', filename='audio/sad-trombone.mp3') }}"></audio>
+    <!-- Ban Duration -->
+    <div class="sentence-clock">
+      <p>⏳ Suspension Duration: <span class="countdown" id="banDuration"></span></p>
+    </div>
+
+    <!-- Fun Button -->
+    <button class="apology-button" id="apologyButton">😭 I'm Sorry</button>
   </div>
 
-  <script src="https://unpkg.com/vue@3"></script>
-  <script src="{{ url_for('static', filename='js/black.js') }}"></script>
+  <!-- Sound Effect -->
+  <audio id="soundEffect" src="static/audio/sad-trombone.mp3"></audio>
 </body>
 </html>
