@@ -1,3 +1,5 @@
+--version 0319
+--
 USE `booking_system_db`;
 
 
@@ -19,14 +21,14 @@ END //
 DELIMITER ;
 
 
--- 触发器：当 Bookings 表中记录的 status 字段更新为 'approved' 时，
+-- 触发器：当 Bookings 表中记录的 status 字段更新为 'approved'或者changed时候 时，
 -- 更新对应 Room_availability 的 availability 为 2（已预订）。
 DELIMITER //
-CREATE TRIGGER update_availability_on_booking_approve
+CREATE TRIGGER update_availability_on_booking_approve_or_changed
 AFTER UPDATE ON Bookings
 FOR EACH ROW
 BEGIN
-    IF NEW.status = 'approved' AND OLD.status <> 'approved' THEN
+    IF (NEW.status IN ('approved', 'changed')) AND (OLD.status NOT IN ('approved', 'changed')) THEN
         UPDATE Room_availability
         SET availability = 2
         WHERE room_id = NEW.room_id
@@ -36,6 +38,7 @@ BEGIN
     END IF;
 END //
 DELIMITER ;
+
 
 -- 触发器：当 Bookings 表中记录的 status 字段更新为 'canceled' 时，
 -- 更新对应 Room_availability 的 availability 为 0（可用）。
@@ -256,5 +259,33 @@ BEGIN
         );
     END IF;
 END //
+DELIMITER ;
+
+
+
+DELIMITER //
+
+CREATE TRIGGER trg_after_booking_insert
+AFTER INSERT ON Bookings
+FOR EACH ROW
+BEGIN
+    DECLARE notif_msg VARCHAR(512);
+    DECLARE notif_action ENUM('confirmation', 'reminder', 'cancellation', 'changed', 'failed', 'rejected', 'alert', 'info');
+
+    IF NEW.status = 'pending' THEN
+        SET notif_msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') is pending approval.Need to wait for administrator confirmation');
+        SET notif_action = 'reminder';
+    ELSEIF NEW.status = 'approved' THEN
+        SET notif_msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has been approved. Please arrive at your booked room on time for use.');
+        SET notif_action = 'confirmation';
+    ELSE
+        SET notif_msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has been added with status ', NEW.status, '.');
+        SET notif_action = 'info';
+    END IF;
+
+    INSERT INTO Notifications(user_id, message, notification_action)
+    VALUES (NEW.user_id, notif_msg, notif_action);
+END //
+
 DELIMITER ;
 
