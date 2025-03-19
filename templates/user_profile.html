@@ -1,159 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title><!DOCTYPE html>
-<html lang="zh">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>用户信息</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        body {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .profile-container {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-            width: 100%;
-            max-width: 600px;
-            transition: all 0.3s ease;
-        }
-
-        .profile-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .profile-header h1 {
-            color: #333;
-            font-size: 2em;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .profile-header p {
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        .profile-details {
-            margin-top: 20px;
-        }
-
-        .profile-details .detail-item {
-            margin-bottom: 15px;
-        }
-
-        .detail-item label {
-            display: block;
-            font-weight: 500;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .detail-item span {
-            display: block;
-            background: #f5f5f5;
-            padding: 10px;
-            border-radius: 8px;
-            color: #555;
-            font-size: 0.9em;
-        }
-
-        .logout-btn {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            border: none;
-            border-radius: 10px;
-            background: #2F2F2F;
-            color: white;
-            font-size: 1em;
-            font-weight: 500;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            text-align: center;
-            text-decoration: none;
-            margin-top: 20px;
-        }
-
-        .logout-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_profile.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <title>My Profile</title>
+  <script src="{{ url_for('static', filename='js/user_profile.js') }}"></script>
 </head>
 <body>
-    <div class="profile-container">
-        <div class="profile-header">
-            <h1>用户信息</h1>
-            <p>以下是您的 Microsoft 账户详细信息</p>
+  <div class="hamburger-menu">
+      <i class="fas fa-bars"></i>
+  </div>
+  <div class="main-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <a class="nav-item" href="{{ url_for('booking_centre') }}">
+        <i class="fas fa-calendar-alt nav-icon"></i>
+        Booking Center
+      </a>
+      <a class="nav-item" href="{{ url_for('my_reservation') }}">
+        <i class="fas fa-list-ul nav-icon"></i>
+        My Bookings
+      </a>
+      <a class="nav-item" href="{{ url_for('my_notification') }}">
+        <i class="fas fa-bell nav-icon"></i>
+        Notifications
+      </a>
+      <a class="nav-item active" href="{{ url_for('user_profile') }}">
+             <i class="fas fa-user-circle nav-icon"></i>
+             My Profile
+      </a>
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
         </div>
-
-        <div class="profile-details">
-            <div class="detail-item">
-                <label>显示名称</label>
-                <span id="displayName">{{ name }}</span>
-            </div>
-            <div class="detail-item">
-                <label>邮箱</label>
-                <span id="email">{{ email }}</span>
-            </div>
-            <div class="detail-item">
-                <label>用户 ID</label>
-                <span id="userId">{{ id }}</span>
-            </div>
-            <div class="detail-item">
-                <label>职位</label>
-                <span id="jobTitle">{{ job_title }}</span>
-            </div>
-            <div class="detail-item">
-                <label>公司</label>
-                <span id="companyName">{{ company_name }}</span>
-            </div>
-            <div class="detail-item">
-                <label>电话号码</label>
-                <span id="phoneNumber">{{ phone_number }}</span>
-            </div>
-        </div>
-
-        <a href="/logout" class="logout-btn">退出登录</a>
     </div>
 
-    <script>
-        // 在控制台打印完整的用户信息
-        const userInfo = {
-            displayName: "{{ name }}",
-            email: "{{ email }}",
-            userId: "{{ id }}",
-            jobTitle: "{{ job_title }}",
-            companyName: "{{ company_name }}",
-            phoneNumber: "{{ phone_number }}",
-            rawData: {{ raw_data | tojson }}
-        };
-        console.log('完整用户信息:', userInfo);
-    </script>
-</body>
-</html></title>
-</head>
-<body>
+    <!-- Content Area -->
+    <div class="content-area">
+      <header>
+        <h1>My Profile</h1>
+      </header>
 
+      <!-- Personal Data Form -->
+      <div class="profile-container">
+        <div class="profile-header">
+            <div class="profile-picture">
+                <img src="{{ url_for('static', filename='images/default_avatar.png') }}" alt="Logo" id="profile-image">
+                <button class="edit-picture-btn" onclick="triggerFileInput()">
+                    <i class="fas fa-camera"></i>
+                </button>
+                <input type="file" id="file-input" style="display: none;" onchange="handleImageUpload(event)">
+            </div>
+            <h2 id="username"></h2>
+            <p id="user-id">User ID</p>
+            <p id="role-type">(Student)</p>
+        </div>
+
+        <form id="profile-form">
+          <div class="form-group">
+            <label for="full-name">Full Name</label>
+            <input type="text" id="full-name" name="full-name" disabled>
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" disabled>
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone</label>
+            <input type="tel" id="phone" name="phone" disabled>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" id="edit-btn" onclick="toggleEditMode()">Edit Profile</button>
+            <button type="submit" id="save-btn" style="display: none;">Save Changes</button>
+            <button type="button" id="cancel-btn" style="display: none;" onclick="cancelEditMode()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

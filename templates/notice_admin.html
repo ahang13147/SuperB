@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DIICSU Intelligent Meeting Room Booking System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/notice_admin.css">
+    <link rel="stylesheet" href="../static/css/sidebar.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="hamburger-menu">
+        <i class="fas fa-bars"></i>
+</div>
+    <div class="main-container">
+        <div class="sidebar">
+
+            <a class="nav-item" href="{{ url_for('booking_centre_admin') }}">
+                <i class="fas fa-calendar-alt nav-icon"></i>
+                Booking Center
+            </a>
+            <a class="nav-item" href="{{ url_for('my_reservation_admin') }}">
+                <i class="fas fa-list-ul nav-icon"></i>
+                My Bookings
+            </a>
+            <a class="nav-item" href="{{ url_for('Approval_Center') }}">
+                <i class="fas fa-check-circle nav-icon"></i>
+                Approval Management
+            </a>
+            <a class="nav-item" href="{{ url_for('cancel_reservation') }}">
+                <i class="fas fa-calendar-times nav-icon"></i>
+                Cancel Reservation
+            </a>
+            <a class="nav-item" href="{{ url_for('room_management') }}">
+                <i class="fas fa-door-open nav-icon"></i>
+                Room Management
+            </a>
+        <a class="nav-item" href="{{ url_for('room_issue_management') }}">
+            <i class="fas fa-door-open nav-icon"></i>
+            Room Issue Management
+        </a>
+            <a class="nav-item active" href="{{ url_for('notice_admin') }}">
+                <i class="fas fa-bell nav-icon"></i>
+                Notifications
+            </a>
+            <a class="nav-item" href="{{ url_for('blacklist') }}">
+                <i class="fas fa-ban nav-icon"></i>
+                Black List
+            </a>
+            <a class="nav-item" href="{{ url_for('trust_list') }}">
+                <i class="fas fa-shield-alt nav-icon"></i>
+                Trust List
+            </a>
+            <a class="nav-item" href="{{ url_for('my_profile_admin') }}">
+                <i class="fas fa-user-circle nav-icon"></i>
+                My Profile
+            </a>
+            <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+            </div>
+        </div>
+        <!-- Content Area -->
+        <div class="content-area">
+                     <h1>Notification</h1>
+            <!-- Notification Center Example -->
+            <div class="notification-panel">
+                <div class="notification-item unread">
+                    <div class="notification-time">2023-10-01 09:00</div>
+                    <div class="notification-content">
+                        Your booking for "Innovation Room 101" has been confirmed (09:00-10:00)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../static/js/notice_admin.js"></script>
+</body>
+</html>
