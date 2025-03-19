@@ -1,18 +1,23 @@
-// // Page switching functionality
-// document.querySelectorAll('.nav-item').forEach(item => {
-//     item.addEventListener('click', function() {
-//         // Remove all active states
-//         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-//         this.classList.add('active');
-//
-//         // Switch content display
-//         const panels = document.querySelectorAll('.search-container, .notification-panel');
-//         panels.forEach(p => p.style.display = 'none');
-//
-//         if(this.querySelector('.fa-bell')) {
-//             document.querySelector('.notification-panel').style.display = 'block';
-//         } else {
-//             document.querySelector('.search-container').style.display = 'block';
-//         }
-//     });
-// });
+document.addEventListener('DOMContentLoaded', function() {
+    const hamburger = document.querySelector('.hamburger-menu');
+    const sidebar = document.querySelector('.sidebar');
+
+    // 汉堡菜单点击事件
+    hamburger.addEventListener('click', function() {
+        sidebar.classList.toggle('active');
+    });
+
+    // 点击外部关闭侧边栏
+    document.addEventListener('click', function(e) {
+        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+            sidebar.classList.remove('active');
+        }
+    });
+
+    // 窗口大小变化时重置侧边栏
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            sidebar.classList.remove('active');
+        }
+    });
+});

@@ -88,7 +88,7 @@ h1 {
     line-height: 1.5;
 }
 
-
+/* notice_admin.css 新增移动端样式 */
 @media (max-width: 768px) {
   body {
     padding: 0 !important;
@@ -134,6 +134,7 @@ h1 {
     line-height: 1.4;
   }
 
+  /* 侧边栏响应式调整 */
   .sidebar {
     width: 240px;
     transform: translateX(-100%);
@@ -174,18 +175,20 @@ h1 {
     font-size: 0.9em;
   }
 
-
+  /* 汉堡菜单优化 */
   .hamburger-menu {
     padding: 12px;
     z-index: 100;
   }
 
+  /* 移动端隐藏桌面导航效果 */
   .nav-item:hover {
     transform: none;
     background: rgba(255,255,255,0.05);
   }
 }
 
+/* 新增移动端专用样式 */
 .mobile-notification-badge {
   display: none;
   position: fixed;

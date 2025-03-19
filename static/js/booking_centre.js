@@ -307,3 +307,59 @@ document.addEventListener('DOMContentLoaded', async () => {
         alert('System initialization failed');
     }
 });
+//add for menu
+document.addEventListener('DOMContentLoaded', function() {
+    const hamburger = document.querySelector('.hamburger-menu');
+    const sidebar = document.querySelector('.sidebar');
+
+    // 汉堡菜单点击事件
+    hamburger.addEventListener('click', function() {
+        sidebar.classList.toggle('active');
+    });
+
+    // 点击外部关闭侧边栏
+    document.addEventListener('click', function(e) {
+        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+            sidebar.classList.remove('active');
+        }
+    });
+
+    // 窗口大小变化时重置侧边栏
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            sidebar.classList.remove('active');
+        }
+    });
+});
+
+function adaptTitle() {
+  const title = document.querySelector('h1');
+  if (window.innerWidth < 600) {
+    title.textContent = 'Classroom Booking';
+  } else {
+    title.textContent = 'Classroom reservation system';
+  }
+}
+window.addEventListener('resize', adaptTitle);
+adaptTitle();
+
+document.addEventListener('DOMContentLoaded', function() {
+    const hamburger = document.querySelector('.hamburger-menu');
+    const sidebar = document.querySelector('.sidebar');
+
+    hamburger.addEventListener('click', function() {
+        sidebar.classList.toggle('active');
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+            sidebar.classList.remove('active');
+        }
+    });
+
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            sidebar.classList.remove('active');
+        }
+    });
+});
