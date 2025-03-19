@@ -1984,6 +1984,9 @@ def insert_trusted_user():
         if conn:
             conn.close()
 
+# Syllabus Crawling part
+
+
 
 # if __name__ == '__main__':
 #     print("\nRegistered routes:")

@@ -40,17 +40,17 @@ VALUES
 SET @current_date = CURRENT_DATE();
 
 -- 更新Room_availability的日期为动态范围
-INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, availability) VALUES
--- 过去3天到未来7天的数据
-(1, '09:00:00', '12:00:00', DATE_SUB(@current_date, INTERVAL 3 DAY), 0),
-(1, '13:00:00', '17:00:00', DATE_SUB(@current_date, INTERVAL 2 DAY), 1),
-(2, '10:00:00', '14:00:00', DATE_SUB(@current_date, INTERVAL 1 DAY), 0),
-(2, '15:00:00', '18:00:00', @current_date, 2),
-(3, '08:00:00', '10:00:00', DATE_ADD(@current_date, INTERVAL 1 DAY), 0),
-(3, '11:00:00', '13:00:00', DATE_ADD(@current_date, INTERVAL 2 DAY), 1),
-(4, '09:00:00', '12:00:00', DATE_ADD(@current_date, INTERVAL 3 DAY), 0),
-(12, '10:00:00', '12:00:00', DATE_ADD(@current_date, INTERVAL 4 DAY), 0),
-(5, '13:00:00', '15:00:00', DATE_ADD(@current_date, INTERVAL 5 DAY), 1);
+# INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, availability) VALUES
+# -- 过去3天到未来7天的数据
+# (1, '09:00:00', '12:00:00', DATE_SUB(@current_date, INTERVAL 3 DAY), 0),
+# (1, '13:00:00', '17:00:00', DATE_SUB(@current_date, INTERVAL 2 DAY), 1),
+# (2, '10:00:00', '14:00:00', DATE_SUB(@current_date, INTERVAL 1 DAY), 0),
+# (2, '15:00:00', '18:00:00', @current_date, 2),
+# (3, '08:00:00', '10:00:00', DATE_ADD(@current_date, INTERVAL 1 DAY), 0),
+# (3, '11:00:00', '13:00:00', DATE_ADD(@current_date, INTERVAL 2 DAY), 1),
+# (4, '09:00:00', '12:00:00', DATE_ADD(@current_date, INTERVAL 3 DAY), 0),
+# (12, '10:00:00', '12:00:00', DATE_ADD(@current_date, INTERVAL 4 DAY), 0),
+# (5, '13:00:00', '15:00:00', DATE_ADD(@current_date, INTERVAL 5 DAY), 1);
 
 
 INSERT INTO Bookings (user_id, room_id, start_time, end_time, booking_date, status, reason)
