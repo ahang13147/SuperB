@@ -996,6 +996,59 @@ def get_Finished_Workflow_bookings():
             conn.close()
 
 
+
+@app.route('/get-blacklist-reason', methods=['GET'])
+def get_blacklist_reason():
+    try:
+        # 获取数据库连接
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        user_id = get_user_id_by_email()
+
+        # SQL 查询，连接 Blacklist 与 Users 表，获取黑名单记录和对应的 username
+        query = """
+          SELECT 
+                u.username,
+                b.start_date,
+                b.start_time,
+                b.end_date,
+                b.end_time,
+                b.reason
+            FROM Blacklist b
+            JOIN Users u ON b.user_id = u.user_id
+            WHERE b.user_id = %s
+        """
+
+        # 执行查询
+        cursor.execute(query,(user_id,))
+        blacklists = cursor.fetchall()
+
+        # 格式化日期和时间字段
+        for record in blacklists:
+            record['start_date'] = record['start_date'].strftime("%Y-%m-%d")
+            record['start_time'] = format_time(record['start_time'])
+            record['end_date'] = record['end_date'].strftime("%Y-%m-%d")
+            record['end_time'] = format_time(record['end_time'])
+
+        # 返回 JSON 格式数据
+        return jsonify({
+            "count": len(blacklists),
+            "blacklists": blacklists
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+
 @app.route('/get-blacklist', methods=['GET'])
 def get_blacklist():
     try:
@@ -1056,54 +1109,6 @@ def get_blacklist():
             conn.close()
 
 
-@app.route('/get-blacklist-reason', methods=['GET'])
-def get_blacklist_reason():
-    try:
-        # 获取数据库连接
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-
-        # SQL 查询，连接 Blacklist 与 Users 表，获取黑名单记录和对应的 username
-        query = """
-            SELECT 
-                u.username,
-                b.start_date,
-                b.start_time,
-                b.end_date,
-                b.end_time,
-                b.reason
-            FROM Blacklist b
-            JOIN Users u ON b.user_id = u.user_id
-        """
-
-        # 执行查询
-        cursor.execute(query)
-        blacklists = cursor.fetchall()
-
-        # 格式化日期和时间字段
-        for record in blacklists:
-            record['start_date'] = record['start_date'].strftime("%Y-%m-%d")
-            record['start_time'] = format_time(record['start_time'])
-            record['end_date'] = record['end_date'].strftime("%Y-%m-%d")
-            record['end_time'] = format_time(record['end_time'])
-
-        # 返回 JSON 格式数据
-        return jsonify({
-            "count": len(blacklists),
-            "blacklists": blacklists
-        })
-
-    except mysql.connector.Error as e:
-        print(f"Database error: {str(e)}")
-        return jsonify({"error": "Database error", "details": str(e)}), 500
-    except Exception as e:
-        print(f"Unexpected error: {str(e)}")
-        return jsonify({"error": "Internal server error", "details": str(e)}), 500
-    finally:
-        if 'cursor' in locals():
-            cursor.close()
-        if 'conn' in locals():
-            conn.close()
 
 
 @app.route('/get_room_trusted_users', methods=['GET'])
