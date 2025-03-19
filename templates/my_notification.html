@@ -3,74 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>DIICSU Intelligent Meeting Room Booking System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="{{ url_for('static', filename='js/my_notification.js') }}"></script>
-    <link rel="stylesheet" href="../static/css/sidebar.css"> <!-- 引入侧边栏的CSS文件 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/my_notification.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        /* Original CSS styles remain unchanged */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', 'PingFang SC', system-ui;
-        }
-
-        /* Main container */
-        .main-container {
-            width: 100%;
-            min-height: 1080px;
-            background: #f8f9fa;
-            position: relative;
-
-            overflow-x: hidden;
-        }
-
-        /* Content area */
-        .content-area {
-            margin-left: 200px;
-            width: calc(100% - 200px);
-            min-height: 1080px;
-            padding: 40px;
-            box-sizing: border-box;
-            background: #f8f9fa;
-        }
-
-        /* Notification panel */
-        .notification-panel {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.05);
-        }
-
-        .notification-item {
-            padding: 20px;
-            margin-bottom: 15px;
-            border-left: 4px solid transparent;
-            border-radius: 8px;
-            transition: all 0.3s;
-        }
-
-        .notification-item.unread {
-            border-left-color: #00f2c3;
-            background: rgba(0,242,195,0.03);
-        }
-
-        .notification-time {
-            color: #6c757d;
-            font-size: 0.9rem;
-            margin-bottom: 5px;
-        }
-
-        .notification-content {
-            color: #2c3e50;
-            line-height: 1.5;
-        }
-    </style>
 </head>
 <body>
+<div class="hamburger-menu">
+        <i class="fas fa-bars"></i>
+</div>
     <div class="main-container">
-        <!-- Sidebar -->
         <div class="sidebar">
             <a class="nav-item" href="{{ url_for('booking_centre') }}">
                 <i class="fas fa-calendar-alt nav-icon"></i>
@@ -84,16 +27,19 @@
                 <i class="fas fa-bell nav-icon"></i>
                 Notifications
             </a>
-            <a class="nav-item disabled" href="{{ url_for('user_profile') }}">
+            <a class="nav-item" href="{{ url_for('user_profile') }}">
                 <i class="fas fa-user-circle nav-icon"></i>
                 My Profile
             </a>
+            <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+            </div>
         </div>
-
         <!-- Content Area -->
         <div class="content-area">
+                     <h1>Notification</h1>
             <!-- Notification Center Example -->
-            <div class="notification-panel" >
+            <div class="notification-panel">
                 <div class="notification-item unread">
                     <div class="notification-time">2023-10-01 09:00</div>
                     <div class="notification-content">
@@ -104,26 +50,5 @@
         </div>
     </div>
 
-    <script>
-        // Page switching functionality
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', function() {
-                // Remove all active states
-                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
-
-                // Switch content display
-                const panels = document.querySelectorAll('.search-container, .notification-panel');
-                panels.forEach(p => p.style.display = 'none');
-
-                if(this.querySelector('.fa-bell')) {
-                    document.querySelector('.notification-panel').style.display = 'block';
-                } else {
-                    document.querySelector('.search-container').style.display = 'block';
-                }
-            });
-        });
-    </script>
-    <script src="common.js"></script>
 </body>
 </html>

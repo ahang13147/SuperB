@@ -35,6 +35,10 @@
             <i class="fas fa-door-open nav-icon"></i>
             Room Management
           </a>
+            <a class="nav-item" href="{{ url_for('room_issue_management') }}">
+                <i class="fas fa-door-open nav-icon"></i>
+                Room Issue Management
+            </a>
           <a class="nav-item" href="{{ url_for('notice_admin') }}">
             <i class="fas fa-bell nav-icon"></i>
             Notifications
@@ -68,7 +72,7 @@
       <div class="profile-container">
         <div class="profile-header">
             <div class="profile-picture">
-                <img src="profile_photo.png" alt="Profile Picture" id="profile-image">
+                <img src="{{ url_for('static', filename='images/default_avatar.png') }}" alt="Profile Picture" id="profile-image">
                 <button class="edit-picture-btn" onclick="triggerFileInput()">
                     <i class="fas fa-camera"></i>
                 </button>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Issue Management</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="../static/css/sidebar.css">
+    <link rel="stylesheet" href="../static/css/room_issue_management.css">
+</head>
+
+<body>
+    <div class="main-container">
+        <div class="sidebar">
+        
+            <a class="nav-item" href="{{ url_for('booking_centre_admin') }}">
+                <i class="fas fa-calendar-alt nav-icon"></i>
+                Booking Center
+            </a>
+            <a class="nav-item" href="{{ url_for('my_reservation_admin') }}">
+                <i class="fas fa-list-ul nav-icon"></i>
+                My Bookings
+            </a>
+            <a class="nav-item" href="{{ url_for('Approval_Center') }}">
+                <i class="fas fa-check-circle nav-icon"></i>
+                Approval Management
+            </a>
+            <a class="nav-item" href="{{ url_for('cancel_reservation') }}">
+                <i class="fas fa-calendar-times nav-icon"></i>
+                Cancel Reservation
+            </a>
+            <a class="nav-item" href="{{ url_for('room_management') }}">
+                <i class="fas fa-door-open nav-icon"></i>
+                Room Management
+            </a>
+            <a class="nav-item active" href="{{ url_for('room_issue_management') }}">
+                <i class="fas fa-door-open nav-icon"></i>
+                Room Issue Management
+            </a>
+            <a class="nav-item" href="{{ url_for('notice_admin') }}">
+                <i class="fas fa-bell nav-icon"></i>
+                Notifications
+            </a>
+            <a class="nav-item" href="{{ url_for('blacklist') }}">
+                <i class="fas fa-ban nav-icon"></i>
+                Black List
+            </a>
+            <a class="nav-item" href="{{ url_for('trust_list') }}">
+                <i class="fas fa-shield-alt nav-icon"></i>
+                Trust List
+            </a>
+            <a class="nav-item" href="{{ url_for('my_profile_admin') }}">
+                <i class="fas fa-user-circle nav-icon"></i>
+                My Profile
+            </a>
+        
+            <div class="sidebar-logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+            </div>
+        </div>
+<div class="content-container">
+    <div class="container mt-5">
+        <h1 class="text-center mb-4" style="color: #2c3e50;">Room Issue Management</h1>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Add New Issue</h5>
+            </div>
+            <div class="card-body">
+                <form id="issueForm">
+                    <div class="mb-3">
+                        <label class="form-label">Room ID</label>
+                        <input type="text" class="form-control" id="roomId" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Issue Description</label>
+                        <textarea class="form-control" id="issue" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Start Time</label>
+                        <input type="text" class="form-control" id="startTime" placeholder="Select date and time"
+                            required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Issue</button>
+                        
+                </form>
+            </div>
+        </div>
+        <!-- Search and Filter Section -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <input type="text" class="form-control" id="searchRoomId" placeholder="Search by Room ID">
+            </div>
+            <div class="col-md-6">
+                <select class="form-select" id="filterStatus">
+                    <option value="">All Statuses</option>
+                    <option value="fault">Fault</option>
+                    <option value="in_maintenance">In Maintenance</option>
+                    <option value="resolved">Resolved</option>
+                </select>
+            </div>
+        </div>
+        <!-- issue list -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Issues List</h5>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover m-0">
+                    <thead>
+                        <tr>
+                            <th>Issue ID</th>
+                            <th>Room ID</th>
+                            <th>Reporter Name</th>
+                            <th>Issue</th>
+                            <th>Start Time</th>
+                            <th>Status</th>
+                            <th>End Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="issuesTableBody">
+                        <!-- 动态添加问题行 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑模态框 -->
+    <div class="modal fade" id="editModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Issue</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm">
+                        <div class="mb-3">
+                            <label class="form-label">Issue Description</label>
+                            <textarea class="form-control" id="editIssue" rows="4" required></textarea>
+                        </div>
+                        <input type="hidden" id="editIssueId">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEdit()">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Bootstrap JS and dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+<!-- Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="{{ url_for('static', filename='js/room_issue_management.js') }}"></script>
+</body>
+
+</html>
