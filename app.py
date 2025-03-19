@@ -168,7 +168,6 @@ def index():
     session.permanent = True  # 强制将 session 设置为持久化
     return redirect(url_for('login_page'))
 
-
 @app.route('/login')
 def login_page():
     return '''
@@ -237,29 +236,6 @@ def role_required(role):
 @app.route("/logout")
 def logout():
     return redirect(auth.log_out(url_for("index", _external=True)))
-
-
-# @app.route('/profile')
-# def profile():
-#     # 显示用户信息
-#     if 'access_token' not in session:
-#         return redirect(url_for('index'))
-#
-#     headers = {'Authorization': f'Bearer {session["access_token"]}'}
-#     user_info = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers).json()
-#
-#     # 渲染本地HTML文件并传递用户信息
-#     return render_template(
-#         'booking_centre.html',
-#         name=user_info.get('displayName', '未知用户'),
-#         email=user_info.get('mail', '无邮箱信息'),
-#         id=user_info.get('id', '')
-#     )
-
-# @app.route('/user_profile')
-# def booking_centre():
-#     return render_template('user_profile.html')
-
 
 # 路由：渲染 booking_centre.html
 @app.route('/booking_centre')
@@ -541,31 +517,6 @@ def delete_users():
         conn.close()
     return jsonify({"message": result}), status_code
 
-#
-# @app.route('/delete/rooms', methods=['POST'])
-# def delete_rooms():
-#     data = request.json
-#     room_id = data.get('room_id')
-#     room_name = data.get('room_name')
-#     capacity = data.get('capacity')
-#     location = data.get('location')
-#     # 先删除依赖数据：Room_availability、Bookings（依赖该房间）
-#     dependent_queries = [
-#         ("DELETE FROM Room_availability WHERE room_id = %s", (room_id,)),
-#         ("DELETE FROM Bookings WHERE room_id = %s", (room_id,))
-#     ]
-#     for q, p in dependent_queries:
-#         delete_record(q, p)
-#     query = """
-#     DELETE FROM Rooms
-#     WHERE (room_id = %s OR %s IS NULL)
-#       AND (room_name = %s OR %s IS NULL)
-#       AND (capacity = %s OR %s IS NULL)
-#       AND (location = %s OR %s IS NULL)
-#     """
-#     params = (room_id, room_id, room_name, room_name, capacity, capacity, location, location)
-#     result, status = delete_record(query, params)
-#     return jsonify({"message": result}), status
 
 
 @app.route('/update_room_status', methods=['POST'])
@@ -876,7 +827,7 @@ def get_rooms():
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         query = """
-            SELECT room_id, room_name, capacity, equipment, location
+            SELECT room_id, room_name, capacity, equipment, location,room_type
             FROM Rooms
         """
         cursor.execute(query)
@@ -1321,6 +1272,7 @@ def update_room(room_id):
     capacity = data.get('capacity')
     equipment = data.get('equipment')
     location = data.get('location')
+    room_type= data.get('type')
 
     try:
         conn = get_db_connection()
@@ -1352,7 +1304,7 @@ def update_room(room_id):
         # Proceed with update if there are changes.
         update_query = """
             UPDATE Rooms
-            SET room_name = %s, capacity = %s, equipment = %s, location = %s
+            SET room_name = %s, capacity = %s, equipment = %s, location = %s,room_type =%s
             WHERE room_id = %s
         """
         update_params = (room_name, capacity, equipment, location, room_id)
@@ -1375,7 +1327,8 @@ def update_room(room_id):
             "room_name": updated_room[1],
             "capacity": updated_room[2],
             "equipment": updated_room[3],
-            "location": updated_room[4]
+            "location": updated_room[4],
+            "room_type": updated_room[5]
         })
 
     except mysql.connector.Error as e:
