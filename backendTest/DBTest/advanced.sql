@@ -210,3 +210,51 @@ END;
 //
 
 DELIMITER ;
+
+
+
+DELIMITER //
+
+CREATE TRIGGER trg_booking_status_change
+AFTER UPDATE ON Bookings
+FOR EACH ROW
+BEGIN
+    -- 1) 先声明所有需要的变量
+    DECLARE msg VARCHAR(512);
+
+    -- 2) 然后再写逻辑，比如 IF 判断
+    IF NEW.status <> OLD.status THEN
+        IF NEW.status = 'approved' THEN
+            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has been approved. Approved by administrator.');
+        ELSEIF NEW.status = 'rejected' THEN
+            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has been rejected. Rejected by administrator.');
+        ELSEIF NEW.status = 'changed' THEN
+            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has been changed. The room has issues and has been reallocated for you.');
+        ELSEIF NEW.status = 'pending' THEN
+            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') is now pending. Your booking is pending review.');
+        ELSEIF NEW.status = 'canceled' THEN
+            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has been canceled. You have successfully canceled your booking.');
+        ELSEIF NEW.status = 'failed' THEN
+            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has failed. Booking failed, possibly due to room conflict (someone else booked the room).');
+        ELSE
+            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') status has been updated to ', NEW.status, '.');
+        END IF;
+
+        INSERT INTO Notifications(user_id, message, notification_action)
+        VALUES (
+            NEW.user_id,
+            msg,
+            CASE
+                WHEN NEW.status = 'approved' THEN 'confirmation'
+                WHEN NEW.status = 'rejected' THEN 'rejected'
+                WHEN NEW.status = 'changed' THEN 'changed'
+                WHEN NEW.status = 'pending' THEN 'reminder'
+                WHEN NEW.status = 'canceled' THEN 'cancellation'
+                WHEN NEW.status = 'failed' THEN 'failed'
+                ELSE 'info'
+            END
+        );
+    END IF;
+END //
+DELIMITER ;
+

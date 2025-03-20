@@ -39,6 +39,7 @@ VALUES
 
 SET @current_date = CURRENT_DATE();
 
+
 -- 更新Room_availability的日期为动态范围
 # INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, availability) VALUES
 # -- 过去3天到未来7天的数据

@@ -72,7 +72,7 @@ CREATE TABLE Notifications (
     user_id INT NULL,                                -- User ID, 如果为 NULL 则表示全局系统公告
     message TEXT NOT NULL,                           -- Notification message
     notification_action ENUM('confirmation', 'reminder', 'cancellation', 'changed', 'failed', 'rejected', 'alert', 'info') NOT NULL,  -- 通知具体动作
-    status ENUM('read','unread')
+    status ENUM('read','unread') DEFAULT 'unread',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Timestamp of notification creation
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
@@ -100,6 +100,7 @@ CREATE TABLE RoomTrustedUsers (
     FOREIGN KEY (user_id) REFERENCES Users(user_id),      -- Foreign key referencing Users table
     FOREIGN KEY (added_by) REFERENCES Users(user_id)      -- Foreign key referencing Users table (Admin)
 );
+
 
 -- 1.11 Blacklist Table (Stores users who are banned or restricted from using the system)
 CREATE TABLE Blacklist (
