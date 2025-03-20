@@ -1,28 +1,30 @@
-#  @version: 3/16/2025
+#  @version: 3/12/2025
 #  @author: Xin Yu, Siyan Guo, Zibang Nie
 # add: finished-workflow-booking get api
 from contextlib import closing
-
 from flask import Flask, redirect, request, session, url_for, render_template, jsonify
 from functools import wraps
 from flask_cors import CORS
 import mysql.connector
-import requests
-# from bs4 import BeautifulSoup
-# import json
-# import re
-# import time
-from datetime import date, datetime, timedelta
+from bs4 import BeautifulSoup
+import json
+import re
+import time
 import yaml
 import msal
+import csv
+import requests
+from datetime import datetime, timedelta, date
+import pymysql
+
+
 
 app = Flask(__name__)
 # 设置 session 持久化
 app.config['SESSION_PERMANENT'] = True  # 启用持久会话
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=3)  # Set session duration to 3 hours
-CORS(app)  # 允许所有来源访问
+CORS(app, supports_credentials=True, origins=["http://localhost:8000"])  # 允许所有来源访问
 app.secret_key = 'your-secret-key-here'
-
 
 
 # ---------------------------- import config----------------------------
@@ -137,32 +139,35 @@ def get_room_id(room_name):
 # 查询用户ID
 def get_user_id_by_email():
     user_email = session.get('user_email')
-
     if not user_email:
         return None  # 如果 session 中没有 user_email，返回 None
 
     try:
-        with closing(get_db_connection()) as conn:
-            with conn.cursor(dictionary=True) as cursor:
-                # 根据 email 查询 user_id
-                cursor.execute("SELECT user_id FROM Users WHERE email = %s", (user_email,))
-                user = cursor.fetchone()
+        # 获取数据库连接
+        conn = get_db_connection()
+        # 手动创建 cursor（字典格式）
+        cursor = conn.cursor(dictionary=True)
+        try:
+            # 根据 email 查询 user_id
+            cursor.execute("SELECT user_id FROM Users WHERE email = %s", (user_email,))
+            user = cursor.fetchone()
+        finally:
+            cursor.close()  # 手动关闭 cursor
+        conn.close()
 
-                if user:
-                    return user['user_id']  # 返回 user_id
-                else:
-                    return None  # 如果没有找到对应的用户，返回 None
+        if user:
+            return user['user_id']  # 返回 user_id
+        else:
+            return None  # 如果没有找到对应的用户，返回 None
     except Exception as e:
         print(f"Database error: {str(e)}")
         return None  # 如果数据库查询出错，返回 None
 
 
 # ---------------------------- login ----------------------------
-
-
 @app.route('/')
 def index():
-    #todo
+    # todo
     session.permanent = True  # 强制将 session 设置为持久化
     return redirect(url_for('login_page'))
 
@@ -207,15 +212,16 @@ def auth_callback():
         return f"认证错误：{result.get('error_description')}", 500
 
 
-
-#todo: add two new function
+# todo: add two new function
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_email' not in session:
             return redirect(url_for('login'))  # 如果未登录，重定向到登录页面
         return f(*args, **kwargs)
+
     return decorated_function
+
 
 # 角色验证装饰器
 def role_required(role):
@@ -225,8 +231,11 @@ def role_required(role):
             if 'user_role' not in session or session['user_role'] != role:
                 return redirect(url_for('login'))  # 如果不是指定角色，重定向到普通页面
             return f(*args, **kwargs)
+
         return decorated_function
+
     return decorator
+
 
 @app.route("/logout")
 def logout():
@@ -255,29 +264,27 @@ def logout():
 #     return render_template('user_profile.html')
 
 
-#路由：渲染 booking_centre.html
+# 路由：渲染 booking_centre.html
 @app.route('/booking_centre')
-@login_required 
-
+@login_required  # 确保用户已登录
 def booking_centre():
     return render_template('booking_centre.html')
 
 
 @app.route('/my_reservation')
-@login_required  
+@login_required  # 确保用户已登录
 def my_reservation():
     return render_template('my_reservation.html')
 
 
 @app.route('/user_profile')
-@login_required  
+@login_required  # 确保用户已登录
 def user_profile():
     return render_template('user_profile.html')
 
 
 @app.route('/my_notification')
-@login_required  
-
+@login_required  # 确保用户已登录
 def my_notification():
     return render_template('my_notification.html')
 
@@ -357,15 +364,22 @@ def trust_list():
     return render_template('trust_list.html')
 
 
+@app.route('/room_issue_management')
+@login_required  # 确保用户已登录
+@role_required('admin')
+def room_issue_management():
+    return render_template('room_issue_management.html')
+
+
 # 路由：渲染 login.html
 @app.route('/login')
 def login():
     return render_template('login.html')
 
-#TODO: 原函数
 
-#profile route
+# TODO: 原函数
 
+# profile route
 @app.route('/profile')
 def profile():
     if 'access_token' not in session:
@@ -396,7 +410,8 @@ def profile():
     try:
         print(f"Calling role API with email: {user_email}")
         role_response = requests.get(
-            f"http://localhost:8000/login_get_role?email={user_email}"  # 参数名改为 email
+            f"https://101.200.197.132:8000/login_get_role?email={user_email}",
+            verify=False  # 忽略证书验证
         )
         print(f"Role API response status: {role_response.status_code}, body: {role_response.text}")
 
@@ -429,21 +444,25 @@ def login_get_role():
         return jsonify({"error": "Missing email parameter"}), 400
 
     try:
-        with closing(get_db_connection()) as conn:
-            with conn.cursor(dictionary=True) as cursor:
-                cursor.execute("SELECT role FROM Users WHERE email = %s", (email,))
-                user = cursor.fetchone()
+        conn = get_db_connection()  # 获取数据库连接
+        cursor = conn.cursor(dictionary=True)  # 创建游标
 
-                if user:
-                    return jsonify({'role': user['role']})
-                else:
-                    return jsonify({"error": "User not found"}), 404
+        # 执行查询
+        cursor.execute("SELECT role FROM Users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+
+        # 关闭游标和连接
+        cursor.close()
+        conn.close()
+
+        if user:
+            return jsonify({'role': user['role']})
+        else:
+            return jsonify({"error": "User not found"}), 404
 
     except Exception as e:
         print(f"Database error: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
-
-
 
 
 # ---------------------------- delete ----------------------------
@@ -838,7 +857,7 @@ def get_user_bookings():
     try:
         # 从查询参数中获取user_id
         # user_id = request.args.get('user_id')
-        #todo: 添加获取当前userid
+        # todo: 添加获取当前userid
         user_id = get_user_id_by_email()
         print(user_id)
         print(session.get('user_email'))
@@ -892,6 +911,7 @@ def get_user_bookings():
             cursor.close()
         if 'conn' in locals():
             conn.close()
+
 
 @app.route('/rooms', methods=['GET'])
 def get_rooms():
@@ -1103,16 +1123,15 @@ def get_room_trusted_users():
             conn.close()
 
 
-#todo : change the method from post to GET
+# todo : change the method from post to GET
 @app.route('/get_user', methods=['GET'])
 def get_user():
     # data = request.get_json()
     # if not data or 'user_id' not in data:
     #     return jsonify({"status": "error", "error": "Missing user_id parameter"}), 400
 
-    #todo : change user id (from current session)
+    # todo : change user id (from current session)
     user_id = get_user_id_by_email()
-
 
     conn = get_db_connection()
     if not conn:
@@ -1130,6 +1149,152 @@ def get_user():
         return jsonify({"status": "error", "error": str(err)}), 400
     finally:
         if conn:
+            conn.close()
+
+
+from datetime import timedelta
+
+
+@app.route('/display-issues', methods=['GET'])
+def get_all_issues():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)  # 使用字典游标
+
+        # 获取查询参数
+        status = request.args.get('status')
+        room_id = request.args.get('room_id')
+
+        # 构建查询条件和参数
+        conditions = []
+        params = []
+
+        if status:
+            conditions.append("i.status = %s")
+            params.append(status)
+
+        if room_id:
+            # 验证room_id是否为有效整数
+            if not room_id.isdigit():
+                return jsonify({"error": "room_id must be a valid integer"}), 400
+            conditions.append("i.room_id = %s")
+            params.append(int(room_id))
+
+        # 构建基础SQL查询
+        base_query = """
+            SELECT 
+                i.issue_id,
+                i.room_id,
+                r.room_name,
+                i.issue,
+                i.status,
+                i.start_date,
+                i.start_time,
+                i.end_date,
+                i.end_time,
+                i.added_by,
+                u.username AS reporter_name
+            FROM Issues i
+            LEFT JOIN Rooms r ON i.room_id = r.room_id
+            LEFT JOIN Users u ON i.added_by = u.user_id
+        """
+
+        # 添加WHERE条件
+        if conditions:
+            base_query += " WHERE " + " AND ".join(conditions)
+
+        # 添加排序
+        base_query += " ORDER BY i.start_date DESC"
+
+        # 执行查询
+        cursor.execute(base_query, tuple(params))
+        issues = cursor.fetchall()
+
+        # 统一格式化时间字段
+        for issue in issues:
+            # 处理日期
+            for date_field in ['start_date', 'end_date']:
+                if issue[date_field]:
+                    issue[date_field] = issue[date_field].strftime("%Y-%m-%d")
+
+            # 处理时间
+            for time_field in ['start_time', 'end_time']:
+                time_value = issue[time_field]
+                if time_value:
+                    if isinstance(time_value, timedelta):  # 处理timedelta类型
+                        # 将timedelta转换为时间字符串 (HH:MM:SS)
+                        total_seconds = int(time_value.total_seconds())
+                        hours, remainder = divmod(total_seconds, 3600)
+                        minutes, seconds = divmod(remainder, 60)
+                        issue[time_field] = f"{hours:02}:{minutes:02}:{seconds:02}"
+                    elif isinstance(time_value, str):  # 如果已经是字符串
+                        issue[time_field] = time_value
+                    else:  # 处理datetime.time类型
+                        issue[time_field] = time_value.strftime("%H:%M:%S")
+                else:
+                    issue[time_field] = None
+
+        return jsonify({
+            "count": len(issues),
+            "issues": issues
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+
+# todo: add new function(03180117)
+@app.route('/notifications', methods=['GET'])
+def get_notifications():
+    try:
+        # 1. 通过 session 获取当前用户的 user_id
+        user_id = get_user_id_by_email()
+        print(user_id)
+        if not user_id:
+            return jsonify({"error": "Not logged in or user not found"}), 401
+
+        # 2. 查询该用户的通知
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT 
+                notification_id,
+                user_id,
+                message,
+                notification_action,
+                created_at
+            FROM Notifications
+            WHERE user_id = %s OR user_id IS NULL
+            ORDER BY created_at DESC
+        """
+        cursor.execute(query, (user_id,))
+        notifications = cursor.fetchall()
+
+        # 3. 返回该用户的通知列表
+        return jsonify({
+            "count": len(notifications),
+            "notifications": notifications
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
             conn.close()
 
 
@@ -1380,7 +1545,7 @@ def cancel_booking(booking_id):
             conn.close()
 
 
-#todo :user id
+# todo :user id
 @app.route('/update_user', methods=['POST'])
 def update_user():
     data = request.get_json()
@@ -1395,7 +1560,6 @@ def update_user():
     #     data.pop('user_id')
 
     # get the fields that are allow to update
-
     update_fields = {}
     for field in ['username', 'email', 'phone_number', 'role']:
         if field in data:
@@ -1445,6 +1609,77 @@ def update_user():
             conn.close()
 
 
+# 2. Update existing issue (Admin only)
+@app.route('/update-issues/<int:issue_id>', methods=['PUT'])
+def update_issue(issue_id):
+    try:
+        data = request.get_json()
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 获取现有问题记录
+        cursor.execute("SELECT * FROM Issues WHERE issue_id = %s", (issue_id,))
+        raw_issue = cursor.fetchone()
+
+        if not raw_issue:
+            conn.close()
+            return jsonify({'error': 'Issue not found'}), 404
+
+        # 将元组转换为字典（修复字段访问问题）
+        columns = [col[0] for col in cursor.description]
+        issue = dict(zip(columns, raw_issue))
+
+        # 准备更新字段
+        update_fields = {
+            'issue': data.get('issue', issue['issue']),
+            'status': data.get('status', issue['status']),
+            'start_date': data.get('start_date', issue['start_date']),
+            'start_time': data.get('start_time', issue['start_time']),
+            'end_date': issue['end_date'],
+            'end_time': issue['end_time']
+        }
+
+        # 处理状态转换（修复日期调用问题）
+        if update_fields['status'] != issue['status']:
+            if update_fields['status'] == 'resolved':
+                # 使用正确导入的date和datetime对象
+                update_fields['end_date'] = date.today().strftime('%Y-%m-%d')  # 直接使用date
+                update_fields['end_time'] = datetime.now().strftime('%H:%M:%S')  # 直接使用datetime
+            elif issue['status'] == 'resolved' and update_fields['status'] != 'resolved':
+                update_fields['end_date'] = None
+                update_fields['end_time'] = None
+
+        # 执行更新
+        cursor.execute("""
+            UPDATE Issues SET
+                issue = %s,
+                status = %s,
+                start_date = %s,
+                start_time = %s,
+                end_date = %s,
+                end_time = %s
+            WHERE issue_id = %s
+        """, (
+            update_fields['issue'],
+            update_fields['status'],
+            update_fields['start_date'],
+            update_fields['start_time'],
+            update_fields['end_date'],
+            update_fields['end_time'],
+            issue_id
+        ))
+
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'Issue updated successfully'}), 200
+
+    except Exception as e:
+        if 'conn' in locals():
+            conn.rollback()
+            conn.close()
+        return jsonify({'error': str(e)}), 500
+
+
 # ---------------------------- insert ----------------------------
 
 @app.route('/insert_booking', methods=['POST'])
@@ -1452,7 +1687,7 @@ def insert_booking():
     data = request.get_json()
     room_id = data.get('room_id')
 
-    #todo: modify the user_id
+    # todo: modify the user_id
 
     user_id = get_user_id_by_email()
     booking_date = data.get('booking_date')
@@ -1529,7 +1764,7 @@ def insert_booking():
             conn.close()
 
 
-#todo: add check for the same insert
+# todo: add check for the same insert
 @app.route('/insert_booking_with_reason', methods=['POST'])
 def insert_booking_with_reason():
     """前端输入 reason 后调用此 API 进行最终插入"""
@@ -1566,7 +1801,6 @@ def insert_booking_with_reason():
             return jsonify({"status": "error", "error": "Duplicate booking, the same booking already exists."}), 400
 
         # 如果没有重复，执行插入操作
-
         query = """
             INSERT INTO Bookings (user_id, room_id, start_time, end_time, booking_date, status, reason)
             VALUES (%s, %s, %s, %s, %s, 'pending', %s)
@@ -1582,7 +1816,6 @@ def insert_booking_with_reason():
     finally:
         if conn:
             conn.close()
-
 
 
 @app.route('/insert_room', methods=['POST'])
@@ -1611,7 +1844,8 @@ def insert_room():
         if conn:
             conn.close()
 
-#todo: add- check if the user_id is the same
+
+# todo: add- check if the user_id is the same
 @app.route('/insert-blacklist', methods=['POST'])
 def add_to_blacklist():
     """
@@ -1633,7 +1867,9 @@ def add_to_blacklist():
         # 前端传入要被黑名单的用户ID
         user_id = data.get('user_id')
         # 获取当前登录用户的ID，作为 added_by
+        print("Session info at /insert-blacklist:", session)
         added_by = get_user_id_by_email()
+        print("added_by:", added_by)
         start_date_str = data.get('start_date')
         start_time_str = data.get('start_time')
         end_date_str = data.get('end_date')
@@ -1665,16 +1901,22 @@ def add_to_blacklist():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # 检查该目标用户是否已经在黑名单中
+        # 1. 检查目标用户是否存在于 Users 表中
+        cursor.execute("SELECT user_id FROM Users WHERE user_id = %s", (user_id,))
+        target_user = cursor.fetchone()
+        if not target_user:
+            return jsonify({"error": "Target user does not exist"}), 400
+
+        # 2. 检查该目标用户是否已经在黑名单中
         check_query = "SELECT * FROM Blacklist WHERE user_id = %s"
         cursor.execute(check_query, (user_id,))
-        existing_blacklist_entry = cursor.fetchall()  # 获取所有结果
+        existing_blacklist_entry = cursor.fetchall()  # 使用 fetchall 确保读取所有结果
 
-        # 如果已经存在记录，则提示错误
         if existing_blacklist_entry:
+            # 如果该用户已经在黑名单中
             return jsonify({"error": "User is already in the blacklist"}), 400
 
-        # 执行插入操作
+        # 3. 执行插入操作
         insert_query = """
             INSERT INTO Blacklist
             (user_id, added_by, added_date, added_time, start_date, start_time, end_date, end_time, reason)
@@ -1721,7 +1963,6 @@ def add_to_blacklist():
             conn.close()
 
 
-
 @app.route('/insert_trusted_user', methods=['POST'])
 def insert_trusted_user():
     data = request.get_json()
@@ -1764,11 +2005,441 @@ def insert_trusted_user():
             conn.close()
 
 
+# 1. Insert new issue (Admin only)
+@app.route('/insert-issues', methods=['POST'])
+def add_issue():
+    try:
+        data = request.get_json()
+        required_fields = ['room_id', 'issue', 'start_date', 'start_time']
+
+        # Validate required fields
+        if not all(field in data for field in required_fields):
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        # Get admin user_id by email
+        admin_id = get_user_id_by_email()
+        if not admin_id:
+            return jsonify({'error': 'Admin user not found'}), 404
+
+        # Check room existence
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 检查房间是否存在
+        cursor.execute("SELECT room_id FROM Rooms WHERE room_id = %s", (data['room_id'],))
+        if not cursor.fetchone():
+            conn.close()
+            return jsonify({'error': 'Room not found'}), 404
+
+        # Insert new issue with correct status
+        cursor.execute("""
+            INSERT INTO Issues (
+                room_id, 
+                issue, 
+                status, 
+                start_date, 
+                start_time, 
+                added_by
+            ) VALUES (
+                %s, %s, DEFAULT, %s, %s, %s
+            )
+        """, (
+            data['room_id'],
+            data['issue'],
+            data['start_date'],
+            data['start_time'],
+            admin_id
+        ))
+
+        conn.commit()
+        new_issue_id = cursor.lastrowid
+        conn.close()
+
+        return jsonify({
+            'message': 'Issue created successfully',
+            'issue_id': new_issue_id
+        }), 201
+
+    except Exception as e:
+        if 'conn' in locals():
+            conn.rollback()
+            conn.close()
+        return jsonify({'error': str(e)}), 500
+
+
+#Syllabus crawling part
+# ============================ Utility Functions ============================
+def get_week_dates():
+    """Calculate the dates for each day of the current week (from Monday to Sunday)"""
+    today = datetime.today()
+    start_of_week = today - timedelta(days=today.weekday())
+    return [(start_of_week + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7)]
+
+
+# ============================ Global Variables ============================
+# Initialize timetable: 7 columns represent Sunday (index 0) to Saturday (index 6)
+timetable = {
+    "1-2": [""] * 7,
+    "3-4": [""] * 7,
+    "5-6": [""] * 7,
+    "7-8": [""] * 7,
+    "9-10": [""] * 7,
+    "11-12": [""] * 7,
+    "Notes": [""] * 7
+}
+
+# Mapping of class periods to time ranges (do not modify)
+class_periods = {
+    "1-2": [("[08:00-08:45]", "[08:55-09:40]")],
+    "3-4": [("[10:00-10:45]", "[10:55-11:40]")],
+    "5-6": [("[14:00-14:45]", "[14:55-15:40]")],
+    "7-8": [("[16:00-16:45]", "[16:55-17:40]")],
+    "9-10": [("[19:00-19:45]", "[19:55-20:40]")],
+    "11-12": [("[21:00-21:45]", "[21:55-22:40]")]
+}
+
+# Regular expression to extract classroom names (e.g., "Foreign Language Network Building 635")
+classroom_pattern = re.compile(r'外语网络楼(\d{3})')
+
+
+def extract_classrooms(course_text):
+    """Extract classroom names from course text"""
+    return classroom_pattern.findall(course_text)
+
+# Read CSV file and store week-to-date mapping
+def load_weeks(file_path):
+    weeks = []
+    with open(file_path, mode='r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            week = {
+                "week_number": int(row['week_number']),
+                "start_date": datetime.strptime(row['start_date'], "%Y-%m-%d"),
+                "end_date": datetime.strptime(row['end_date'], "%Y-%m-%d")
+            }
+            weeks.append(week)
+    return weeks
+
+# Calculate which week the current date belongs to
+def get_current_week(weeks):
+    current_date = datetime.today()
+    for week in weeks:
+        if week["start_date"] <= current_date <= week["end_date"]:
+            return week["week_number"]
+    return None  # If the date is not within any week
+
+# ============================ Data Scraping Functionality (Keep unchanged) ============================
+def crawl_data():
+    """Scrape data for majors, classes, and schedules for each academic year"""
+    global timetable  # Use global timetable
+    class_usage = {}
+    session = requests.Session()
+    url_main = "http://csujwc.its.csu.edu.cn/jiaowu/pkgl/llsykb/llsykb_find_xx04.jsp?init=1&isview=1&xnxq01id=null"
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Referer": url_main
+    }
+    session.get(url_main, headers=headers)
+    current_date = datetime.today().date()
+    # Get the current year
+    current_year = current_date.today().year
+    # Read the current week from the file
+    weeks = load_weeks('timetable/insert_room_availability_info/data/weeks.csv')
+    current_week = get_current_week(weeks)
+    # Check if the current date is before September 1st
+    if current_date.month < 9 or (current_date.month == 9 and current_date.day < 1):
+        # If the date is before September 1st, academic_years do not include the current year
+        start_year = max(2022, current_year - 3)
+        academic_years = [str(year) for year in range(start_year, current_year)]
+    else:
+        # If the date is after September 1st, academic_years include the current year
+        start_year = max(2022, current_year - 3)
+        academic_years = [str(year) for year in range(start_year, current_year + 1)]
+
+    if (current_date.month >= 9 and current_date.month <= 12):
+        # If the current date is between September 1st and February 1st next year
+        semester_id = f"{current_year}-{current_year + 1}-1"
+    elif (current_date.month == 1):
+        semester_id = f"{current_year - 1}-{current_year}-1"
+    elif (current_date.month >= 2 and current_date.month <= 8):
+        # If the current date is between February 2nd and August 31st
+        semester_id = f"{current_year - 1}-{current_year}-2"
+    url_major = "http://csujwc.its.csu.edu.cn/KbctjcAction.do?method=queryzy"
+    url_class = "http://csujwc.its.csu.edu.cn/KbctjcAction.do?method=querybj"
+
+    for year in academic_years:
+        major_data = {"yxbh": "tc9qn3Xixg", "rxnf": year}
+        response_major = session.post(url_major, data=major_data, headers=headers)
+        if response_major.status_code != 200 or not response_major.text.strip():
+            continue
+        fixed_json_major = re.sub(r"([{,])\s*([a-zA-Z0-9_]+)\s*:", r'\1"\2":', response_major.text)
+        fixed_json_major = re.sub(r":\s*'([^']*)'", r':"\1"', fixed_json_major)
+        try:
+            major_list = json.loads(fixed_json_major)
+        except json.JSONDecodeError:
+            continue
+
+        for major in major_list:
+            major_id = major["jx01id"]
+            class_data = {"yxbh": "tc9qn3Xixg", "rxnf": year, "zy": major_id, "xnxq01id": semester_id}
+            response_class = session.post(url_class, data=class_data, headers=headers)
+            if response_class.status_code != 200 or not response_class.text.strip():
+                continue
+            fixed_json_class = re.sub(r"([{,])\s*([a-zA-Z0-9_]+)\s*:", r'\1"\2":', response_class.text)
+            fixed_json_class = re.sub(r":\s*'([^']*)'", r':"\1"', fixed_json_class)
+            try:
+                class_list = json.loads(fixed_json_class)
+            except json.JSONDecodeError:
+                continue
+
+            for class_info in class_list:
+                class_id = class_info["xx04id"]
+                class_name = class_info["bj"]
+                schedule_url = "http://csujwc.its.csu.edu.cn/jiaowu/pkgl/llsykb/llsykb_kb.jsp"
+                schedule_data = {
+                    "type": "xx04",
+                    "isview": "1",
+                    "xx04id": class_id,
+                    "yxbh": "tc9qn3Xixg",
+                    "rxnf": year,
+                    "zy": major_id,
+                    "bjbh": class_name,
+                    "zc": current_week,
+                    "xnxq01id": semester_id,
+                    "xx04mc": "",
+                    "sfFD": "1"
+                }
+                response_schedule = session.post(schedule_url, data=schedule_data, headers=headers)
+                if response_schedule.status_code != 200 or not response_schedule.text.strip():
+                    continue
+                soup = BeautifulSoup(response_schedule.text, "html.parser")
+                table = soup.find("table")
+                if table:
+                    rows = table.find_all("tr")[1:]
+                    for row_idx, row in enumerate(rows):
+                        cols = row.find_all("td")
+                        if len(cols) < 2:
+                            continue
+                        time_period = list(timetable.keys())[row_idx]
+                        for col_idx in range(1, 8):
+                            if col_idx >= len(cols):
+                                continue
+                            room_text = cols[col_idx].text.strip()
+                            if not room_text:
+                                continue
+                            rooms = extract_classrooms(room_text)
+                            if rooms:
+                                if timetable[time_period][col_idx - 1]:
+                                    timetable[time_period][col_idx - 1] += ", " + ", ".join(rooms)
+                                else:
+                                    timetable[time_period][col_idx - 1] = ", ".join(rooms)
+                                for room in rooms:
+                                    if room not in class_usage:
+                                        class_usage[room] = []
+                                    class_usage[room].append(f"周{col_idx} {time_period}")
+    return class_usage
+
+
+# ============================ Data Integration ============================
+def integrate_schedule(class_usage):
+    classroom_schedule = {}
+    for room, times in class_usage.items():
+        time_slots = sorted(set(times))
+        days_schedule = {i: [] for i in range(7)}
+        for time in time_slots:
+            day, period = time.split(" ")
+            day_number = int(day[1]) - 1
+            time_ranges = class_periods.get(period, [("Unknown Time", "Unknown Time")])
+            for time_range in time_ranges:
+                start_time, end_time = time_range
+                days_schedule[day_number].append(f"{start_time}{end_time}")
+        formatted_schedule = {}
+        for day_idx in range(7):
+            if days_schedule[day_idx]:
+                formatted_schedule[day_idx] = sorted(days_schedule[day_idx])
+        classroom_schedule[int(room)] = formatted_schedule
+
+    room_2d_array = {}
+    for room, schedule in classroom_schedule.items():
+        room_2d_array[room] = [[""] * len(class_periods) for _ in range(7)]
+        for day_idx, times in schedule.items():
+            for time_idx, time in enumerate(times):
+                room_2d_array[room][day_idx][time_idx] = time
+    return room_2d_array
+
+
+def format_schedule_data(new_room_2d_array):
+    week_dates = get_week_dates()
+    formatted_schedule = []
+    for room, schedule in new_room_2d_array.items():
+        for day_idx, day in enumerate(schedule):
+            for time_slot in day:
+                if time_slot:
+                    start_time, end_time = time_slot.split("-")
+                    formatted_schedule.append([room, week_dates[day_idx], start_time, end_time])
+    return formatted_schedule
+
+
+# ============================ Update Database ============================
+def update_room_availability(formatted_schedule):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True, buffered=True)
+    try:
+        for entry in formatted_schedule:
+            room_name, available_date, available_begin, available_end = entry  # Unpack data
+            cursor.execute("SELECT room_id FROM Rooms WHERE room_name = %s", (room_name,))
+            room_result = cursor.fetchone()
+            if not room_result:
+                continue
+            room_id = room_result["room_id"]
+            cursor.execute(""" 
+                SELECT availability_id FROM Room_availability 
+                WHERE room_id = %s AND available_date = %s 
+                AND available_begin = %s AND available_end = %s
+            """, (room_id, available_date, available_begin, available_end))
+            existing_availability = cursor.fetchone()
+            if existing_availability:
+                cursor.execute("""
+                    UPDATE Room_availability 
+                    SET availability = 1 
+                    WHERE availability_id = %s
+                """, (existing_availability["availability_id"],))
+            else:
+                cursor.execute("""
+                    INSERT INTO Room_availability (room_id, available_date, available_begin, available_end, availability)
+                    VALUES (%s, %s, %s, %s, 1)
+                """, (room_id, available_date, available_begin, available_end))
+        conn.commit()
+    except mysql.connector.Error as err:
+        conn.rollback()
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# ============================ Split Time Slots ============================
+def split_time_slots(data):
+    """Split stored string data into individual time slots (remove all brackets)"""
+    new_data = {}
+    for room, schedule in data.items():
+        new_schedule = []
+        for day in schedule:
+            new_day = []
+            for item in day:
+                if item:
+                    time_slots = item.split('][')
+                    if len(time_slots) > 1:
+                        for slot in time_slots:
+                            clean_slot = slot.replace("[", "").replace("]", "")
+                            new_day.append(clean_slot)
+                    else:
+                        new_day.append(item)
+                else:
+                    new_day.append('')  # Handle empty values
+            new_schedule.append(new_day)
+        new_data[room] = new_schedule
+    return new_data
+
+
+# ============================ Flask API Endpoint ============================
+@app.route('/run_scheduler', methods=['GET'])
+def run_scheduler():
+    try:
+        # Run the scraping and database update process
+        result = main_scheduler()
+        return jsonify({"message": result}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ============================ Main Scheduler Function ============================
+def main_scheduler():
+    # 1. Scrape data
+    class_usage = crawl_data()
+    # 2. Integrate data into 2D array
+    room_2d_array = integrate_schedule(class_usage)
+    # 3. Split time slots and remove brackets
+    new_room_2d_array = split_time_slots(room_2d_array)
+    # 4. Format data and generate the standard format list
+    formatted_schedule = format_schedule_data(new_room_2d_array)
+    # 5. Update database
+    update_room_availability(formatted_schedule)
+    return "Crawling and updating database successfully!"
+
+
+#initialize_room_availability_table
+# Define room time slots (available time slots for each room)
+availability_times = [
+    ("08:00", "08:45"),
+    ("08:55", "09:40"),
+    ("10:00", "10:45"),
+    ("10:55", "11:40"),
+    ("14:00", "14:45"),
+    ("14:55", "15:40"),
+    ("16:00", "16:45"),
+    ("16:55", "17:40"),
+    ("19:00", "19:45"),
+    ("19:55", "20:40")
+]
+
+# Function to insert room availability data
+@app.route('/insert_room_availability', methods=['GET'])
+def insert_room_availability():
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    # Get all room_ids
+    cursor.execute("SELECT room_id FROM Rooms")
+    rooms = cursor.fetchall()
+
+    # Get today's date and calculate all dates for this week (from Monday to Sunday)
+    today = datetime.today()
+    start_of_week = today - timedelta(days=today.weekday())  # Monday's date this week
+    dates_this_week = [start_of_week + timedelta(days=i) for i in range(7)]  # All 7 days of the week
+
+    # Insert room availability records for each room and time slot
+    try:
+        for room in rooms:
+            room_id = room[0]
+
+            # Insert records for each time slot and date for the current room
+            for start_time, end_time in availability_times:
+                for date in dates_this_week:
+                    cursor.execute("""
+                        INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, availability)
+                        VALUES (%s, %s, %s, %s, 0)  -- Set availability to 0 (not available)
+                    """, (room_id, start_time, end_time, date.strftime('%Y-%m-%d')))
+
+        # Commit transaction
+        connection.commit()
+        return jsonify({"message": "Room availability records have been successfully inserted!"}), 200
+
+    except pymysql.MySQLError as e:
+        print(f"Database error: {e}")
+        connection.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        # Close database connection
+        cursor.close()
+        connection.close()
+
 # if __name__ == '__main__':
 #     print("\nRegistered routes:")
 #     for rule in app.url_map.iter_rules():
 #         print(f"→ {rule}")
 #     app.run(debug=True)
+
+# if __name__ == '__main__':
+#     print("\nRegistered routes:")
+#     for rule in app.url_map.iter_rules():
+#         print(f"→ {rule}")
+#     # 启用 HTTPS
+#     app.run(
+#         host='0.0.0.0',  # 监听所有网络接口
+#         port=8000,  # HTTPS 默认端口
+#         ssl_context=('cert.pem', 'key.pem')  # 证书和私钥文件
+#     )
 
 if __name__ == '__main__':
     print("\nRegistered routes:")

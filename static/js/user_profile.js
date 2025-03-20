@@ -19,11 +19,11 @@ async function initializeProfile() {
 async function fetchUserData() {
     try {
         const response = await fetch(`${API_BASE}/get_user`, {
-            method: 'POST',
+            method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ user_id: DEFAULT_USER_ID }),
+            // body: JSON.stringify({ user_id: DEFAULT_USER_ID }),
         });
 
         if (!response.ok) {
@@ -75,12 +75,19 @@ function cancelEditMode() {
 }
 
 // Form submission processing
-document.getElementById('profile-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    try {
-        await updateUserProfile();
-    } catch (error) {
-        showError(error.message);
+document.addEventListener('DOMContentLoaded', function() {
+    const profileForm = document.getElementById('profile-form');
+    if (profileForm) {
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await updateUserProfile();
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+    } else {
+        console.error('Profile form not found!');
     }
 });
 
@@ -155,3 +162,29 @@ function handleImageUpload(event) {
     };
     reader.readAsDataURL(file);
 }
+
+
+//add for menu
+document.addEventListener('DOMContentLoaded', function() {
+    const hamburger = document.querySelector('.hamburger-menu');
+    const sidebar = document.querySelector('.sidebar');
+
+    // 汉堡菜单点击事件
+    hamburger.addEventListener('click', function() {
+        sidebar.classList.toggle('active');
+    });
+
+    // 点击外部关闭侧边栏
+    document.addEventListener('click', function(e) {
+        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+            sidebar.classList.remove('active');
+        }
+    });
+
+    // 窗口大小变化时重置侧边栏
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            sidebar.classList.remove('active');
+        }
+    });
+});

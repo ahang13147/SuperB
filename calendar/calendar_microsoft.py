@@ -2,12 +2,11 @@ import msal
 import requests
 import urllib.parse
 
-# Azure 注册应用时提供的客户端ID、客户端机密和租户ID
+# 直接硬编码 Azure 应用的配置
 client_id = 'f40296ef-9aca-48b4-9ca1-b02e6d690f7c'  # 应用注册时获得的客户端ID
-client_secret = 'Efx8Q~EMGVcb7yZ2Ji_c9bsAKDO7MxTysBZVoauK'  # 应用注册时获得的客户端密钥值
-tenant_id = '52ff27b4-1ebf-4510-a74f-8940dbf42624'
+client_secret = 'JUV8Q~s~0D45yzMMLJmZuOT0hO53hwb84xHrebb~'  # 应用注册时获得的客户端密钥值
+tenant_id = '52ff27b4-1ebf-4510-a74f-8940dbf42624'  # 租户ID
 redirect_uri = 'https://101.200.197.132:8000/auth_callback'  # 设置为与Azure应用注册中的重定向URI相同
-#Efx8Q~EMGVcb7yZ2Ji_c9bsAKDO7MxTysBZVoauK
 
 # 对 client_secret 进行 URL 编码
 encoded_client_secret = urllib.parse.quote(client_secret)
@@ -16,10 +15,11 @@ encoded_client_secret = urllib.parse.quote(client_secret)
 authority = f'https://login.microsoftonline.com/{tenant_id}'
 scopes = ['User.Read', 'Calendars.ReadWrite']
 
-app = msal.PublicClientApplication(client_id, authority=authority)
+# 创建 ConfidentialClientApplication，而不是 PublicClientApplication
+app = msal.ConfidentialClientApplication(client_id, authority=authority, client_credential=client_secret)
 
 # 获取授权码URL
-auth_url = app.get_authorization_request_url(scopes)
+auth_url = app.get_authorization_request_url(scopes, redirect_uri=redirect_uri)
 print(f'请访问以下URL登录并授权应用：\n{auth_url}')
 
 # 2. 用户登录后，输入获取的授权码
