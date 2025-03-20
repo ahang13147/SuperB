@@ -38,6 +38,7 @@
 
     <script>
         $(document).ready(function() {
+            // 发送验证码
             $('#sendCode').click(function() {
                 let email = $('#email').val();
                 if (!email.endsWith('@dundee.ac.uk')) {
@@ -50,16 +51,21 @@
                     url: '/send_verification',
                     data: { email: email },
                     success: function(response) {
-                        $('#message').text('Verification code sent. Check your email.').css('color', 'green');
-                        $('#verificationCode').prop('disabled', false);
-                        $('#verifyCode').prop('disabled', false);
+                        if (response.status === 'success') {
+                            $('#message').text(response.message).css('color', 'green');
+                            $('#verificationCode').prop('disabled', false);
+                            $('#verifyCode').prop('disabled', false);
+                        } else {
+                            $('#message').text(response.message).css('color', 'red');
+                        }
                     },
                     error: function(xhr, status, error) {
-                        $('#message').text(xhr.responseText).css('color', 'red');
+                        $('#message').text('An error occurred').css('color', 'red');
                     }
                 });
             });
 
+            // 验证验证码
             $('#verifyCode').click(function() {
                 let email = $('#email').val();
                 let code = $('#verificationCode').val();
@@ -69,10 +75,14 @@
                     url: '/verify',
                     data: { email: email, code: code },
                     success: function(response) {
-                        $('#message').text('Verification successful!').css('color', 'green');
+                        if (response.status === 'success') {
+                            $('#message').text(response.message).css('color', 'green');
+                        } else {
+                            $('#message').text(response.message).css('color', 'red');
+                        }
                     },
                     error: function(xhr, status, error) {
-                        $('#message').text(xhr.responseText).css('color', 'red');
+                        $('#message').text('An error occurred').css('color', 'red');
                     }
                 });
             });
