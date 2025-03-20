@@ -4,6 +4,7 @@ let userIdCounter = 1; // 自动分配 User ID
 document.getElementById("addUserForm").addEventListener("submit", function (event) {
     event.preventDefault();
 
+
     const username = document.getElementById("username").value;
     const email = document.getElementById("email").value;
     const phone = document.getElementById("phone").value;
