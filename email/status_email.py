@@ -5,11 +5,10 @@ Description: This Flask application sends reminder emails to users about their r
              It retrieves booking details from the database and sends an email to the user.
              The email includes booking details such as room name, location, start time, and end time.
              Each endpoint is responsible for sending a specific type of email based on the booking status.
-             The response to each request is a JSON object containing the status of the email operation.
-
+             The response to each request is a JSON object containing the status of the email operation and the booking_id.
 """
 
-from flask import Flask, render_template, request, flash, redirect, url_for, jsonify
+from flask import Flask, render_template, request, jsonify
 from flask_mail import Mail, Message
 import mysql.connector
 from datetime import datetime, timedelta
@@ -45,7 +44,8 @@ def fetch_booking_info(booking_id):
         booking_id (int): The booking ID for which to fetch details.
 
     Returns:
-        tuple: A tuple containing booking details (booking_id, user_email, room_name, room_location, start_time, end_time).
+        tuple: A tuple containing booking details
+               (booking_id, user_email, room_name, room_location, start_time, end_time).
         If no matching booking is found, returns None.
     """
     try:
@@ -81,7 +81,6 @@ def fetch_booking_info(booking_id):
         print(f"Database error: {err}")
         return None
 
-
 def send_email(to_email, subject, body):
     """
     Send an email to the specified recipient.
@@ -101,221 +100,251 @@ def send_email(to_email, subject, body):
     except Exception as e:
         print(f'Failed to send email: {e}')
 
-# Updated email body formatting
+# -------------------------------
+# 以下各接口均从 JSON 请求中获取 booking_id，并在返回 JSON 中包含 booking_id
+# -------------------------------
 
 @app.route('/send_email/success', methods=['POST'])
 def send_success_email():
     """
     Send an email notifying the user that their booking was successful.
 
-    Request Format:
-        POST method with 'booking_id' in form data (int).
+    Request Format (JSON):
+    {
+        "booking_id": 123
+    }
 
-    Response Format:
-        JSON with 'status' and 'message'.
-        'status' can be 'success' or 'failed'.
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+        "booking_id": 123
+    }
     """
-    booking_id = request.form.get('booking_id', type=int)
-    if not booking_id:
-        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.'})
+    data = request.get_json()
+    if not data or 'booking_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.', 'booking_id': None}), 400
+
+    try:
+        booking_id = int(data.get('booking_id'))
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'booking_id must be an integer.', 'booking_id': None}), 400
 
     booking_info = fetch_booking_info(booking_id)
     if booking_info:
         booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
 
-        # Updated Email content with improved formatting
         subject = f"Booking Successful: Room {room_name}"
         body = f"""
-        Dear {user_email},
+        Dear {user_email},<br><br>
 
-        Congratulations! Your room booking has been successfully confirmed. Below are your booking details:
-
-        <br><br>
+        Congratulations! Your room booking has been successfully confirmed. Below are your booking details:<br><br>
         <strong>Booking ID:</strong> {booking_id}<br>
         <strong>Room Name:</strong> {room_name}<br>
         <strong>Room Location:</strong> {room_location}<br>
         <strong>Start Time:</strong> {start_time}<br>
-        <strong>End Time:</strong> {end_time}<br>
+        <strong>End Time:</strong> {end_time}<br><br>
 
         Thank you for using our system, and we hope you enjoy your booking!
         """
         send_email(user_email, subject, body)
-        return jsonify({'status': 'success', 'message': 'Booking successful email sent!'})
+        return jsonify({'status': 'success', 'message': 'Booking successful email sent!', 'booking_id': booking_id})
     else:
-        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.'})
-
+        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
 
 @app.route('/send_email/rejected', methods=['POST'])
 def send_rejected_email():
     """
     Send an email notifying the user that their booking was rejected by the administrator.
 
-    Request Format:
-        POST method with 'booking_id' in form data (int).
+    Request Format (JSON):
+    {
+        "booking_id": 123
+    }
 
-    Response Format:
-        JSON with 'status' and 'message'.
-        'status' can be 'success' or 'failed'.
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+        "booking_id": 123
+    }
     """
-    booking_id = request.form.get('booking_id', type=int)
-    if not booking_id:
-        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.'})
+    data = request.get_json()
+    if not data or 'booking_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.', 'booking_id': None}), 400
+
+    try:
+        booking_id = int(data.get('booking_id'))
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'booking_id must be an integer.', 'booking_id': None}), 400
 
     booking_info = fetch_booking_info(booking_id)
     if booking_info:
         booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
 
-        # Updated Email content with improved formatting
         subject = f"Booking Rejected: Room {room_name}"
         body = f"""
-        Dear {user_email},
+        Dear {user_email},<br><br>
 
-        We regret to inform you that your room booking request has been rejected by the administrator. Below are your booking details:
-
-        <br><br>
+        We regret to inform you that your room booking request has been rejected by the administrator. Below are your booking details:<br><br>
         <strong>Booking ID:</strong> {booking_id}<br>
         <strong>Room Name:</strong> {room_name}<br>
         <strong>Room Location:</strong> {room_location}<br>
-        <strong>Booking Time:</strong> {start_time} - {end_time}<br>
+        <strong>Booking Time:</strong> {start_time} - {end_time}<br><br>
 
         Please contact the administrator for further clarification.
         """
         send_email(user_email, subject, body)
-        return jsonify({'status': 'success', 'message': 'Booking rejected email sent!'})
+        return jsonify({'status': 'success', 'message': 'Booking rejected email sent!', 'booking_id': booking_id})
     else:
-        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.'})
-
+        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
 
 @app.route('/send_email/cancelled', methods=['POST'])
 def send_cancelled_email():
     """
     Send an email notifying the user that their booking has been cancelled.
 
-    Request Format:
-        POST method with 'booking_id' in form data (int).
+    Request Format (JSON):
+    {
+        "booking_id": 123
+    }
 
-    Response Format:
-        JSON with 'status' and 'message'.
-        'status' can be 'success' or 'failed'.
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+        "booking_id": 123
+    }
     """
-    booking_id = request.form.get('booking_id', type=int)
-    if not booking_id:
-        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.'})
+    data = request.get_json()
+    if not data or 'booking_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.', 'booking_id': None}), 400
+
+    try:
+        booking_id = int(data.get('booking_id'))
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'booking_id must be an integer.', 'booking_id': None}), 400
 
     booking_info = fetch_booking_info(booking_id)
     if booking_info:
         booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
 
-        # Updated Email content with improved formatting
         subject = f"Booking Cancelled: Room {room_name}"
         body = f"""
-        Dear {user_email},
+        Dear {user_email},<br><br>
 
-        We regret to inform you that your room booking has been cancelled. Below are your booking details:
-
-        <br><br>
+        We regret to inform you that your room booking has been cancelled. Below are your booking details:<br><br>
         <strong>Booking ID:</strong> {booking_id}<br>
         <strong>Room Name:</strong> {room_name}<br>
         <strong>Room Location:</strong> {room_location}<br>
-        <strong>Booking Time:</strong> {start_time} - {end_time}<br>
+        <strong>Booking Time:</strong> {start_time} - {end_time}<br><br>
 
         Thank you for your understanding.
         """
         send_email(user_email, subject, body)
-        return jsonify({'status': 'success', 'message': 'Booking cancelled email sent!'})
+        return jsonify({'status': 'success', 'message': 'Booking cancelled email sent!', 'booking_id': booking_id})
     else:
-        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.'})
-
+        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
 
 @app.route('/send_email/failed', methods=['POST'])
 def send_failed_email():
     """
     Send an email notifying the user that their booking failed.
 
-    Request Format:
-        POST method with 'booking_id' in form data (int).
+    Request Format (JSON):
+    {
+        "booking_id": 123
+    }
 
-    Response Format:
-        JSON with 'status' and 'message'.
-        'status' can be 'success' or 'failed'.
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+        "booking_id": 123
+    }
     """
-    booking_id = request.form.get('booking_id', type=int)
-    if not booking_id:
-        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.'})
+    data = request.get_json()
+    if not data or 'booking_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.', 'booking_id': None}), 400
+
+    try:
+        booking_id = int(data.get('booking_id'))
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'booking_id must be an integer.', 'booking_id': None}), 400
 
     booking_info = fetch_booking_info(booking_id)
     if booking_info:
         booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
 
-        # Updated Email content with improved formatting
         subject = f"Booking Failed: Room {room_name}"
         body = f"""
-        Dear {user_email},
+        Dear {user_email},<br><br>
 
-        We regret to inform you that your room booking has failed. Below are your booking details:
-
-        <br><br>
+        We regret to inform you that your room booking has failed. Below are your booking details:<br><br>
         <strong>Booking ID:</strong> {booking_id}<br>
         <strong>Room Name:</strong> {room_name}<br>
         <strong>Room Location:</strong> {room_location}<br>
-        <strong>Booking Time:</strong> {start_time} - {end_time}<br>
+        <strong>Booking Time:</strong> {start_time} - {end_time}<br><br>
 
         Please check your booking details or contact the administrator for further assistance.
         """
         send_email(user_email, subject, body)
-        return jsonify({'status': 'success', 'message': 'Booking failed email sent!'})
+        return jsonify({'status': 'success', 'message': 'Booking failed email sent!', 'booking_id': booking_id})
     else:
-        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.'})
-
+        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
 
 @app.route('/send_email/remind', methods=['POST'])
 def send_remind_email():
     """
     Send a reminder email notifying the user that their booking is about to begin.
 
-    Request Format:
-        POST method with 'booking_id' in form data (int).
+    Request Format (JSON):
+    {
+        "booking_id": 123
+    }
 
-    Response Format:
-        JSON with 'status' and 'message'.
-        'status' can be 'success' or 'failed'.
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+        "booking_id": 123
+    }
     """
-    booking_id = request.form.get('booking_id', type=int)
-    if not booking_id:
-        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.'})
+    data = request.get_json()
+    if not data or 'booking_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.', 'booking_id': None}), 400
+
+    try:
+        booking_id = int(data.get('booking_id'))
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'booking_id must be an integer.', 'booking_id': None}), 400
 
     booking_info = fetch_booking_info(booking_id)
     if booking_info:
         booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
 
-        # Updated Email content with improved formatting
         subject = f"Reminder: Your Booking for Room {room_name} is Approaching"
         body = f"""
-        Dear {user_email},
+        Dear {user_email},<br><br>
 
-        This is a reminder that your room booking is about to begin. Below are your booking details:
-
-        <br><br>
+        This is a reminder that your room booking is about to begin. Below are your booking details:<br><br>
         <strong>Booking ID:</strong> {booking_id}<br>
         <strong>Room Name:</strong> {room_name}<br>
         <strong>Room Location:</strong> {room_location}<br>
         <strong>Start Time:</strong> {start_time}<br>
-        <strong>End Time:</strong> {end_time}<br>
+        <strong>End Time:</strong> {end_time}<br><br>
 
         Please head to the room in time. Thank you.
         """
         send_email(user_email, subject, body)
-        return jsonify({'status': 'success', 'message': 'Reminder email sent!'})
+        return jsonify({'status': 'success', 'message': 'Reminder email sent!', 'booking_id': booking_id})
     else:
-        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.'})
-
-
+        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
 
 @app.route('/')
 def index():
     """Render the main page"""
     return render_template('total_email.html')
-
 
 if __name__ == '__main__':
     app.run(debug=True)
