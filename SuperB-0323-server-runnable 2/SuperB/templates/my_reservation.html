@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <script src="{{ url_for('static', filename='js/my_reservation.js') }}"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{url_for('static',filename='css/my_reservation.css')}}">
+    <link rel="stylesheet" href="{{url_for('static',filename='css/sidebar.css')}}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <title>My Reservations</title>
+</head>
+
+<body>
+    <div class="hamburger-menu">
+        <i class="fas fa-bars"></i>
+    </div>
+    <div class="main-container">
+        <!-- sidebar -->
+        <div class="sidebar">
+            <a class="nav-item" href="{{ url_for('booking_centre') }}">
+                <i class="fas fa-calendar-alt nav-icon"></i>
+                Booking Center
+            </a>
+            <a class="nav-item active" href="{{ url_for('my_reservation') }}">
+                <i class="fas fa-list-ul nav-icon"></i>
+                My Bookings
+            </a>
+            <a class="nav-item" href="{{ url_for('my_notification') }}">
+                <i class="fas fa-bell nav-icon"></i>
+                Notifications
+            </a>
+            <a class="nav-item" href="{{ url_for('user_profile') }}">
+                <i class="fas fa-user-circle nav-icon"></i>
+                My Profile
+            </a>
+        </div>
+
+        <!-- content  area -->
+        <div class="content-area">
+            <header>
+                <h1>My Reservations</h1>
+            </header>
+
+            <!-- booking area -->
+            <div class="reservations-container">
+                <!-- booking model-->
+                <div class="reservation-card" data-reservation-id="">
+                    <div class="status-indicator"></div>
+                    <div class="reservation-info">
+                        <label>Date:</label>
+                        <span data-date=""></span>
+                    </div>
+                    <div class="reservation-info">
+                        <label>Time:</label>
+                        <span data-time=""></span>
+                    </div>
+                    <div class="reservation-info">
+                        <label>Room:</label>
+                        <span data-room=""></span>
+                    </div>
+                    <div class="reservation-info">
+                        <label>Capacity:</label>
+                        <span></span>
+                    </div>
+                    <button class="cancel-btn">Cancel Reservation</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- cancel booking model -->
+    <div class="modal" id="cancelModal">
+        <div class="modal-content">
+            <h3>Confirm Cancellation</h3>
+            <p>Are you sure you want to cancel this reservation?</p>
+            <div class="modal-actions">
+                <button class="modal-btn close-btn" id="closeModal">Close</button>
+                <button class="modal-btn confirm-btn" id="confirmCancel">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

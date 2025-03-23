@@ -3,116 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Room Booking Reminder System</title>
+    <title>Send Booking Emails</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 50px;
-            background-color: #f4f4f9;
-        }
-        h1 {
-            color: #333;
-        }
-        label, button {
-            font-size: 16px;
-        }
-        input, select {
-            padding: 8px;
-            font-size: 16px;
-            width: 300px;
-            margin: 5px 0;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-            padding: 10px 20px;
-        }
-        button:hover {
-            background-color: #45a049;
+            margin: 0;
+            padding: 20px;
         }
         .container {
-            max-width: 400px;
-            margin: auto;
-            background-color: white;
+            max-width: 600px;
+            margin: 0 auto;
             padding: 20px;
+            border: 1px solid #ccc;
             border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        .alert {
+        h2 {
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
             padding: 10px;
-            margin-top: 10px;
-            border-radius: 5px;
+            background-color: #007bff;
             color: white;
-            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
         }
-        .alert.success { background-color: #4CAF50; }
-        .alert.error { background-color: #f44336; }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .response {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Send Room Booking Email</h1>
+<div class="container">
+    <h2>Send Booking Email</h2>
 
-        <!-- Success or Error messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert {{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+    <label for="booking_id">Enter Booking ID</label>
+    <input type="number" id="booking_id" placeholder="Enter the booking ID">
 
-        <!-- Form to send reminder emails -->
-        <form action="{{ url_for('send_remind_email') }}" method="POST">
-            <label for="booking_id">Enter Booking ID:</label>
-            <input type="number" id="booking_id" name="booking_id" required><br><br>
+    <button id="sendSuccessEmailBtn">Send Success Email</button>
+    <button id="sendRejectedEmailBtn">Send Rejected Email</button>
+    <button id="sendCancelledEmailBtn">Send Cancelled Email</button>
+    <button id="sendFailedEmailBtn">Send Failed Email</button>
+    <button id="sendRemindEmailBtn">Send Reminder Email</button>
+    <button id="sendCalendarEmailBtn">Send Calendar Email</button>
 
-            <button type="submit">Send Reminder Email</button>
-        </form>
-
-        <hr>
-
-        <!-- Form to send success email -->
-        <form action="{{ url_for('send_success_email') }}" method="POST">
-            <label for="booking_id_success">Enter Booking ID (Success):</label>
-            <input type="number" id="booking_id_success" name="booking_id" required><br><br>
-
-            <button type="submit">Send Success Email</button>
-        </form>
-
-        <hr>
-
-        <!-- Form to send rejected email -->
-        <form action="{{ url_for('send_rejected_email') }}" method="POST">
-            <label for="booking_id_rejected">Enter Booking ID (Rejected):</label>
-            <input type="number" id="booking_id_rejected" name="booking_id" required><br><br>
-
-            <button type="submit">Send Rejected Email</button>
-        </form>
-
-        <hr>
-
-        <!-- Form to send cancelled email -->
-        <form action="{{ url_for('send_cancelled_email') }}" method="POST">
-            <label for="booking_id_cancelled">Enter Booking ID (Cancelled):</label>
-            <input type="number" id="booking_id_cancelled" name="booking_id" required><br><br>
-
-            <button type="submit">Send Cancelled Email</button>
-        </form>
-
-        <hr>
-
-        <!-- Form to send failed email -->
-        <form action="{{ url_for('send_failed_email') }}" method="POST">
-            <label for="booking_id_failed">Enter Booking ID (Failed):</label>
-            <input type="number" id="booking_id_failed" name="booking_id" required><br><br>
-
-            <button type="submit">Send Failed Email</button>
-        </form>
+    <div class="response" id="response" style="display:none;">
+        <h3>Response:</h3>
+        <p id="responseMessage"></p>
     </div>
+</div>
+
+<script>
+    function sendEmailRequest(endpoint, bookingId) {
+        // Check if bookingId is provided
+        if (!bookingId) {
+            alert('Please enter a valid booking ID.');
+            return;
+        }
+
+        // Send POST request to backend
+        const data = { booking_id: bookingId };
+        fetch(`http://localhost:5000/send_email/${endpoint}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Display response message
+            const responseMessage = document.getElementById('responseMessage');
+            const responseDiv = document.getElementById('response');
+            if (data.status === 'success') {
+                responseDiv.style.backgroundColor = '#d4edda'; // Green background
+                responseMessage.textContent = data.message;
+            } else {
+                responseDiv.style.backgroundColor = '#f8d7da'; // Red background
+                responseMessage.textContent = data.message;
+            }
+            responseDiv.style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while sending the email.');
+        });
+    }
+
+    // Attach event listeners to buttons
+    document.getElementById('sendSuccessEmailBtn').addEventListener('click', function() {
+        const bookingId = document.getElementById('booking_id').value;
+        sendEmailRequest('success', bookingId);
+    });
+
+    document.getElementById('sendRejectedEmailBtn').addEventListener('click', function() {
+        const bookingId = document.getElementById('booking_id').value;
+        sendEmailRequest('rejected', bookingId);
+    });
+
+    document.getElementById('sendCancelledEmailBtn').addEventListener('click', function() {
+        const bookingId = document.getElementById('booking_id').value;
+        sendEmailRequest('cancelled', bookingId);
+    });
+
+    document.getElementById('sendFailedEmailBtn').addEventListener('click', function() {
+        const bookingId = document.getElementById('booking_id').value;
+        sendEmailRequest('failed', bookingId);
+    });
+
+    document.getElementById('sendRemindEmailBtn').addEventListener('click', function() {
+        const bookingId = document.getElementById('booking_id').value;
+        sendEmailRequest('remind', bookingId);
+    });
+
+    document.getElementById('sendCalendarEmailBtn').addEventListener('click', function() {
+        const bookingId = document.getElementById('booking_id').value;
+        sendEmailRequest('calendar', bookingId);
+    });
+</script>
 
 </body>
 </html>

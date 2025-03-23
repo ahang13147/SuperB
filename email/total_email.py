@@ -1,29 +1,23 @@
-# -*- coding: utf-8 -*-
-"""
-Author: Zibang Nie
-Description: This Flask application sends reminder emails to users about their room bookings.
-             It retrieves booking details from the database and sends an email to the user.
-             The email includes booking details such as room name, location, start time, and end time.
-             Each endpoint is responsible for sending a specific type of email based on the booking status.
-             The response to each request is a JSON object containing the status of the email operation.
-
-"""
-
-from flask import Flask, render_template, request, flash, redirect, url_for, jsonify
+from flask import Flask, render_template, request, jsonify
 from flask_mail import Mail, Message
+from flask_cors import CORS  # Import CORS
 import mysql.connector
-from datetime import datetime, timedelta
+import urllib.parse
+import pytz
 
 app = Flask(__name__)
+
+# Enable CORS for all routes
+CORS(app)
 
 # Configuration for Flask application
 app.secret_key = 'your_secret_key'
 app.config.update({
     'MAIL_SERVER': 'smtp.qq.com',  # Email server
-    'MAIL_PORT': 587,              # Port (587 for TLS)
+    'MAIL_PORT': 587,  # Port (587 for TLS)
     'MAIL_USE_TLS': True,
     'MAIL_USERNAME': '2530681892@qq.com',  # Sender's email
-    'MAIL_PASSWORD': 'gnpunomuoqwhechd',    # Sender's email password
+    'MAIL_PASSWORD': 'gnpunomuoqwhechd',  # Sender's email password
     'MAIL_DEFAULT_SENDER': ('Classroom System', '2530681892@qq.com')  # Default sender
 })
 
@@ -37,6 +31,7 @@ db_config = {
     'database': 'booking_system_db'  # Database name
 }
 
+
 def fetch_booking_info(booking_id):
     """
     Fetch booking details from the database using booking_id.
@@ -45,7 +40,7 @@ def fetch_booking_info(booking_id):
         booking_id (int): The booking ID for which to fetch details.
 
     Returns:
-        tuple: A tuple containing booking details (booking_id, user_email, room_name, room_location, start_time, end_time).
+        tuple: A tuple containing booking details (booking_id, user_email, room_name, room_location, start_time, end_time, booking_date).
         If no matching booking is found, returns None.
     """
     try:
@@ -59,7 +54,7 @@ def fetch_booking_info(booking_id):
         cursor = conn.cursor()
 
         query = """
-        SELECT b.booking_id, u.email, r.room_name, r.location, b.start_time, b.end_time
+        SELECT b.booking_id, u.email, r.room_name, r.location, b.start_time, b.end_time, b.booking_date
         FROM Bookings b
         JOIN Users u ON b.user_id = u.user_id
         JOIN Rooms r ON b.room_id = r.room_id
@@ -72,7 +67,7 @@ def fetch_booking_info(booking_id):
         conn.close()
 
         if booking_info:
-            return booking_info
+            return booking_info  # Now returns (booking_id, user_email, room_name, room_location, start_time, end_time, booking_date)
         else:
             print(f"Booking ID {booking_id} not found")
             return None
@@ -80,6 +75,7 @@ def fetch_booking_info(booking_id):
     except mysql.connector.Error as err:
         print(f"Database error: {err}")
         return None
+
 
 
 def send_email(to_email, subject, body):
@@ -101,21 +97,20 @@ def send_email(to_email, subject, body):
     except Exception as e:
         print(f'Failed to send email: {e}')
 
-# Updated email body formatting
 
+# ============================
+# Send Success Email
+# ============================
 @app.route('/send_email/success', methods=['POST'])
 def send_success_email():
     """
     Send an email notifying the user that their booking was successful.
-
     Request Format:
-        POST method with 'booking_id' in form data (int).
-
-    Response Format:
-        JSON with 'status' and 'message'.
-        'status' can be 'success' or 'failed'.
+        POST method with 'booking_id' in JSON body (int).
     """
-    booking_id = request.form.get('booking_id', type=int)
+    data = request.get_json()
+    booking_id = data.get('booking_id')
+
     if not booking_id:
         return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.'})
 
@@ -123,7 +118,6 @@ def send_success_email():
     if booking_info:
         booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
 
-        # Updated Email content with improved formatting
         subject = f"Booking Successful: Room {room_name}"
         body = f"""
         Dear {user_email},
@@ -145,19 +139,19 @@ def send_success_email():
         return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.'})
 
 
+# ============================
+# Send Rejected Email
+# ============================
 @app.route('/send_email/rejected', methods=['POST'])
 def send_rejected_email():
     """
     Send an email notifying the user that their booking was rejected by the administrator.
-
     Request Format:
-        POST method with 'booking_id' in form data (int).
-
-    Response Format:
-        JSON with 'status' and 'message'.
-        'status' can be 'success' or 'failed'.
+        POST method with 'booking_id' in JSON body (int).
     """
-    booking_id = request.form.get('booking_id', type=int)
+    data = request.get_json()
+    booking_id = data.get('booking_id')
+
     if not booking_id:
         return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.'})
 
@@ -165,7 +159,6 @@ def send_rejected_email():
     if booking_info:
         booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
 
-        # Updated Email content with improved formatting
         subject = f"Booking Rejected: Room {room_name}"
         body = f"""
         Dear {user_email},
@@ -186,19 +179,19 @@ def send_rejected_email():
         return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.'})
 
 
+# ============================
+# Send Cancelled Email
+# ============================
 @app.route('/send_email/cancelled', methods=['POST'])
 def send_cancelled_email():
     """
     Send an email notifying the user that their booking has been cancelled.
-
     Request Format:
-        POST method with 'booking_id' in form data (int).
-
-    Response Format:
-        JSON with 'status' and 'message'.
-        'status' can be 'success' or 'failed'.
+        POST method with 'booking_id' in JSON body (int).
     """
-    booking_id = request.form.get('booking_id', type=int)
+    data = request.get_json()
+    booking_id = data.get('booking_id')
+
     if not booking_id:
         return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.'})
 
@@ -206,7 +199,6 @@ def send_cancelled_email():
     if booking_info:
         booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
 
-        # Updated Email content with improved formatting
         subject = f"Booking Cancelled: Room {room_name}"
         body = f"""
         Dear {user_email},
@@ -227,19 +219,19 @@ def send_cancelled_email():
         return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.'})
 
 
+# ============================
+# Send Failed Email
+# ============================
 @app.route('/send_email/failed', methods=['POST'])
 def send_failed_email():
     """
     Send an email notifying the user that their booking failed.
-
     Request Format:
-        POST method with 'booking_id' in form data (int).
-
-    Response Format:
-        JSON with 'status' and 'message'.
-        'status' can be 'success' or 'failed'.
+        POST method with 'booking_id' in JSON body (int).
     """
-    booking_id = request.form.get('booking_id', type=int)
+    data = request.get_json()
+    booking_id = data.get('booking_id')
+
     if not booking_id:
         return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.'})
 
@@ -247,7 +239,6 @@ def send_failed_email():
     if booking_info:
         booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
 
-        # Updated Email content with improved formatting
         subject = f"Booking Failed: Room {room_name}"
         body = f"""
         Dear {user_email},
@@ -268,19 +259,19 @@ def send_failed_email():
         return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.'})
 
 
+# ============================
+# Send Reminder Email
+# ============================
 @app.route('/send_email/remind', methods=['POST'])
 def send_remind_email():
     """
     Send a reminder email notifying the user that their booking is about to begin.
-
     Request Format:
-        POST method with 'booking_id' in form data (int).
-
-    Response Format:
-        JSON with 'status' and 'message'.
-        'status' can be 'success' or 'failed'.
+        POST method with 'booking_id' in JSON body (int).
     """
-    booking_id = request.form.get('booking_id', type=int)
+    data = request.get_json()
+    booking_id = data.get('booking_id')
+
     if not booking_id:
         return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.'})
 
@@ -288,7 +279,6 @@ def send_remind_email():
     if booking_info:
         booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
 
-        # Updated Email content with improved formatting
         subject = f"Reminder: Your Booking for Room {room_name} is Approaching"
         body = f"""
         Dear {user_email},
@@ -309,6 +299,92 @@ def send_remind_email():
     else:
         return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.'})
 
+
+# ============================
+# Send Calendar Email
+# ============================
+import pytz
+from datetime import datetime
+
+@app.route('/send_email/calendar', methods=['POST'])
+def send_calendar_email():
+    """
+    Send an email with a pre-filled Outlook calendar event link based on booking details.
+    Request Format:
+        POST method with 'booking_id' in JSON body (int).
+    """
+    data = request.get_json()
+    booking_id = data.get('booking_id')
+
+    if not booking_id:
+        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.'})
+
+    booking_info = fetch_booking_info(booking_id)
+
+    if not booking_info:
+        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.'})
+
+    booking_id, user_email, room_name, room_location, start_time, end_time, booking_date = booking_info
+
+    # Define time zones
+    beijing_tz = pytz.timezone('Asia/Shanghai')  # Beijing Time zone (UTC+8)
+    utc_tz = pytz.timezone('UTC')  # UTC time zone
+
+    # Combine booking_date and start_time to create a datetime object
+    start_datetime_str = f"{booking_date} {start_time}"
+    end_datetime_str = f"{booking_date} {end_time}"
+
+    # Convert start and end times from Beijing time to UTC time
+    start_datetime_local = datetime.strptime(start_datetime_str, '%Y-%m-%d %H:%M:%S')
+    end_datetime_local = datetime.strptime(end_datetime_str, '%Y-%m-%d %H:%M:%S')
+
+    start_datetime_local = beijing_tz.localize(start_datetime_local)  # Localize to Beijing time
+    end_datetime_local = beijing_tz.localize(end_datetime_local)  # Localize to Beijing time
+
+    # Convert to UTC
+    start_datetime_utc = start_datetime_local.astimezone(utc_tz)
+    end_datetime_utc = end_datetime_local.astimezone(utc_tz)
+
+    # Format to the required "YYYY-MM-DDTHH:MM:SSZ" format
+    start_datetime = start_datetime_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
+    end_datetime = end_datetime_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+    summary = f"Booking for {room_name}"
+    description = f"Room: {room_name}, Location: {room_location}, Start time: {start_time}, End time: {end_time}"
+    location = room_location
+
+    # Generate Outlook calendar link using times from the booking
+    outlook_base_url = "https://outlook.office.com/calendar/0/deeplink/compose?"
+    outlook_params = {
+        "subject": summary,
+        "startdt": start_datetime,  # Use the start time from the booking in the exact required format
+        "enddt": end_datetime,  # Use the end time from the booking in the exact required format
+        "body": description,
+        "location": location
+    }
+    outlook_calendar_link = outlook_base_url + urllib.parse.urlencode(outlook_params)
+
+    subject = f"Add Your Booking to Outlook Calendar: {room_name}"
+
+    # Updated body_text to include HTML <a> tag for clickable hyperlink
+    body_text = f"""Hi,
+
+    Please use the following link to add your booking for room {room_name} to your Outlook calendar:
+    <a href="{outlook_calendar_link}">Add to Outlook Calendar</a>
+
+    Best regards,
+    Your Team
+    """
+
+    message = Message(subject, recipients=[user_email])
+    message.body = body_text  # Plain text version
+    message.html = body_text  # HTML version for email clients that support it
+
+    try:
+        mail.send(message)
+        return jsonify({'status': 'success', 'message': 'Calendar email sent successfully.'})
+    except Exception as e:
+        return jsonify({'status': 'failed', 'message': f"Error sending email: {e}"})
 
 
 @app.route('/')

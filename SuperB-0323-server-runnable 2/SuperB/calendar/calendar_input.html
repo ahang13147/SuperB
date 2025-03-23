@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Outlook Event</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            width: 60%;
+            margin: auto;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Create Outlook Event</h2>
+        <form id="eventForm">
+            <div class="form-group">
+                <label for="subject">Event Title:</label>
+                <input type="text" id="subject" name="subject" required>
+            </div>
+            <div class="form-group">
+                <label for="start">Start Time:</label>
+                <input type="datetime-local" id="start" name="start" required>
+            </div>
+            <div class="form-group">
+                <label for="end">End Time:</label>
+                <input type="datetime-local" id="end" name="end" required>
+            </div>
+            <div class="form-group">
+                <label for="location">Location:</label>
+                <input type="text" id="location" name="location" required>
+            </div>
+            <div class="form-group">
+                <label for="attendees">Attendees (comma separated):</label>
+                <input type="text" id="attendees" name="attendees">
+            </div>
+            <button type="submit">Create Event</button>
+        </form>
+        <p id="responseMessage"></p>
+    </div>
+
+    <script>
+        document.getElementById('eventForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const subject = document.getElementById('subject').value;
+            const start = document.getElementById('start').value;
+            const end = document.getElementById('end').value;
+            const location = document.getElementById('location').value;
+            const attendees = document.getElementById('attendees').value.split(',').map(item => item.trim());
+
+            const eventData = {
+                subject: subject,
+                start: start,
+                end: end,
+                location: location,
+                attendees: attendees
+            };
+
+            // Sending POST request to backend API
+            fetch('http://127.0.0.1:5000/create_event', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(eventData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('responseMessage').innerText = data.message;
+            })
+            .catch(error => {
+                document.getElementById('responseMessage').innerText = 'Error: ' + error.message;
+            });
+        });
+    </script>
+</body>
+</html>

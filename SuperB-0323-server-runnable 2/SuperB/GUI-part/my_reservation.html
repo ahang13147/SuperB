@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="my_reservations.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="my_reservation.css">
+    <link rel="stylesheet" href="sidebarAndNotice.css"> <!-- 引入侧边栏的CSS文件 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <title>My Reservations</title>
+
+</head>
+<body>
+    <div class="main-container">
+        <!-- 侧边栏 -->
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <a class="nav-item" href="booking_centre.html">
+                <i class="fas fa-calendar-alt nav-icon"></i>
+                Booking Center
+            </a>
+            <a class="nav-item active" href="my_reservation.html">
+                <i class="fas fa-list-ul nav-icon"></i>
+                My Bookings
+            </a>
+            <a class="nav-item" href="sidebarAndNotice.html">
+                <i class="fas fa-bell nav-icon"></i>
+                Notifications
+            </a>
+            <a class="nav-item" href="#">
+                <i class="fas fa-user-circle nav-icon"></i>
+                Profile (Coming Soon)
+            </a>
+            <a class="nav-item" href="manage room detail.html">
+                <i class="fas fa-user-circle nav-icon"></i>
+                Room Management
+            </a>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="content-area">
+            <header>
+                <h1>My Reservations</h1>
+            </header>
+
+            <!-- 原有内容容器 -->
+            <div class="reservations-container">
+                <!-- 预约卡片 1 -->
+<div class="reservation-card" data-reservation-id="1">
+    <div class="status-indicator">Confirmed</div>
+    <div class="reservation-info">
+        <label>Date:</label>
+        <span data-date="2023-10-25">2023-10-25</span>
+    </div>
+    <div class="reservation-info">
+        <label>Time:</label>
+        <span data-time="10:00 - 12:00">10:00 - 12:00</span>
+    </div>
+    <div class="reservation-info">
+        <label>Room:</label>
+        <span data-room="101 (Building A)">101 (Building A)</span>
+    </div>
+                        <div class="reservation-info">
+                        <label>Capacity:</label>
+                        <span>30 seats</span>
+                    </div>
+                    <button class="cancel-btn">Cancel Reservation</button>
+    <!-- ...其他内容保持不变... -->
+</div>
+
+
+
+            </div>
+        </div>
+    </div>
+
+<!-- 修改弹窗内容 -->
+<div class="modal" id="cancelModal">
+    <div class="modal-content">
+        <h3>Confirm Cancellation</h3>
+        <p>Are you sure you want to cancel this reservation?</p>
+        <div class="modal-actions">
+            <button class="modal-btn close-btn" id="closeModal">Close</button>
+            <button class="modal-btn confirm-btn" id="confirmCancel">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<script src="common.js"></script>
+</body>
+</html>
