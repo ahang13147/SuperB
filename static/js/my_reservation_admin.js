@@ -98,6 +98,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.querySelector('.status-indicator').style.backgroundColor = 'var(--danger-color)';
                 card.querySelector('.cancel-btn').disabled = true;
                 modal.style.display = 'none';
+
+                   // todo :add send email to user
+                const emailResponse = await fetch('http://localhost:8000/send_email/cancelled_user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        booking_id: reservation.booking_id
+                    })
+                });
+                if (emailResponse.ok) {
+                    console.log('Cancellation email sent successfully.');
+                } else {
+                    console.error('Failed to send cancellation email.');
+                }
+                //
                 loadReservations();
             } else {
                 alert('Failed to cancel reservation');

@@ -299,6 +299,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             alert('Booking successful!');
             elements.modal.style.display = 'none';
+
+            // todo: add new function for send email
+            await fetch('http://localhost:8000/send_email/success', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    booking_id: data.booking_id  // 确保后端返回了 booking_id
+                })
+            });
             await fetchClassrooms();
         } catch (error) {
             console.error('Booking Error:', error);
