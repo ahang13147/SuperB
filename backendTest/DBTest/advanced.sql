@@ -159,6 +159,8 @@ DELIMITER ;
 
 
 
+
+
 DELIMITER //
 
 -- 触发器：在插入一条 Issue 后自动发送通知，并根据 Issue 状态更新 Rooms 表的 room_status
@@ -190,6 +192,7 @@ CREATE TRIGGER after_issue_update
 AFTER UPDATE ON Issues
 FOR EACH ROW
 BEGIN
+
     IF NEW.status <> OLD.status THEN
         INSERT INTO Notifications (user_id, message, notification_action)
         VALUES (
@@ -214,50 +217,59 @@ DELIMITER ;
 
 
 
+
+
 DELIMITER //
 
 CREATE TRIGGER trg_booking_status_change
 AFTER UPDATE ON Bookings
 FOR EACH ROW
 BEGIN
-    -- 1) 先声明所有需要的变量
-    DECLARE msg VARCHAR(512);
+	DECLARE msg VARCHAR(512);
+    DECLARE v_username VARCHAR(255);
+    DECLARE v_roomname VARCHAR(255);
 
-    -- 2) 然后再写逻辑，比如 IF 判断
-    IF NEW.status <> OLD.status THEN
-        IF NEW.status = 'approved' THEN
-            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has been approved. Approved by administrator.');
-        ELSEIF NEW.status = 'rejected' THEN
-            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has been rejected. Rejected by administrator.');
-        ELSEIF NEW.status = 'changed' THEN
-            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has been changed. The room has issues and has been reallocated for you.');
-        ELSEIF NEW.status = 'pending' THEN
-            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') is now pending. Your booking is pending review.');
-        ELSEIF NEW.status = 'canceled' THEN
-            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has been canceled. You have successfully canceled your booking.');
-        ELSEIF NEW.status = 'failed' THEN
-            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has failed. Booking failed, possibly due to room conflict (someone else booked the room).');
-        ELSE
-            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') status has been updated to ', NEW.status, '.');
-        END IF;
+    -- 查询用户名称和房间名称
+SELECT username INTO v_username FROM Users WHERE user_id = NEW.user_id;
+SELECT room_name INTO v_roomname FROM Rooms WHERE room_id = NEW.room_id;
 
-        INSERT INTO Notifications(user_id, message, notification_action)
-        VALUES (
-            NEW.user_id,
-            msg,
-            CASE
-                WHEN NEW.status = 'approved' THEN 'confirmation'
-                WHEN NEW.status = 'rejected' THEN 'rejected'
-                WHEN NEW.status = 'changed' THEN 'changed'
-                WHEN NEW.status = 'pending' THEN 'reminder'
-                WHEN NEW.status = 'canceled' THEN 'cancellation'
-                WHEN NEW.status = 'failed' THEN 'failed'
-                ELSE 'info'
-            END
-        );
+IF NEW.status <> OLD.status THEN
+    IF NEW.status = 'approved' THEN
+        SET msg = CONCAT('Dear ', v_username, ' (User ID: ', NEW.user_id, '), your booking (Booking ID: ', NEW.booking_id, ') for room ', v_roomname, ' (Room ID: ', NEW.room_id, ') has been approved by the administrator.');
+    ELSEIF NEW.status = 'rejected' THEN
+        SET msg = CONCAT('Dear ', v_username, ' (User ID: ', NEW.user_id, '), your booking (Booking ID: ', NEW.booking_id, ') for room ', v_roomname, ' (Room ID: ', NEW.room_id, ') has been rejected by the administrator.');
+    ELSEIF NEW.status = 'changed' THEN
+        SET msg = CONCAT('Dear ', v_username, ' (User ID: ', NEW.user_id, '), your booking (Booking ID: ', NEW.booking_id, ') for room ', v_roomname, ' (Room ID: ', NEW.room_id, ') has been changed due to room issues and has been reallocated for you.');
+    ELSEIF NEW.status = 'pending' THEN
+        SET msg = CONCAT('Dear ', v_username, ' (User ID: ', NEW.user_id, '), your booking (Booking ID: ', NEW.booking_id, ') for room ', v_roomname, ' (Room ID: ', NEW.room_id, ') is now pending. Please wait for review.');
+    ELSEIF NEW.status = 'canceled' THEN
+        SET msg = CONCAT('Dear ', v_username, ' (User ID: ', NEW.user_id, '), you have successfully canceled your booking (Booking ID: ', NEW.booking_id, ') for room ', v_roomname, ' (Room ID: ', NEW.room_id, ').');
+    ELSEIF NEW.status = 'failed' THEN
+        SET msg = CONCAT('Dear ', v_username, ' (User ID: ', NEW.user_id, '), your booking (Booking ID: ', NEW.booking_id, ') for room ', v_roomname, ' (Room ID: ', NEW.room_id, ') has failed, possibly due to a room conflict (someone else booked the room).');
+    ELSE
+        SET msg = CONCAT('Dear ', v_username, ' (User ID: ', NEW.user_id, '), your booking (Booking ID: ', NEW.booking_id, ') for room ', v_roomname, ' (Room ID: ', NEW.room_id, ') status has been updated to ', NEW.status, '.');
     END IF;
+
+    INSERT INTO Notifications(user_id, message, notification_action)
+    VALUES (
+        NEW.user_id,
+        msg,
+        CASE
+            WHEN NEW.status = 'approved' THEN 'confirmation'
+            WHEN NEW.status = 'rejected' THEN 'rejected'
+            WHEN NEW.status = 'changed' THEN 'changed'
+            WHEN NEW.status = 'pending' THEN 'reminder'
+            WHEN NEW.status = 'canceled' THEN 'cancellation'
+            WHEN NEW.status = 'failed' THEN 'failed'
+            ELSE 'info'
+        END
+    );
+END IF;
 END //
+
 DELIMITER ;
+
+
 
 
 
@@ -268,13 +280,19 @@ AFTER INSERT ON Bookings
 FOR EACH ROW
 BEGIN
     DECLARE notif_msg VARCHAR(512);
+	DECLARE v_username VARCHAR(255);
+    DECLARE v_roomname VARCHAR(255);
     DECLARE notif_action ENUM('confirmation', 'reminder', 'cancellation', 'changed', 'failed', 'rejected', 'alert', 'info');
 
+	-- 查询用户名称和房间名称
+	SELECT username INTO v_username FROM Users WHERE user_id = NEW.user_id;
+	SELECT room_name INTO v_roomname FROM Rooms WHERE room_id = NEW.room_id;
+
     IF NEW.status = 'pending' THEN
-        SET notif_msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') is pending approval.Need to wait for administrator confirmation');
+        SET notif_msg = CONCAT('Dear ', v_username, ' (User ID: ', NEW.user_id, '), your booking (Booking ID: ', NEW.booking_id, ') for room ', v_roomname, ' (Room ID: ', NEW.room_id, ') is now pending. Please wait for review of admin.');
         SET notif_action = 'reminder';
     ELSEIF NEW.status = 'approved' THEN
-        SET notif_msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has been approved. Please arrive at your booked room on time for use.');
+        SET notif_msg = CONCAT('Dear ', v_username, ' (User ID: ', NEW.user_id, '), your booking (Booking ID: ', NEW.booking_id, ') for room ', v_roomname, ' (Room ID: ', NEW.room_id, ') has been approved automatically.Please arrive at your reserved classroom on time');
         SET notif_action = 'confirmation';
     ELSE
         SET notif_msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has been added with status ', NEW.status, '.');
@@ -287,3 +305,26 @@ END //
 
 DELIMITER ;
 
+
+
+
+
+
+SET GLOBAL event_scheduler = ON;
+
+DELIMITER $$
+
+CREATE EVENT auto_remove_expired_blacklist
+ON SCHEDULE EVERY 1 MINUTE
+ON COMPLETION PRESERVE
+ENABLE
+COMMENT '自动删除过期黑名单'
+DO
+BEGIN
+    -- 使用 TIMESTAMP(end_date, end_time) 确保时间类型正确
+    DELETE FROM Blacklist
+    WHERE TIMESTAMP(end_date, end_time) < NOW();
+END$$
+
+
+DELIMITER ;
