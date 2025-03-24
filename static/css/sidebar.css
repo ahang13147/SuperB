@@ -22,30 +22,12 @@
     top: 0;
     background: linear-gradient(180deg, #2b5876 0%, #4e4376 100%);
     padding: 30px 0;
-    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
 
-    /* 新增滚动条样式 */
-    overflow-y: auto;
-    scrollbar-width: thin; /* 火狐浏览器 */
-    scrollbar-color: rgba(255,255,255,0.2) transparent; /* 火狐浏览器 */
-}
-
-/* Chrome/Edge/Safari 滚动条样式 */
-.sidebar::-webkit-scrollbar {
-    width: 6px;
-}
-.sidebar::-webkit-scrollbar-track {
-    background: transparent;
-}
-.sidebar::-webkit-scrollbar-thumb {
-    background-color: rgba(255,255,255,0.2);
-    border-radius: 3px;
 }
 
 .content-area {
     margin-left: 200px;
-    width: calc(100% - 200px);
+    /* width: calc(100% - 200px); */
     min-height: 1080px;
     padding: 40px;
     box-sizing: border-box;
@@ -85,63 +67,64 @@
     margin-right: 15px;
 }
 
-/* 手机端汉堡菜单样式 */
+
 .hamburger-menu {
-    display: none; /* 默认隐藏 */
+    display: none;
     position: fixed;
     left: 20px;
     top: 20px;
-    z-index: 999; /* 确保在模态框上方 */
+    z-index: 999;
     font-size: 1.5rem;
     cursor: pointer;
-    color: #333; /* 确保图标可见 */
+    color: #333;
 }
 
-/* 手机端响应式布局 */
+
 @media (max-width: 768px) {
     .sidebar {
         position: fixed;
-        left: -250px; /* 初始隐藏 */
+        left: -250px;
         width: 250px;
         height: 100%;
         transition: 0.3s;
         background: #4365E2;
         box-shadow: 2px 0 5px rgba(0,0,0,0.2);
         z-index: 1000;
+        flex-direction: column !important;
+        align-items: flex-start !important;
     }
 
     .hamburger-menu {
-        display: block; /* 手机端显示 */
+        display: block;
     }
 
     .sidebar.active {
-        left: 0; /* 展开侧边栏 */
+        left: 0;
     }
 
     .content-area {
         margin-left: 0;
-        padding-top: 60px; /* 防止内容被遮挡 */
+        padding-top: 60px;
     }
     /*logo position control*/
-    .sidebar-logo {
-      position: absolute;
-      bottom: 20px;
-      left: 40px!important;
-      width: calc(100% - 40px);
+   .sidebar-logo {
+        position: absolute !important;
+        bottom: 10px !important;
+        left: 40px !important;
+        width: calc(100% - 50px) !important;
+        z-index: 1001;
     }
-    /* Control image size */
+
     .sidebar-logo img {
-      width: 100%;
-      max-width: 165px !important;
-      height: auto;
-      opacity: 0.7 !important;
-      transition: opacity 0.3s;
+        max-width: 200px !important;
+        opacity: 1 !important;
+        display: block !important;
     }
 }
 
-/* 添加过渡动画 */
+
 .sidebar {
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
 }
 
 .sidebar-logo {
@@ -151,16 +134,108 @@
   width: calc(100% - 40px);
 }
 
-/* Control image size */
+
 .sidebar-logo img {
   width: 100%;
-  max-width: 220px;
+  max-width: 140px !important;
   height: auto;
-  opacity: 0.9;
+  opacity: 0.9 !important;
   transition: opacity 0.3s;
 }
 
-/* Hover effect (optional) */
 .sidebar-logo img:hover {
   opacity: 1;
 }
+@media (min-width: 769px) {
+    .sidebar {
+        left: 0 ;
+    }
+
+    .hamburger-menu {
+        display: none;
+    }
+
+    .content-area {
+        margin-left: 200px;
+    }
+        .sidebar-logo {
+        bottom: 40px !important;
+        left: 30px !important;
+    }
+    .sidebar-logo img {
+        max-width: 240px !important;
+}
+
+@media (min-width: 769px) {
+    .sidebar {
+        width: 220px;
+    }
+
+    .nav-item {
+        padding: 14px 20px;
+        margin: 6px 10px;
+        font-size: 0.95rem;
+    }
+
+    .nav-icon {
+        font-size: 1.1rem;
+        margin-right: 12px;
+    }
+
+    .nav-item span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex-shrink: 0;
+    }
+
+    .content-area {
+        margin-left: 220px;
+        width: calc(100% - 220px);
+    }
+}
+
+
+
+
+.nav-menu {
+    overflow-y: auto;
+    flex-grow: 1;
+    padding-bottom: 80px;
+}
+
+
+@media (max-width: 768px) {
+
+    .sidebar.active {
+        width: 280px;
+        left: 0;
+    }
+
+
+    .sidebar-logo {
+        left: 20px;
+        width: calc(100% - 40px);
+        z-index: 1000;
+    }
+
+    .sidebar-logo img {
+        max-width: 160px;
+    }
+}
+
+
+@media (min-width: 769px) {
+    .sidebar {
+        width: 220px !important;
+    }
+    .nav-item span {
+        white-space: nowrap !important;
+        z-index: 1001;
+    }
+}
+@media screen and (min-width: 700px) {
+  .sidebar-logo {
+    display: none;
+  }
+}}

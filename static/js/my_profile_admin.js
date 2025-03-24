@@ -1,12 +1,12 @@
 // Configures constants
-const API_BASE = 'http://localhost:8000';
-const DEFAULT_USER_ID = 1;
+const API_BASE = 'https://www.diicsu.top:8000'; // Change the IP address to the server address
+const DEFAULT_USER_ID = 1;  // Default user ID, used for backup only
 
 // Initialize the page
 document.addEventListener('DOMContentLoaded', () => {
     initializeProfile();
 
-    // 确保在DOM加载完成后才绑定事件
+    // Make sure to bind events only after the DOM has loaded
     const form = document.getElementById('profile-form');
     if (form) {
         form.addEventListener('submit', handleFormSubmit);
@@ -42,7 +42,7 @@ async function fetchUserData() {
             headers: {
                 'Content-Type': 'application/json',
             },
-//            body: JSON.stringify({ user_id: DEFAULT_USER_ID }),
+            credentials: 'include' // Let the request carry a Cookie
         });
 
         if (!response.ok) {
@@ -75,7 +75,7 @@ function updateProfileUI(user) {
 function toggleEditMode() {
     const inputs = document.querySelectorAll('#profile-form input');
     inputs.forEach(input => {
-        if (input.id !== 'email') { // 跳过邮箱输入框
+        if (input.id !== 'email') { // Skip the mailbox input box
             input.disabled = false;
         }
     });
@@ -97,26 +97,10 @@ function cancelEditMode() {
     initializeProfile();
 }
 
-//document.addEventListener('DOMContentLoaded', function() {
-//    const profileForm = document.getElementById('profile-form');
-//    if (profileForm) {
-//        profileForm.addEventListener('submit', async (e) => {
-//            e.preventDefault();
-//            try {
-//                await updateUserProfile();
-//            } catch (error) {
-//                showError(error.message);
-//            }
-//        });
-//    } else {
-//        console.error('Profile form not found!');
-//    }
-//});
-
 // Update user profile
 async function updateUserProfile() {
     const updateData = {
-        user_id: DEFAULT_USER_ID,
+        user_id: DEFAULT_USER_ID, // You are advised to obtain the ID of the current user based on the session
         username: document.getElementById('full-name').value,
         email: document.getElementById('email').value,
         phone_number: document.getElementById('phone').value
@@ -128,6 +112,7 @@ async function updateUserProfile() {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',  // Carry Cookie
             body: JSON.stringify(updateData),
         });
 

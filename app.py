@@ -1,28 +1,33 @@
-#  @version: 3/16/2025
+#  @version: 3/12/2025
 #  @author: Xin Yu, Siyan Guo, Zibang Nie
 # add: finished-workflow-booking get api
 from contextlib import closing
 
 from flask import Flask, redirect, request, session, url_for, render_template, jsonify
+from flask_mail import Mail, Message
 from functools import wraps
 from flask_cors import CORS
 import mysql.connector
 import requests
-# from bs4 import BeautifulSoup
-# import json
-# import re
-# import time
+import random
+from bs4 import BeautifulSoup
+import json
+import re
+import time
 from datetime import date, datetime, timedelta
 import yaml
 import msal
+import csv
+import pymysql
+
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 # 设置 session 持久化
 app.config['SESSION_PERMANENT'] = True  # 启用持久会话
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=3)  # Set session duration to 3 hours
-CORS(app)  # 允许所有来源访问
+CORS(app, supports_credentials=True, origins=["https://www.diicsu.top:8000"])  # 允许所有来源访问
 app.secret_key = 'your-secret-key-here'
-
 
 
 # ---------------------------- import config----------------------------
@@ -36,6 +41,522 @@ app.secret_key = 'your-secret-key-here'
 # def get_db_connection():
 #     return mysql.connector.connect(**db_config)
 
+#--------------------------email-config--------------------------
+
+app.config.update({
+    'MAIL_SERVER': 'smtp.qq.com',
+    'MAIL_PORT': 587,
+    'MAIL_USE_TLS': True,       # 使用 TLS 加密
+    'MAIL_USE_SSL': False,      # 不使用 SSL
+    'MAIL_USERNAME': '2530681892@qq.com',
+    'MAIL_PASSWORD': 'gnpunomuoqwhechd',
+    'MAIL_DEFAULT_SENDER': ('Classroom System', '2530681892@qq.com')
+})
+
+#-------------------------profile-photo-config----------------
+
+app.config['UPLOAD_FOLDER'] = 'static/uploads/avatars'  # 实际存储路径
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 限制为 2MB
+
+#-------------------------profile-photo-----------------------
+
+@app.route('/upload-avatar', methods=['POST'])
+def upload_avatar():
+
+    user_id = get_user_id_by_email()  # 调用你的现有方法
+    if not user_id:
+        return jsonify({'error': 'User not found'}), 404
+
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'Empty filename'}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({'error': 'File type not allowed'}), 400
+
+    # 生成唯一文件名
+    filename = secure_filename(file.filename)
+    unique_name = f"{uuid.uuid4().hex}_{filename}"
+    save_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_name)
+    
+    # 保存文件
+    file.save(save_path)
+
+    # --- 修改用户记录关联逻辑 ---
+    user = User.query.filter_by(user_id=user_id).first()  # 根据你的字段名 user_id 查询
+    if not user:
+        return jsonify({'error': 'User database record not found'}), 404
+
+    # 更新头像路径（注意字段名是否叫 avatar_path）
+    user.avatar_path = os.path.join('avatars', unique_name)
+    db.session.commit()
+
+    # 生成访问 URL
+    avatar_url = url_for('static', filename=f"uploads/{user.avatar_path}", _external=True)
+    
+    return jsonify({'url': avatar_url})
+
+
+# 允许的文件类型白名单
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+#--------------------------email---------------------------
+
+mail = Mail(app)
+verification_codes = {}  # 用于存储各邮箱的验证码及发送时间
+code_expiry = 300  # 验证码有效时间，单位为秒（5 分钟）
+
+
+@app.route('/send_verification', methods=['POST'])
+def send_verification():
+    """
+    接收 JSON 格式的请求数据，包含邮箱地址，生成并发送验证码到该邮箱。
+    要求邮箱必须以 "@dundee.ac.uk" 结尾。
+
+    请求示例（JSON）:
+    {
+        "email": "your_email@dundee.ac.uk"
+    }
+
+    返回示例（JSON）:
+    成功:
+    {
+        "status": "success",
+        "message": "Verification code sent. Check your email."
+    }
+    失败:
+    {
+        "status": "failed",
+        "message": "错误信息..."
+    }
+    """
+    data = request.get_json()
+    if not data or 'email' not in data:
+        return jsonify({'status': 'failed', 'message': 'Missing email parameter'}), 400
+
+    email = data.get('email')
+
+    if not email.endswith('@dundee.ac.uk'):
+        return jsonify({'status': 'failed', 'message': 'The email must be from the dundee.ac.uk domain'}), 400
+
+    # 生成随机6位验证码
+    verification_code = random.randint(100000, 999999)
+    # 将验证码及当前时间存入字典
+    verification_codes[email] = {
+        'code': verification_code,
+        'timestamp': time.time()
+    }
+
+    try:
+        # 构造邮件消息
+        msg = Message('Verification Code - Classroom System Login', recipients=[email])
+        msg.body = f'Your verification code is: {verification_code}'
+        msg.html = f'<p>Your verification code is: <strong>{verification_code}</strong></p>'
+        # 发送邮件
+        mail.send(msg)
+        return jsonify({'status': 'success', 'message': 'Verification code sent. Check your email.'})
+    except Exception as e:
+        return jsonify({'status': 'failed', 'message': f'Failed to send email: {str(e)}'}), 500
+
+
+    
+@app.route('/verify', methods=['POST'])
+def verify():
+    """
+    验证验证码并处理用户跳转
+    请求格式（JSON）:
+    {
+        "email": "user@example.com",
+        "code": "123456"
+    }
+    """
+    data = request.get_json()
+        
+    # 基础参数校验
+    if not data or 'email' not in data or 'code' not in data:
+        return jsonify({'status': 'failed', 'message': 'Missing required parameters'}), 400
+
+    email = data['email'].lower().strip()  # 邮箱标准化处理
+    code = data['code']
+
+    # 验证码格式检查
+    try:
+        entered_code = int(code)
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'Invalid code format'}), 400
+
+    # 验证码有效性检查
+    if email not in verification_codes:
+        return jsonify({'status': 'failed', 'message': 'Invalid email address'}), 400
+
+    stored_data = verification_codes[email]
+    if time.time() - stored_data['timestamp'] > code_expiry:
+        del verification_codes[email]
+        return jsonify({'status': 'failed', 'message': 'Verification code expired'}), 400
+
+        # 核心验证逻辑
+    if entered_code != stored_data['code']:
+        return jsonify({'status': 'failed', 'message': 'Incorrect verification code'}), 400
+
+        # 验证通过后清理验证码
+    del verification_codes[email]
+
+        # 设置会话信息
+    session.permanent = True
+    session['user_email'] = email
+
+    if is_user_blacklisted():  # 假设已实现黑名单检查函数
+        return jsonify({
+            'status': 'success',
+            'redirect': url_for('black')
+        })
+
+        # 获取用户角色
+    try:
+        role_api_url = f"https://www.diicsu.top:8000/login_get_role?email={email}"
+        role_response = requests.get(role_api_url, verify=False, timeout=5)
+            
+        if role_response.status_code == 200:
+            role_data = role_response.json()
+            user_role = role_data.get('role', 'user')
+            session['user_role'] = user_role
+        else:
+            session['user_role'] = 'student'  # 默认角色
+    except Exception as e:
+        app.logger.error(f"Role API error: {str(e)}")
+        session['user_role'] = 'user'
+
+        # 角色导向跳转
+    if session.get('user_role') == 'admin':
+        return jsonify({
+            'status': 'success',
+            'redirect': url_for('booking_centre_admin')
+        })
+    else:
+        return jsonify({
+            'status': 'success',
+            'redirect': url_for('booking_centre')
+        })
+
+#----------------------------status_email----------------------
+
+
+
+def fetch_booking_info(booking_id):
+    """
+    Fetch booking details from the database using booking_id.
+
+    Args:
+        booking_id (int): The booking ID for which to fetch details.
+
+    Returns:
+        tuple: A tuple containing booking details
+               (booking_id, user_email, room_name, room_location, start_time, end_time).
+        If no matching booking is found, returns None.
+    """
+    try:
+        conn = mysql.connector.connect(
+            host=db_config['host'],
+            user=db_config['user'],
+            password=db_config['password'],
+            database=db_config['database'],
+            ssl_disabled=True  # Disable SSL
+        )
+        cursor = conn.cursor()
+
+        query = """
+        SELECT b.booking_id, u.email, r.room_name, r.location, b.start_time, b.end_time
+        FROM Bookings b
+        JOIN Users u ON b.user_id = u.user_id
+        JOIN Rooms r ON b.room_id = r.room_id
+        WHERE b.booking_id = %s
+        """
+        cursor.execute(query, (booking_id,))
+        booking_info = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if booking_info:
+            return booking_info
+        else:
+            print(f"Booking ID {booking_id} not found")
+            return None
+
+    except mysql.connector.Error as err:
+        print(f"Database error: {err}")
+        return None
+
+def send_email(to_email, subject, body):
+    """
+    Send an email to the specified recipient.
+
+    Args:
+        to_email (str): Recipient's email address.
+        subject (str): The subject of the email.
+        body (str): The body of the email.
+    """
+    try:
+        msg = Message(subject, recipients=[to_email])
+        msg.body = body
+        msg.html = body  # Use HTML format for the email
+
+        mail.send(msg)
+        print(f'Email sent to {to_email}')
+    except Exception as e:
+        print(f'Failed to send email: {e}')
+
+# -------------------------------
+# 以下各接口均从 JSON 请求中获取 booking_id，并在返回 JSON 中包含 booking_id
+# -------------------------------
+
+@app.route('/send_email/success', methods=['POST'])
+def send_success_email():
+    """
+    Send an email notifying the user that their booking was successful.
+
+    Request Format (JSON):
+    {
+        "booking_id": 123
+    }
+
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+        "booking_id": 123
+    }
+    """
+    data = request.get_json()
+    if not data or 'booking_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.', 'booking_id': None}), 400
+
+    try:
+        booking_id = int(data.get('booking_id'))
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'booking_id must be an integer.', 'booking_id': None}), 400
+
+    booking_info = fetch_booking_info(booking_id)
+    if booking_info:
+        booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
+
+        subject = f"Booking Successful: Room {room_name}"
+        body = f"""
+        Dear {user_email},<br><br>
+
+        Congratulations! Your room booking has been successfully confirmed. Below are your booking details:<br><br>
+        <strong>Booking ID:</strong> {booking_id}<br>
+        <strong>Room Name:</strong> {room_name}<br>
+        <strong>Room Location:</strong> {room_location}<br>
+        <strong>Start Time:</strong> {start_time}<br>
+        <strong>End Time:</strong> {end_time}<br><br>
+
+        Thank you for using our system, and we hope you enjoy your booking!
+        """
+        send_email(user_email, subject, body)
+        return jsonify({'status': 'success', 'message': 'Booking successful email sent!', 'booking_id': booking_id})
+    else:
+        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+
+@app.route('/send_email/rejected', methods=['POST'])
+def send_rejected_email():
+    """
+    Send an email notifying the user that their booking was rejected by the administrator.
+
+    Request Format (JSON):
+    {
+        "booking_id": 123
+    }
+
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+        "booking_id": 123
+    }
+    """
+    data = request.get_json()
+    if not data or 'booking_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.', 'booking_id': None}), 400
+
+    try:
+        booking_id = int(data.get('booking_id'))
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'booking_id must be an integer.', 'booking_id': None}), 400
+
+    booking_info = fetch_booking_info(booking_id)
+    if booking_info:
+        booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
+
+        subject = f"Booking Rejected: Room {room_name}"
+        body = f"""
+        Dear {user_email},<br><br>
+
+        We regret to inform you that your room booking request has been rejected by the administrator. Below are your booking details:<br><br>
+        <strong>Booking ID:</strong> {booking_id}<br>
+        <strong>Room Name:</strong> {room_name}<br>
+        <strong>Room Location:</strong> {room_location}<br>
+        <strong>Booking Time:</strong> {start_time} - {end_time}<br><br>
+
+        Please contact the administrator for further clarification.
+        """
+        send_email(user_email, subject, body)
+        return jsonify({'status': 'success', 'message': 'Booking rejected email sent!', 'booking_id': booking_id})
+    else:
+        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+
+@app.route('/send_email/cancelled', methods=['POST'])
+def send_cancelled_email():
+    """
+    Send an email notifying the user that their booking has been cancelled.
+
+    Request Format (JSON):
+    {
+        "booking_id": 123
+    }
+
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+        "booking_id": 123
+    }
+    """
+    data = request.get_json()
+    if not data or 'booking_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.', 'booking_id': None}), 400
+
+    try:
+        booking_id = int(data.get('booking_id'))
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'booking_id must be an integer.', 'booking_id': None}), 400
+
+    booking_info = fetch_booking_info(booking_id)
+    if booking_info:
+        booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
+
+        subject = f"Booking Cancelled: Room {room_name}"
+        body = f"""
+        Dear {user_email},<br><br>
+
+        We regret to inform you that your room booking has been cancelled. Below are your booking details:<br><br>
+        <strong>Booking ID:</strong> {booking_id}<br>
+        <strong>Room Name:</strong> {room_name}<br>
+        <strong>Room Location:</strong> {room_location}<br>
+        <strong>Booking Time:</strong> {start_time} - {end_time}<br><br>
+
+        Thank you for your understanding.
+        """
+        send_email(user_email, subject, body)
+        return jsonify({'status': 'success', 'message': 'Booking cancelled email sent!', 'booking_id': booking_id})
+    else:
+        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+
+@app.route('/send_email/failed', methods=['POST'])
+def send_failed_email():
+    """
+    Send an email notifying the user that their booking failed.
+
+    Request Format (JSON):
+    {
+        "booking_id": 123
+    }
+
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+        "booking_id": 123
+    }
+    """
+    data = request.get_json()
+    if not data or 'booking_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.', 'booking_id': None}), 400
+
+    try:
+        booking_id = int(data.get('booking_id'))
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'booking_id must be an integer.', 'booking_id': None}), 400
+
+    booking_info = fetch_booking_info(booking_id)
+    if booking_info:
+        booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
+
+        subject = f"Booking Failed: Room {room_name}"
+        body = f"""
+        Dear {user_email},<br><br>
+
+        We regret to inform you that your room booking has failed. Below are your booking details:<br><br>
+        <strong>Booking ID:</strong> {booking_id}<br>
+        <strong>Room Name:</strong> {room_name}<br>
+        <strong>Room Location:</strong> {room_location}<br>
+        <strong>Booking Time:</strong> {start_time} - {end_time}<br><br>
+
+        Please check your booking details or contact the administrator for further assistance.
+        """
+        send_email(user_email, subject, body)
+        return jsonify({'status': 'success', 'message': 'Booking failed email sent!', 'booking_id': booking_id})
+    else:
+        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+
+@app.route('/send_email/remind', methods=['POST'])
+def send_remind_email():
+    """
+    Send a reminder email notifying the user that their booking is about to begin.
+
+    Request Format (JSON):
+    {
+        "booking_id": 123
+    }
+
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+        "booking_id": 123
+    }
+    """
+    data = request.get_json()
+    if not data or 'booking_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.', 'booking_id': None}), 400
+
+    try:
+        booking_id = int(data.get('booking_id'))
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'booking_id must be an integer.', 'booking_id': None}), 400
+
+    booking_info = fetch_booking_info(booking_id)
+    if booking_info:
+        booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
+
+        subject = f"Reminder: Your Booking for Room {room_name} is Approaching"
+        body = f"""
+        Dear {user_email},<br><br>
+
+        This is a reminder that your room booking is about to begin. Below are your booking details:<br><br>
+        <strong>Booking ID:</strong> {booking_id}<br>
+        <strong>Room Name:</strong> {room_name}<br>
+        <strong>Room Location:</strong> {room_location}<br>
+        <strong>Start Time:</strong> {start_time}<br>
+        <strong>End Time:</strong> {end_time}<br><br>
+
+        Please head to the room in time. Thank you.
+        """
+        send_email(user_email, subject, body)
+        return jsonify({'status': 'success', 'message': 'Reminder email sent!', 'booking_id': booking_id})
+    else:
+        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+
+
+
+
+#------------------------------------------------------------
 
 def load_config(config_path="config.yaml"):
     """加载配置文件并返回配置字典"""
@@ -137,43 +658,37 @@ def get_room_id(room_name):
 # 查询用户ID
 def get_user_id_by_email():
     user_email = session.get('user_email')
-
     if not user_email:
         return None  # 如果 session 中没有 user_email，返回 None
 
     try:
-        with closing(get_db_connection()) as conn:
-            with conn.cursor(dictionary=True) as cursor:
-                # 根据 email 查询 user_id
-                cursor.execute("SELECT user_id FROM Users WHERE email = %s", (user_email,))
-                user = cursor.fetchone()
+        # 获取数据库连接
+        conn = get_db_connection()
+        # 手动创建 cursor（字典格式）
+        cursor = conn.cursor(dictionary=True)
+        try:
+            # 根据 email 查询 user_id
+            cursor.execute("SELECT user_id FROM Users WHERE email = %s", (user_email,))
+            user = cursor.fetchone()
+        finally:
+            cursor.close()  # 手动关闭 cursor
+        conn.close()
 
-                if user:
-                    return user['user_id']  # 返回 user_id
-                else:
-                    return None  # 如果没有找到对应的用户，返回 None
+        if user:
+            return user['user_id']  # 返回 user_id
+        else:
+            return None  # 如果没有找到对应的用户，返回 None
     except Exception as e:
         print(f"Database error: {str(e)}")
         return None  # 如果数据库查询出错，返回 None
 
 
 # ---------------------------- login ----------------------------
-
-
 @app.route('/')
 def index():
-    #todo
+    # todo
     session.permanent = True  # 强制将 session 设置为持久化
-    return redirect(url_for('login_page'))
-
-
-@app.route('/login')
-def login_page():
-    return '''
-    <script>
-        window.location.href = "/auth";
-    </script>
-    '''
+    return redirect(url_for('login'))
 
 
 @app.route('/auth')
@@ -207,15 +722,18 @@ def auth_callback():
         return f"认证错误：{result.get('error_description')}", 500
 
 
-
-#todo: add two new function
+# todo: add two new function
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_email' not in session:
             return redirect(url_for('login'))  # 如果未登录，重定向到登录页面
+        if is_user_blacklisted():
+            return redirect(url_for('black')) 
         return f(*args, **kwargs)
+
     return decorated_function
+
 
 # 角色验证装饰器
 def role_required(role):
@@ -225,59 +743,37 @@ def role_required(role):
             if 'user_role' not in session or session['user_role'] != role:
                 return redirect(url_for('login'))  # 如果不是指定角色，重定向到普通页面
             return f(*args, **kwargs)
+
         return decorated_function
+
     return decorator
+
 
 @app.route("/logout")
 def logout():
     return redirect(auth.log_out(url_for("index", _external=True)))
 
-
-# @app.route('/profile')
-# def profile():
-#     # 显示用户信息
-#     if 'access_token' not in session:
-#         return redirect(url_for('index'))
-#
-#     headers = {'Authorization': f'Bearer {session["access_token"]}'}
-#     user_info = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers).json()
-#
-#     # 渲染本地HTML文件并传递用户信息
-#     return render_template(
-#         'booking_centre.html',
-#         name=user_info.get('displayName', '未知用户'),
-#         email=user_info.get('mail', '无邮箱信息'),
-#         id=user_info.get('id', '')
-#     )
-
-# @app.route('/user_profile')
-# def booking_centre():
-#     return render_template('user_profile.html')
-
-
-#路由：渲染 booking_centre.html
+# 路由：渲染 booking_centre.html
 @app.route('/booking_centre')
-@login_required 
-
+@login_required  # 确保用户已登录
 def booking_centre():
     return render_template('booking_centre.html')
 
 
 @app.route('/my_reservation')
-@login_required  
+@login_required  # 确保用户已登录
 def my_reservation():
     return render_template('my_reservation.html')
 
 
 @app.route('/user_profile')
-@login_required  
+@login_required  # 确保用户已登录
 def user_profile():
     return render_template('user_profile.html')
 
 
 @app.route('/my_notification')
-@login_required  
-
+@login_required  # 确保用户已登录
 def my_notification():
     return render_template('my_notification.html')
 
@@ -285,6 +781,10 @@ def my_notification():
 @app.route('/error')
 def error_page():
     return render_template('error.html')  # 确保 templates/error.html 文件存在
+
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')
 
 
 @app.route('/adminSidebar')
@@ -349,6 +849,17 @@ def notice_admin():
 def room_management():
     return render_template('room_management.html')
 
+@app.route('/user_management')
+@login_required  # 确保用户已登录
+@role_required('admin')
+def user_management():
+    return render_template('user_management.html')
+
+@app.route('/usage_report_center.html')
+@login_required  # 确保用户已登录
+@role_required('admin')
+def usage_report_center():
+    return render_template('usage_report_center.html')
 
 @app.route('/trust_list')
 @login_required  # 确保用户已登录
@@ -357,15 +868,49 @@ def trust_list():
     return render_template('trust_list.html')
 
 
+@app.route('/room_issue_management')
+@login_required  # 确保用户已登录
+@role_required('admin')
+def room_issue_management():
+    return render_template('room_issue_management.html')
+
+@app.route('/black')
+# @login_required
+def black():
+    return render_template('black.html')
+
+
 # 路由：渲染 login.html
 @app.route('/login')
 def login():
     return render_template('login.html')
 
-#TODO: 原函数
+@app.route('/login_via_code')
+def login_via_code():
+    return render_template('login_via_code.html')
 
-#profile route
 
+#todo : add for check if the user is in blacklist
+def is_user_blacklisted( ):
+    """检查用户邮箱是否在 blacklist 表中"""
+    conn = get_db_connection()
+    user_id=get_user_id_by_email()
+    try:
+        cursor = conn.cursor()
+        query = "SELECT * FROM Blacklist WHERE user_id = %s"
+        cursor.execute(query, (user_id,))
+        result = cursor.fetchone()
+        print('blacklist debug',result)
+        return result is not None
+    except Exception as e:
+        print(f"Error checking blacklist: {str(e)}")
+        return False
+    finally:
+        cursor.close()
+        conn.close()
+
+# TODO: 原函数
+# profile route
 @app.route('/profile')
 def profile():
     if 'access_token' not in session:
@@ -392,11 +937,18 @@ def profile():
         return redirect(url_for('error_page'))
 
     session['user_email'] = user_email
+    print('debugggg',get_user_id_by_email())
+    if is_user_blacklisted( ):
+        return redirect(url_for('black'))
+
+    # 新增：检查是否在黑名单中
+
 
     try:
         print(f"Calling role API with email: {user_email}")
         role_response = requests.get(
-            f"http://localhost:8000/login_get_role?email={user_email}"  # 参数名改为 email
+            f"https://www.diicsu.top:8000/login_get_role?email={user_email}",
+            verify=False  # 忽略证书验证
         )
         print(f"Role API response status: {role_response.status_code}, body: {role_response.text}")
 
@@ -429,21 +981,25 @@ def login_get_role():
         return jsonify({"error": "Missing email parameter"}), 400
 
     try:
-        with closing(get_db_connection()) as conn:
-            with conn.cursor(dictionary=True) as cursor:
-                cursor.execute("SELECT role FROM Users WHERE email = %s", (email,))
-                user = cursor.fetchone()
+        conn = get_db_connection()  # 获取数据库连接
+        cursor = conn.cursor(dictionary=True)  # 创建游标
 
-                if user:
-                    return jsonify({'role': user['role']})
-                else:
-                    return jsonify({"error": "User not found"}), 404
+        # 执行查询
+        cursor.execute("SELECT role FROM Users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+
+        # 关闭游标和连接
+        cursor.close()
+        conn.close()
+
+        if user:
+            return jsonify({'role': user['role']})
+        else:
+            return jsonify({"error": "User not found"}), 404
 
     except Exception as e:
         print(f"Database error: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
-
-
 
 
 # ---------------------------- delete ----------------------------
@@ -497,138 +1053,44 @@ def delete_users():
     return jsonify({"message": result}), status_code
 
 
-@app.route('/delete/rooms', methods=['POST'])
-def delete_rooms():
-    data = request.json
+
+@app.route('/update_room_status', methods=['POST'])
+@login_required
+@role_required('admin')
+def update_room_status():
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': '没有收到任何 JSON 数据'}), 400
+
     room_id = data.get('room_id')
-    room_name = data.get('room_name')
-    capacity = data.get('capacity')
-    location = data.get('location')
-    # 先删除依赖数据：Room_availability、Bookings（依赖该房间）
-    dependent_queries = [
-        ("DELETE FROM Room_availability WHERE room_id = %s", (room_id,)),
-        ("DELETE FROM Bookings WHERE room_id = %s", (room_id,))
-    ]
-    for q, p in dependent_queries:
-        delete_record(q, p)
-    query = """
-    DELETE FROM Rooms
-    WHERE (room_id = %s OR %s IS NULL)
-      AND (room_name = %s OR %s IS NULL)
-      AND (capacity = %s OR %s IS NULL)
-      AND (location = %s OR %s IS NULL)
-    """
-    params = (room_id, room_id, room_name, room_name, capacity, capacity, location, location)
-    result, status = delete_record(query, params)
-    return jsonify({"message": result}), status
+    action = data.get('action')
 
+    if not room_id or not action:
+        return jsonify({'error': '缺少必要的参数'}), 400
 
-@app.route('/delete/room_availability', methods=['POST'])
-def delete_room_availability():
-    data = request.json
-    room_id = data.get('room_id')
-    available_date = data.get('available_date')
-    available_begin = data.get('available_begin')
-    available_end = data.get('available_end')
-    query = """
-    DELETE FROM Room_availability
-    WHERE (room_id = %s OR %s IS NULL)
-      AND (available_date = %s OR %s IS NULL)
-      AND (available_begin = %s OR %s IS NULL)
-      AND (available_end = %s OR %s IS NULL)
-    """
-    params = (
-        room_id, room_id, available_date, available_date, available_begin, available_begin, available_end,
-        available_end)
-    result, status = delete_record(query, params)
-    return jsonify({"message": result}), status
+    if action not in ['delete', 'restore']:
+        return jsonify({'error': '无效的操作类型'}), 400
 
+    new_status = 2 if action == 'delete' else 0
 
-@app.route('/delete/approvals', methods=['POST'])
-def delete_approvals():
-    data = request.json
-    approval_id = data.get('approval_id')
-    booking_id = data.get('booking_id')
-    admin_id = data.get('admin_id')
-    approval_status = data.get('approval_status')
-    query = """
-    DELETE FROM Approvals
-    WHERE (approval_id = %s OR %s IS NULL)
-      AND (booking_id = %s OR %s IS NULL)
-      AND (admin_id = %s OR %s IS NULL)
-      AND (approval_status = %s OR %s IS NULL)
-    """
-    params = (approval_id, approval_id, booking_id, booking_id, admin_id, admin_id, approval_status, approval_status)
-    result, status = delete_record(query, params)
-    return jsonify({"message": result}), status
-
-
-@app.route('/delete/notifications', methods=['POST'])
-def delete_notifications():
-    data = request.json
-    notification_id = data.get('notification_id')
-    user_id = data.get('user_id')
-    notification_type = data.get('notification_type')
-    status_val = data.get('status')
-    query = """
-    DELETE FROM Notifications
-    WHERE (notification_id = %s OR %s IS NULL)
-      AND (user_id = %s OR %s IS NULL)
-      AND (notification_type = %s OR %s IS NULL)
-      AND (status = %s OR %s IS NULL)
-    """
-    params = (
-        notification_id, notification_id, user_id, user_id, notification_type, notification_type, status_val,
-        status_val)
-    result, status = delete_record(query, params)
-    return jsonify({"message": result}), status
-
-
-@app.route('/delete/reports', methods=['POST'])
-def delete_reports():
-    data = request.json
-    report_id = data.get('report_id')
-    admin_id = data.get('admin_id')
-    report_type = data.get('report_type')
-    query = """
-    DELETE FROM Reports
-    WHERE (report_id = %s OR %s IS NULL)
-      AND (admin_id = %s OR %s IS NULL)
-      AND (report_type = %s OR %s IS NULL)
-    """
-    params = (report_id, report_id, admin_id, admin_id, report_type, report_type)
-    result, status = delete_record(query, params)
-    return jsonify({"message": result}), status
-
-
-@app.route('/delete/notifications_by_user', methods=['POST'])
-def delete_notifications_by_user():
-    data = request.json
-    user_id = data.get('user_id')
-    query = "DELETE FROM Notifications WHERE user_id = %s"
-    params = (user_id,)
-    result, status = delete_record(query, params)
-    return jsonify({"message": result}), status
-
-
-@app.route('/delete/approvals_by_booking', methods=['POST'])
-def delete_approvals_by_booking():
-    data = request.json
-    booking_id = data.get('booking_id')
-    query = "DELETE FROM Approvals WHERE booking_id = %s"
-    params = (booking_id,)
-    result, status = delete_record(query, params)
-    return jsonify({"message": result}), status
-
-
-@app.route('/delete/room_availability_by_room', methods=['POST'])
-def delete_room_availability_by_room():
-    data = request.json
-    room_id = data.get('room_id')
-    query = "DELETE FROM Room_availability WHERE room_id = %s"
-    params = (room_id,)
-    result, status = delete_record(query, params)
-    return jsonify({"message": result}), status
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        update_query = "UPDATE Rooms SET room_status = %s WHERE room_id = %s"
+        cursor.execute(update_query, (new_status, room_id))
+        conn.commit()
+        return jsonify({
+            'message': '房间状态更新成功',
+            'room_id': room_id,
+            'new_status': new_status
+        })
+    except Exception as e:
+        return jsonify({'error': '更新房间状态失败', 'details': str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
 
 
 @app.route('/delete_trusted_user', methods=['DELETE'])
@@ -693,8 +1155,42 @@ def delete_blacklist():
         if conn:
             conn.close()
 
+#todo : added new funtion0319
+@app.route('/delete_notification', methods=['POST'])
+def delete_notification():
+    data = request.get_json()
+    if not data or 'notification_id' not in data:
+        return jsonify({"error": "Missing notification_id parameter"}), 400
+
+    notification_id = data['notification_id']
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        query = "DELETE FROM Notifications WHERE notification_id = %s"
+        cursor.execute(query, (notification_id,))
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Notification record not found"}), 404
+
+        return jsonify({
+            "message": "Notification deleted successfully",
+            "notification_id": notification_id
+        })
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": "Failed to delete notification", "details": str(e)}), 500
+
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
 
 # ---------------------------- search/display ----------------------------
+
 
 @app.route('/search-rooms', methods=['POST'])
 def search_rooms():
@@ -728,7 +1224,7 @@ def search_rooms():
         cursor = conn.cursor(dictionary=True, buffered=True)
         query = """
             SELECT 
-                r.room_id, r.room_name, r.capacity, r.equipment, r.location,r.room_type,
+                r.room_id, r.room_name, r.capacity, r.equipment, r.location,r.room_type,r.room_status,
                 ra.available_date, ra.available_begin, ra.available_end, ra.availability
             FROM Rooms r
             JOIN Room_availability ra ON r.room_id = ra.room_id
@@ -838,7 +1334,7 @@ def get_user_bookings():
     try:
         # 从查询参数中获取user_id
         # user_id = request.args.get('user_id')
-        #todo: 添加获取当前userid
+        # todo: 添加获取当前userid
         user_id = get_user_id_by_email()
         print(user_id)
         print(session.get('user_email'))
@@ -893,13 +1389,14 @@ def get_user_bookings():
         if 'conn' in locals():
             conn.close()
 
+
 @app.route('/rooms', methods=['GET'])
 def get_rooms():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         query = """
-            SELECT room_id, room_name, capacity, equipment, location
+            SELECT room_id, room_name, capacity, equipment, location,room_type
             FROM Rooms
         """
         cursor.execute(query)
@@ -1018,6 +1515,95 @@ def get_Finished_Workflow_bookings():
         if 'conn' in locals():
             conn.close()
 
+@app.route('/get-issues/<int:room_id>', methods=['GET'])
+def get_issues_by_room(room_id):
+    """
+    通过 room_id 获取关联的 issue 记录（仅返回 issue 和 status）
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # 查询指定字段
+        query = """
+            SELECT 
+                issue,      -- 问题描述
+                status      -- 状态（fault/in_maintenance/resolved/severe）
+            FROM Issues
+            WHERE room_id = %s
+        """
+        cursor.execute(query, (room_id,))
+        issues = cursor.fetchall()
+
+        return jsonify({
+            "room_id": room_id,
+            "count": len(issues),
+            "issues": issues  # 每个元素仅含 issue 和 status
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+@app.route('/get-blacklist-reason', methods=['GET'])
+def get_blacklist_reason():
+    try:
+        # 获取数据库连接
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        user_id = get_user_id_by_email()
+
+        # SQL 查询，连接 Blacklist 与 Users 表，获取黑名单记录和对应的 username
+        query = """
+          SELECT 
+                u.username,
+                b.start_date,
+                b.start_time,
+                b.end_date,
+                b.end_time,
+                b.reason
+            FROM Blacklist b
+            JOIN Users u ON b.user_id = u.user_id
+            WHERE b.user_id = %s
+        """
+
+        # 执行查询
+        cursor.execute(query,(user_id,))
+        blacklists = cursor.fetchall()
+
+        # 格式化日期和时间字段
+        for record in blacklists:
+            record['start_date'] = record['start_date'].strftime("%Y-%m-%d")
+            record['start_time'] = format_time(record['start_time'])
+            record['end_date'] = record['end_date'].strftime("%Y-%m-%d")
+            record['end_time'] = format_time(record['end_time'])
+
+        # 返回 JSON 格式数据
+        return jsonify({
+            "count": len(blacklists),
+            "blacklists": blacklists
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
 
 @app.route('/get-blacklist', methods=['GET'])
 def get_blacklist():
@@ -1079,6 +1665,8 @@ def get_blacklist():
             conn.close()
 
 
+
+
 @app.route('/get_room_trusted_users', methods=['GET'])
 def get_room_trusted_users():
     conn = get_db_connection()
@@ -1103,16 +1691,15 @@ def get_room_trusted_users():
             conn.close()
 
 
-#todo : change the method from post to GET
+# todo : change the method from post to GET
 @app.route('/get_user', methods=['GET'])
 def get_user():
     # data = request.get_json()
     # if not data or 'user_id' not in data:
     #     return jsonify({"status": "error", "error": "Missing user_id parameter"}), 400
 
-    #todo : change user id (from current session)
+    # todo : change user id (from current session)
     user_id = get_user_id_by_email()
-
 
     conn = get_db_connection()
     if not conn:
@@ -1133,72 +1720,91 @@ def get_user():
             conn.close()
 
 
-# ---------------------------- update ----------------------------
+from datetime import timedelta
 
-@app.route('/update-room/<int:room_id>', methods=['PUT'])
-def update_room(room_id):
-    print(f"Received PUT request to update room with ID: {room_id}")
-    data = request.json
-    print(f"Request body: {data}")
-    room_name = data.get('room_name')
-    capacity = data.get('capacity')
-    equipment = data.get('equipment')
-    location = data.get('location')
 
+@app.route('/display-issues', methods=['GET'])
+def get_all_issues():
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)  # 使用字典游标
 
-        # Retrieve existing room data by room_id
-        cursor.execute("SELECT * FROM Rooms WHERE room_id = %s", (room_id,))
-        existing_room = cursor.fetchone()
-        if not existing_room:
-            print(f"No room found with ID {room_id}.")
-            return jsonify({"error": "Room not found"}), 404
+        # 获取查询参数
+        status = request.args.get('status')
+        room_id = request.args.get('room_id')
 
-        # Check if the new data is exactly the same as the existing data.
-        # Assuming the order of fields is: room_id, room_name, capacity, equipment, location.
-        if (room_name == existing_room[1] and
-                capacity == existing_room[2] and
-                equipment == existing_room[3] and
-                location == existing_room[4]):
-            print("No changes detected.")
-            return jsonify({"message": "No changes were made"}), 200
+        # 构建查询条件和参数
+        conditions = []
+        params = []
 
-        # Check for duplicate room name in other records.
-        cursor.execute("SELECT * FROM Rooms WHERE room_name = %s AND room_id != %s", (room_name, room_id))
-        duplicate_room = cursor.fetchone()
-        if duplicate_room:
-            print(f"Room name '{room_name}' already exists.")
-            return jsonify({"error": "Room name already exists"}), 400
+        if status:
+            conditions.append("i.status = %s")
+            params.append(status)
 
-        # Proceed with update if there are changes.
-        update_query = """
-            UPDATE Rooms
-            SET room_name = %s, capacity = %s, equipment = %s, location = %s
-            WHERE room_id = %s
+        if room_id:
+            # 验证room_id是否为有效整数
+            if not room_id.isdigit():
+                return jsonify({"error": "room_id must be a valid integer"}), 400
+            conditions.append("i.room_id = %s")
+            params.append(int(room_id))
+
+        # 构建基础SQL查询
+        base_query = """
+            SELECT 
+                i.issue_id,
+                i.room_id,
+                r.room_name,
+                i.issue,
+                i.status,
+                i.start_date,
+                i.start_time,
+                i.end_date,
+                i.end_time,
+                i.added_by,
+                u.username AS reporter_name
+            FROM Issues i
+            LEFT JOIN Rooms r ON i.room_id = r.room_id
+            LEFT JOIN Users u ON i.added_by = u.user_id
         """
-        update_params = (room_name, capacity, equipment, location, room_id)
-        print(f"Executing update query: {update_query} with parameters: {update_params}")
-        cursor.execute(update_query, update_params)
-        conn.commit()
 
-        # In rare cases if rowcount is still 0 (but we already checked), we can respond accordingly.
-        if cursor.rowcount == 0:
-            print(f"No changes were made during update for room id {room_id}.")
-            return jsonify({"message": "No changes were made"}), 200
+        # 添加WHERE条件
+        if conditions:
+            base_query += " WHERE " + " AND ".join(conditions)
 
-        # Return the updated room data.
-        cursor.execute("SELECT * FROM Rooms WHERE room_id = %s", (room_id,))
-        updated_room = cursor.fetchone()
-        print(f"Updated room: {updated_room}")
+        # 添加排序
+        base_query += " ORDER BY i.start_date DESC"
+
+        # 执行查询
+        cursor.execute(base_query, tuple(params))
+        issues = cursor.fetchall()
+
+        # 统一格式化时间字段
+        for issue in issues:
+            # 处理日期
+            for date_field in ['start_date', 'end_date']:
+                if issue[date_field]:
+                    issue[date_field] = issue[date_field].strftime("%Y-%m-%d")
+
+            # 处理时间
+            for time_field in ['start_time', 'end_time']:
+                time_value = issue[time_field]
+                if time_value:
+                    if isinstance(time_value, timedelta):  # 处理timedelta类型
+                        # 将timedelta转换为时间字符串 (HH:MM:SS)
+                        total_seconds = int(time_value.total_seconds())
+                        hours, remainder = divmod(total_seconds, 3600)
+                        minutes, seconds = divmod(remainder, 60)
+                        issue[time_field] = f"{hours:02}:{minutes:02}:{seconds:02}"
+                    elif isinstance(time_value, str):  # 如果已经是字符串
+                        issue[time_field] = time_value
+                    else:  # 处理datetime.time类型
+                        issue[time_field] = time_value.strftime("%H:%M:%S")
+                else:
+                    issue[time_field] = None
+
         return jsonify({
-            "message": "Room updated successfully",
-            "room_id": updated_room[0],
-            "room_name": updated_room[1],
-            "capacity": updated_room[2],
-            "equipment": updated_room[3],
-            "location": updated_room[4]
+            "count": len(issues),
+            "issues": issues
         })
 
     except mysql.connector.Error as e:
@@ -1212,6 +1818,300 @@ def update_room(room_id):
             cursor.close()
         if 'conn' in locals():
             conn.close()
+
+
+# todo: add new function(03180117)
+@app.route('/notifications', methods=['GET'])
+def get_notifications():
+    try:
+        # 1. 通过 session 获取当前用户的 user_id
+        user_id = get_user_id_by_email()
+        print(user_id)
+        if not user_id:
+            return jsonify({"error": "Not logged in or user not found"}), 401
+
+        # 2. 查询该用户的通知
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT 
+                notification_id,
+                user_id,
+                message,
+                notification_action,
+                created_at,
+                status
+            FROM Notifications
+            WHERE user_id = %s OR user_id IS NULL
+            ORDER BY created_at DESC
+        """
+        cursor.execute(query, (user_id,))
+        notifications = cursor.fetchall()
+
+        # 3. 返回该用户的通知列表
+        return jsonify({
+            "count": len(notifications),
+            "notifications": notifications
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+
+
+@app.route('/get_all_users_admin', methods=['GET'])
+def get_users():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT user_id, username, email, phone_number, role FROM Users")
+        users = cursor.fetchall()
+
+        return jsonify({
+            "count": len(users),
+            "users": users
+        }), 200
+
+    except mysql.connector.Error as e:
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+@app.route('/top-booked-rooms', methods=['POST'])
+def get_top_booked_rooms():
+    """
+    获取指定时间范围内总有效使用时间前5的房间
+    请求参数示例：
+    {
+        "start_date": "2025-03-01",
+        "end_date": "2025-03-31"
+    }
+    """
+    params = request.json or {}
+    start_date = params.get('start_date')
+    end_date = params.get('end_date')
+
+    # 参数验证
+    if not start_date or not end_date:
+        return jsonify({"error": "Missing start_date or end_date parameter"}), 400
+    
+    try:
+        # 验证日期格式
+        datetime.strptime(start_date, "%Y-%m-%d")
+        datetime.strptime(end_date, "%Y-%m-%d")
+    except ValueError:
+        return jsonify({"error": "Invalid date format (YYYY-MM-DD required)"}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # 修正后的SQL（注意括号闭合）
+        query = """
+            SELECT 
+                r.room_id,
+                r.room_name,
+                r.room_type,
+                SUM(
+                    TIMESTAMPDIFF(
+                        SECOND, 
+                        CONCAT(b.booking_date, ' ', b.start_time),
+                        CONCAT(b.booking_date, ' ', b.end_time)
+                    )
+                ) AS total_seconds
+            FROM Bookings b
+            JOIN Rooms r ON b.room_id = r.room_id
+            WHERE b.status = 'finished'
+                AND b.booking_date BETWEEN %s AND %s
+            GROUP BY r.room_id
+            ORDER BY total_seconds DESC
+            LIMIT 5
+        """
+        
+        cursor.execute(query, (start_date, end_date))
+        results = cursor.fetchall()
+
+        # 处理结果（转换为可序列化格式）
+        for room in results:
+            total_seconds = room['total_seconds'] or 0
+            # 计算小时数
+            room['total_hours'] = round(total_seconds / 3600, 2)
+            # 转换时间格式
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            seconds = total_seconds % 60
+            room['total_duration'] = f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
+            del room['total_seconds']  # 移除中间字段
+
+        return jsonify({
+            "count": len(results),
+            "results": results
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+# ---------------------------- update ----------------------------
+
+@app.route('/update_user_admin', methods=['PUT'])
+def update_user_admin():
+    data = request.get_json() or {}
+    user_id = data.get('user_id')
+
+    if not user_id:
+        return jsonify({"error": "Missing user_id"}), 400
+    if 'email' in data:
+        return jsonify({"error": "Email cannot be modified"}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Fetch existing record
+        cursor.execute(
+            "SELECT username, phone_number, role FROM Users WHERE user_id = %s",
+            (user_id,)
+        )
+        existing = cursor.fetchone()
+        if not existing:
+            return jsonify({"error": "User not found"}), 404
+
+        # Determine which fields actually changed
+        updates = {}
+        for field in ('username', 'phone_number', 'role'):
+            if field in data and data[field] != existing[field]:
+                updates[field] = data[field]
+
+        if not updates:
+            return jsonify({"message": "No changes detected"}), 200
+
+        # Build dynamic UPDATE
+        set_clause = ", ".join(f"{k} = %s" for k in updates)
+        params = list(updates.values()) + [user_id]
+        cursor.execute(
+            f"UPDATE Users SET {set_clause} WHERE user_id = %s",
+            tuple(params)
+        )
+        conn.commit()
+
+        return jsonify({
+            "message": "User updated successfully",
+            "user_id": user_id,
+            **updates
+        }), 200
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": "Failed to update user", "details": str(e)}), 500
+
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+@app.route('/update-room/<int:room_id>', methods=['PUT'])
+def update_room(room_id):
+    print(f"Received PUT request to update room with ID: {room_id}")
+    data = request.json
+    print(f"Request body: {data}")
+    room_name = data.get('room_name')
+    capacity = data.get('capacity')
+    equipment = data.get('equipment')
+    location = data.get('location')
+    room_type = data.get('type')
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 根据 room_id 查询当前房间数据
+        cursor.execute("SELECT * FROM Rooms WHERE room_id = %s", (room_id,))
+        existing_room = cursor.fetchone()
+        if not existing_room:
+            print(f"No room found with ID {room_id}.")
+            return jsonify({"error": "Room not found"}), 404
+
+        # 检查提交数据是否与现有数据完全一致
+        if (room_name == existing_room[1] and
+                capacity == existing_room[2] and
+                equipment == existing_room[3] and
+                location == existing_room[4] and
+                room_type == existing_room[5]):
+            print("No changes detected.")
+            return jsonify({"message": "No changes were made"}), 200
+
+        # 检查其它记录中是否已经存在相同的房间名称（排除当前记录）
+        cursor.execute("SELECT * FROM Rooms WHERE room_name = %s AND room_id != %s", (room_name, room_id))
+        duplicate_room = cursor.fetchone()
+        if duplicate_room:
+            print(f"Room name '{room_name}' already exists.")
+            return jsonify({"error": "Room name already exists"}), 400
+
+        # 执行更新操作
+        update_query = """
+            UPDATE Rooms
+            SET room_name = %s, capacity = %s, equipment = %s, location = %s, room_type = %s
+            WHERE room_id = %s
+        """
+        update_params = (room_name, capacity, equipment, location, room_type, room_id)
+        print(f"Executing update query: {update_query} with parameters: {update_params}")
+        cursor.execute(update_query, update_params)
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            print(f"No changes were made during update for room id {room_id}.")
+            return jsonify({"message": "No changes were made"}), 200
+
+        # 查询并返回更新后的房间数据
+        cursor.execute("SELECT * FROM Rooms WHERE room_id = %s", (room_id,))
+        updated_room = cursor.fetchone()
+        print(f"Updated room: {updated_room}")
+        return jsonify({
+            "message": "Room updated successfully",
+            "room_id": updated_room[0],
+            "room_name": updated_room[1],
+            "capacity": updated_room[2],
+            "equipment": updated_room[3],
+            "location": updated_room[4],
+            "room_type": updated_room[5]
+        })
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {str(e)}")
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
 
 
 @app.route('/update-booking-status/<int:booking_id>', methods=['PUT'])
@@ -1380,7 +2280,7 @@ def cancel_booking(booking_id):
             conn.close()
 
 
-#todo :user id
+# todo :user id
 @app.route('/update_user', methods=['POST'])
 def update_user():
     data = request.get_json()
@@ -1395,7 +2295,6 @@ def update_user():
     #     data.pop('user_id')
 
     # get the fields that are allow to update
-
     update_fields = {}
     for field in ['username', 'email', 'phone_number', 'role']:
         if field in data:
@@ -1445,6 +2344,112 @@ def update_user():
             conn.close()
 
 
+# 2. Update existing issue (Admin only)
+@app.route('/update-issues/<int:issue_id>', methods=['PUT'])
+def update_issue(issue_id):
+    try:
+        data = request.get_json()
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 获取现有问题记录
+        cursor.execute("SELECT * FROM Issues WHERE issue_id = %s", (issue_id,))
+        raw_issue = cursor.fetchone()
+
+        if not raw_issue:
+            conn.close()
+            return jsonify({'error': 'Issue not found'}), 404
+
+        # 将元组转换为字典（修复字段访问问题）
+        columns = [col[0] for col in cursor.description]
+        issue = dict(zip(columns, raw_issue))
+
+        # 准备更新字段
+        update_fields = {
+            'issue': data.get('issue', issue['issue']),
+            'status': data.get('status', issue['status']),
+            'start_date': data.get('start_date', issue['start_date']),
+            'start_time': data.get('start_time', issue['start_time']),
+            'end_date': issue['end_date'],
+            'end_time': issue['end_time']
+        }
+
+        # 处理状态转换（修复日期调用问题）
+        if update_fields['status'] != issue['status']:
+            if update_fields['status'] == 'resolved':
+                # 使用正确导入的date和datetime对象
+                update_fields['end_date'] = date.today().strftime('%Y-%m-%d')  # 直接使用date
+                update_fields['end_time'] = datetime.now().strftime('%H:%M:%S')  # 直接使用datetime
+            elif issue['status'] == 'resolved' and update_fields['status'] != 'resolved':
+                update_fields['end_date'] = None
+                update_fields['end_time'] = None
+
+        # 执行更新
+        cursor.execute("""
+            UPDATE Issues SET
+                issue = %s,
+                status = %s,
+                start_date = %s,
+                start_time = %s,
+                end_date = %s,
+                end_time = %s
+            WHERE issue_id = %s
+        """, (
+            update_fields['issue'],
+            update_fields['status'],
+            update_fields['start_date'],
+            update_fields['start_time'],
+            update_fields['end_date'],
+            update_fields['end_time'],
+            issue_id
+        ))
+
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'Issue updated successfully'}), 200
+
+    except Exception as e:
+        if 'conn' in locals():
+            conn.rollback()
+            conn.close()
+        return jsonify({'error': str(e)}), 500
+
+
+#todo: new function for change unread to read for notification page
+@app.route('/update_notification_status', methods=['POST'])
+def update_notification_status():
+    data = request.get_json()
+    notification_id = data.get('notification_id')
+    new_status = data.get('status')
+
+    if not notification_id or new_status not in ('read', 'unread'):
+        return jsonify({"error": "Missing or invalid parameters — require notification_id and status ('read' or 'unread')"}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        query = "UPDATE Notifications SET status = %s WHERE notification_id = %s"
+        cursor.execute(query, (new_status, notification_id))
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Notification not found"}), 404
+
+        return jsonify({
+            "message": "Notification status updated successfully",
+            "notification_id": notification_id,
+            "new_status": new_status
+        }), 200
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": "Failed to update notification status", "details": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
 # ---------------------------- insert ----------------------------
 
 @app.route('/insert_booking', methods=['POST'])
@@ -1452,7 +2457,7 @@ def insert_booking():
     data = request.get_json()
     room_id = data.get('room_id')
 
-    #todo: modify the user_id
+    # todo: modify the user_id
 
     user_id = get_user_id_by_email()
     booking_date = data.get('booking_date')
@@ -1486,18 +2491,24 @@ def insert_booking():
 
         requires_reason = False
         if room_type == 1:
+            cursor.execute("""
+                SELECT room_trusted_user_id FROM RoomTrustedUsers
+                WHERE room_id = %s AND user_id = %s
+            """, (room_id, user_id,))
+            room_trusted_user_id = cursor.fetchone()
             cursor.execute("SELECT role FROM Users WHERE user_id = %s", (user_id,))
             user = cursor.fetchone()
             if not user:
                 return jsonify({"status": "error", "error": "User not found"}), 400
             user_role = user[0]
             if user_role not in ('admin', 'professor', 'tutor'):
-                requires_reason = True
+                if not room_trusted_user_id:
+                    requires_reason = True
         elif room_type == 2:
             cursor.execute("""
                 SELECT room_trusted_user_id FROM RoomTrustedUsers
                 WHERE room_id = %s AND user_id = %s
-            """, (room_id, user_id))
+            """, (room_id, user_id,))
             if not cursor.fetchone():
                 requires_reason = True
 
@@ -1529,7 +2540,7 @@ def insert_booking():
             conn.close()
 
 
-#todo: add check for the same insert
+# todo: add check for the same insert
 @app.route('/insert_booking_with_reason', methods=['POST'])
 def insert_booking_with_reason():
     """前端输入 reason 后调用此 API 进行最终插入"""
@@ -1566,7 +2577,6 @@ def insert_booking_with_reason():
             return jsonify({"status": "error", "error": "Duplicate booking, the same booking already exists."}), 400
 
         # 如果没有重复，执行插入操作
-
         query = """
             INSERT INTO Bookings (user_id, room_id, start_time, end_time, booking_date, status, reason)
             VALUES (%s, %s, %s, %s, %s, 'pending', %s)
@@ -1584,7 +2594,6 @@ def insert_booking_with_reason():
             conn.close()
 
 
-
 @app.route('/insert_room', methods=['POST'])
 def insert_room():
     data = request.get_json()
@@ -1592,16 +2601,17 @@ def insert_room():
     capacity = data['capacity']
     equipment = data['equipment']
     location = data['location']
+    room_type = data['room_type']
     conn = get_db_connection()
     if not conn:
         return jsonify({"status": "error", "error": "Database connection failed"}), 500
     try:
         cursor = conn.cursor()
         query = """
-        INSERT INTO Rooms (room_name, capacity, equipment, location)
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO Rooms (room_name, capacity, equipment, location,room_type)
+        VALUES (%s, %s, %s, %s, %s)
         """
-        cursor.execute(query, (room_name, capacity, equipment, location))
+        cursor.execute(query, (room_name, capacity, equipment, location,room_type))
         conn.commit()
         return jsonify({"status": "success", "message": "Room inserted successfully!"})
     except mysql.connector.Error as err:
@@ -1611,7 +2621,8 @@ def insert_room():
         if conn:
             conn.close()
 
-#todo: add- check if the user_id is the same
+
+# todo: add- check if the user_id is the same
 @app.route('/insert-blacklist', methods=['POST'])
 def add_to_blacklist():
     """
@@ -1633,7 +2644,9 @@ def add_to_blacklist():
         # 前端传入要被黑名单的用户ID
         user_id = data.get('user_id')
         # 获取当前登录用户的ID，作为 added_by
+        print("Session info at /insert-blacklist:", session)
         added_by = get_user_id_by_email()
+        print("added_by:", added_by)
         start_date_str = data.get('start_date')
         start_time_str = data.get('start_time')
         end_date_str = data.get('end_date')
@@ -1665,16 +2678,22 @@ def add_to_blacklist():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # 检查该目标用户是否已经在黑名单中
+        # 1. 检查目标用户是否存在于 Users 表中
+        cursor.execute("SELECT user_id FROM Users WHERE user_id = %s", (user_id,))
+        target_user = cursor.fetchone()
+        if not target_user:
+            return jsonify({"error": "Target user does not exist"}), 400
+
+        # 2. 检查该目标用户是否已经在黑名单中
         check_query = "SELECT * FROM Blacklist WHERE user_id = %s"
         cursor.execute(check_query, (user_id,))
-        existing_blacklist_entry = cursor.fetchall()  # 获取所有结果
+        existing_blacklist_entry = cursor.fetchall()  # 使用 fetchall 确保读取所有结果
 
-        # 如果已经存在记录，则提示错误
         if existing_blacklist_entry:
+            # 如果该用户已经在黑名单中
             return jsonify({"error": "User is already in the blacklist"}), 400
 
-        # 执行插入操作
+        # 3. 执行插入操作
         insert_query = """
             INSERT INTO Blacklist
             (user_id, added_by, added_date, added_time, start_date, start_time, end_date, end_time, reason)
@@ -1721,7 +2740,6 @@ def add_to_blacklist():
             conn.close()
 
 
-
 @app.route('/insert_trusted_user', methods=['POST'])
 def insert_trusted_user():
     data = request.get_json()
@@ -1764,14 +2782,488 @@ def insert_trusted_user():
             conn.close()
 
 
-# if __name__ == '__main__':
-#     print("\nRegistered routes:")
-#     for rule in app.url_map.iter_rules():
-#         print(f"→ {rule}")
-#     app.run(debug=True)
+# 1. Insert new issue (Admin only)
+@app.route('/insert-issues', methods=['POST'])
+def add_issue():
+    try:
+        data = request.get_json()
+        required_fields = ['room_id', 'issue', 'start_date', 'start_time']
+
+        # Validate required fields
+        if not all(field in data for field in required_fields):
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        # Get admin user_id by email
+        admin_id = get_user_id_by_email()
+        if not admin_id:
+            return jsonify({'error': 'Admin user not found'}), 404
+
+        # Check room existence
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 检查房间是否存在
+        cursor.execute("SELECT room_id FROM Rooms WHERE room_id = %s", (data['room_id'],))
+        if not cursor.fetchone():
+            conn.close()
+            return jsonify({'error': 'Room not found'}), 404
+
+        # Insert new issue with correct status
+        cursor.execute("""
+            INSERT INTO Issues (
+                room_id, 
+                issue, 
+                status, 
+                start_date, 
+                start_time, 
+                added_by
+            ) VALUES (
+                %s, %s, DEFAULT, %s, %s, %s
+            )
+        """, (
+            data['room_id'],
+            data['issue'],
+            data['start_date'],
+            data['start_time'],
+            admin_id
+        ))
+
+        conn.commit()
+        new_issue_id = cursor.lastrowid
+        conn.close()
+
+        return jsonify({
+            'message': 'Issue created successfully',
+            'issue_id': new_issue_id
+        }), 201
+
+    except Exception as e:
+        if 'conn' in locals():
+            conn.rollback()
+            conn.close()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/insert_users_admin', methods=['POST'])
+def insert_use_adminr():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Request body must be JSON"}), 400
+
+    # Required fields (user_id excluded)
+    required = ["username", "email", "phone_number", "role"]
+    missing = [f for f in required if not data.get(f)]
+    if missing:
+        return jsonify({"error": "Missing required fields", "missing_fields": missing}), 400
+
+    username = data["username"].strip()
+    email = data["email"].strip().lower()
+    phone = data["phone_number"].strip()
+    role = data["role"].strip()
+
+    # Validate role value
+    if role not in ("admin", "professor", "student", "tutor"):
+        return jsonify({"error": f"Invalid role '{role}'"}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check for duplicate email
+        cursor.execute("SELECT 1 FROM Users WHERE email = %s", (email,))
+        if cursor.fetchone():
+            return jsonify({"error": "Email already registered"}), 409
+
+        # Insert new user
+        cursor.execute(
+            "INSERT INTO Users (username, email, phone_number, role) VALUES (%s, %s, %s, %s)",
+            (username, email, phone, role)
+        )
+        conn.commit()
+
+        return jsonify({
+            "message": "User created successfully",
+            "user_id": cursor.lastrowid
+        }), 201
+
+    except mysql.connector.Error as e:
+        conn.rollback()
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# -------------------------initialize room avalibility--------------------
+# Define room time slots (available time slots for each room)
+availability_times = [
+    ("08:00", "08:45"),
+    ("08:55", "09:40"),
+    ("10:00", "10:45"),
+    ("10:55", "11:40"),
+    ("14:00", "14:45"),
+    ("14:55", "15:40"),
+    ("16:00", "16:45"),
+    ("16:55", "17:40"),
+    ("19:00", "19:45"),
+    ("19:55", "20:40")
+]
+
+# Function to insert room availability data
+@app.route('/insert_room_availability', methods=['GET'])
+def insert_room_availability():
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    # Get all room_ids
+    cursor.execute("SELECT room_id FROM Rooms")
+    rooms = cursor.fetchall()
+
+    # Get today's date and calculate all dates for this week (from Monday to Sunday)
+    today = datetime.today()
+    start_of_week = today - timedelta(days=today.weekday())  # Monday's date this week
+    dates_this_week = [start_of_week + timedelta(days=i) for i in range(7)]  # All 7 days of the week
+
+    # Insert room availability records for each room and time slot
+    try:
+        for room in rooms:
+            room_id = room[0]
+
+            # Insert records for each time slot and date for the current room
+            for start_time, end_time in availability_times:
+                for date in dates_this_week:
+                    cursor.execute("""
+                        INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, availability)
+                        VALUES (%s, %s, %s, %s, 0)  -- Set availability to 0 (not available)
+                    """, (room_id, start_time, end_time, date.strftime('%Y-%m-%d')))
+
+        # Commit transaction
+        connection.commit()
+        return jsonify({"message": "Room availability records have been successfully inserted!"}), 200
+
+    except pymysql.MySQLError as e:
+        print(f"Database error: {e}")
+        connection.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        # Close database connection
+        cursor.close()
+        connection.close()
+# -----------------------------------update room availibility-------------------------
+
+# ============================ Utility Functions ============================
+def get_week_dates():
+    """Calculate the dates for each day of the current week (from Monday to Sunday)"""
+    today = datetime.today()
+    start_of_week = today - timedelta(days=today.weekday())
+    return [(start_of_week + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(7)]
+
+
+# ============================ Global Variables ============================
+# Initialize timetable: 7 columns represent Sunday (index 0) to Saturday (index 6)
+timetable = {
+    "1-2": [""] * 7,
+    "3-4": [""] * 7,
+    "5-6": [""] * 7,
+    "7-8": [""] * 7,
+    "9-10": [""] * 7,
+    "11-12": [""] * 7,
+    "Notes": [""] * 7
+}
+
+# Mapping of class periods to time ranges (do not modify)
+class_periods = {
+    "1-2": [("[08:00-08:45]", "[08:55-09:40]")],
+    "3-4": [("[10:00-10:45]", "[10:55-11:40]")],
+    "5-6": [("[14:00-14:45]", "[14:55-15:40]")],
+    "7-8": [("[16:00-16:45]", "[16:55-17:40]")],
+    "9-10": [("[19:00-19:45]", "[19:55-20:40]")],
+    "11-12": [("[21:00-21:45]", "[21:55-22:40]")]
+}
+
+# Regular expression to extract classroom names (e.g., "Foreign Language Network Building 635")
+classroom_pattern = re.compile(r'外语网络楼(\d{3})')
+
+
+def extract_classrooms(course_text):
+    """Extract classroom names from course text"""
+    return classroom_pattern.findall(course_text)
+
+# Read CSV file and store week-to-date mapping
+def load_weeks(file_path):
+    weeks = []
+    with open(file_path, mode='r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            week = {
+                "week_number": int(row['week_number']),
+                "start_date": datetime.strptime(row['start_date'], "%Y-%m-%d"),
+                "end_date": datetime.strptime(row['end_date'], "%Y-%m-%d")
+            }
+            weeks.append(week)
+    return weeks
+
+# Calculate which week the current date belongs to
+def get_current_week(weeks):
+    current_date = datetime.today()
+    for week in weeks:
+        if week["start_date"] <= current_date <= week["end_date"]:
+            return week["week_number"]
+    return None  # If the date is not within any week
+
+# ============================ Data Scraping Functionality (Keep unchanged) ============================
+def crawl_data():
+    """Scrape data for majors, classes, and schedules for each academic year"""
+    global timetable  # Use global timetable
+    class_usage = {}
+    session = requests.Session()
+    url_main = "http://csujwc.its.csu.edu.cn/jiaowu/pkgl/llsykb/llsykb_find_xx04.jsp?init=1&isview=1&xnxq01id=null"
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Referer": url_main
+    }
+    session.get(url_main, headers=headers)
+    current_date = datetime.today().date()
+    # Get the current year
+    current_year = current_date.today().year
+    # Read the current week from the file
+    weeks = load_weeks('weeks.csv')
+    current_week = get_current_week(weeks)
+    # Check if the current date is before September 1st
+    if current_date.month < 9 or (current_date.month == 9 and current_date.day < 1):
+        # If the date is before September 1st, academic_years do not include the current year
+        start_year = max(2022, current_year - 3)
+        academic_years = [str(year) for year in range(start_year, current_year)]
+    else:
+        # If the date is after September 1st, academic_years include the current year
+        start_year = max(2022, current_year - 3)
+        academic_years = [str(year) for year in range(start_year, current_year + 1)]
+
+    if (current_date.month >= 9 and current_date.month <= 12):
+        # If the current date is between September 1st and February 1st next year
+        semester_id = f"{current_year}-{current_year + 1}-1"
+    elif (current_date.month == 1):
+        semester_id = f"{current_year - 1}-{current_year}-1"
+    elif (current_date.month >= 2 and current_date.month <= 8):
+        # If the current date is between February 2nd and August 31st
+        semester_id = f"{current_year - 1}-{current_year}-2"
+    url_major = "http://csujwc.its.csu.edu.cn/KbctjcAction.do?method=queryzy"
+    url_class = "http://csujwc.its.csu.edu.cn/KbctjcAction.do?method=querybj"
+
+    for year in academic_years:
+        major_data = {"yxbh": "tc9qn3Xixg", "rxnf": year}
+        response_major = session.post(url_major, data=major_data, headers=headers)
+        if response_major.status_code != 200 or not response_major.text.strip():
+            continue
+        fixed_json_major = re.sub(r"([{,])\s*([a-zA-Z0-9_]+)\s*:", r'\1"\2":', response_major.text)
+        fixed_json_major = re.sub(r":\s*'([^']*)'", r':"\1"', fixed_json_major)
+        try:
+            major_list = json.loads(fixed_json_major)
+        except json.JSONDecodeError:
+            continue
+
+        for major in major_list:
+            major_id = major["jx01id"]
+            class_data = {"yxbh": "tc9qn3Xixg", "rxnf": year, "zy": major_id, "xnxq01id": semester_id}
+            response_class = session.post(url_class, data=class_data, headers=headers)
+            if response_class.status_code != 200 or not response_class.text.strip():
+                continue
+            fixed_json_class = re.sub(r"([{,])\s*([a-zA-Z0-9_]+)\s*:", r'\1"\2":', response_class.text)
+            fixed_json_class = re.sub(r":\s*'([^']*)'", r':"\1"', fixed_json_class)
+            try:
+                class_list = json.loads(fixed_json_class)
+            except json.JSONDecodeError:
+                continue
+
+            for class_info in class_list:
+                class_id = class_info["xx04id"]
+                class_name = class_info["bj"]
+                schedule_url = "http://csujwc.its.csu.edu.cn/jiaowu/pkgl/llsykb/llsykb_kb.jsp"
+                schedule_data = {
+                    "type": "xx04",
+                    "isview": "1",
+                    "xx04id": class_id,
+                    "yxbh": "tc9qn3Xixg",
+                    "rxnf": year,
+                    "zy": major_id,
+                    "bjbh": class_name,
+                    "zc": current_week,
+                    "xnxq01id": semester_id,
+                    "xx04mc": "",
+                    "sfFD": "1"
+                }
+                response_schedule = session.post(schedule_url, data=schedule_data, headers=headers)
+                if response_schedule.status_code != 200 or not response_schedule.text.strip():
+                    continue
+                soup = BeautifulSoup(response_schedule.text, "html.parser")
+                table = soup.find("table")
+                if table:
+                    rows = table.find_all("tr")[1:]
+                    for row_idx, row in enumerate(rows):
+                        cols = row.find_all("td")
+                        if len(cols) < 2:
+                            continue
+                        time_period = list(timetable.keys())[row_idx]
+                        for col_idx in range(1, 8):
+                            if col_idx >= len(cols):
+                                continue
+                            room_text = cols[col_idx].text.strip()
+                            if not room_text:
+                                continue
+                            rooms = extract_classrooms(room_text)
+                            if rooms:
+                                if timetable[time_period][col_idx - 1]:
+                                    timetable[time_period][col_idx - 1] += ", " + ", ".join(rooms)
+                                else:
+                                    timetable[time_period][col_idx - 1] = ", ".join(rooms)
+                                for room in rooms:
+                                    if room not in class_usage:
+                                        class_usage[room] = []
+                                    class_usage[room].append(f"周{col_idx} {time_period}")
+    return class_usage
+
+
+# ============================ Data Integration ============================
+def integrate_schedule(class_usage):
+    classroom_schedule = {}
+    for room, times in class_usage.items():
+        time_slots = sorted(set(times))
+        days_schedule = {i: [] for i in range(7)}
+        for time in time_slots:
+            day, period = time.split(" ")
+            day_number = int(day[1]) - 1
+            time_ranges = class_periods.get(period, [("Unknown Time", "Unknown Time")])
+            for time_range in time_ranges:
+                start_time, end_time = time_range
+                days_schedule[day_number].append(f"{start_time}{end_time}")
+        formatted_schedule = {}
+        for day_idx in range(7):
+            if days_schedule[day_idx]:
+                formatted_schedule[day_idx] = sorted(days_schedule[day_idx])
+        classroom_schedule[int(room)] = formatted_schedule
+
+    room_2d_array = {}
+    for room, schedule in classroom_schedule.items():
+        room_2d_array[room] = [[""] * len(class_periods) for _ in range(7)]
+        for day_idx, times in schedule.items():
+            for time_idx, time in enumerate(times):
+                room_2d_array[room][day_idx][time_idx] = time
+    return room_2d_array
+
+
+def format_schedule_data(new_room_2d_array):
+    week_dates = get_week_dates()
+    formatted_schedule = []
+    for room, schedule in new_room_2d_array.items():
+        for day_idx, day in enumerate(schedule):
+            for time_slot in day:
+                if time_slot:
+                    start_time, end_time = time_slot.split("-")
+                    formatted_schedule.append([room, week_dates[day_idx], start_time, end_time])
+    return formatted_schedule
+
+
+# ============================ Update Database ============================
+def update_room_availability(formatted_schedule):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True, buffered=True)
+    try:
+        for entry in formatted_schedule:
+            room_name, available_date, available_begin, available_end = entry  # Unpack data
+            cursor.execute("SELECT room_id FROM Rooms WHERE room_name = %s", (room_name,))
+            room_result = cursor.fetchone()
+            if not room_result:
+                continue
+            room_id = room_result["room_id"]
+            cursor.execute(""" 
+                SELECT availability_id FROM Room_availability 
+                WHERE room_id = %s AND available_date = %s 
+                AND available_begin = %s AND available_end = %s
+            """, (room_id, available_date, available_begin, available_end))
+            existing_availability = cursor.fetchone()
+            if existing_availability:
+                cursor.execute("""
+                    UPDATE Room_availability 
+                    SET availability = 1 
+                    WHERE availability_id = %s
+                """, (existing_availability["availability_id"],))
+            else:
+                cursor.execute("""
+                    INSERT INTO Room_availability (room_id, available_date, available_begin, available_end, availability)
+                    VALUES (%s, %s, %s, %s, 1)
+                """, (room_id, available_date, available_begin, available_end))
+        conn.commit()
+    except mysql.connector.Error as err:
+        conn.rollback()
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# ============================ Split Time Slots ============================
+def split_time_slots(data):
+    """Split stored string data into individual time slots (remove all brackets)"""
+    new_data = {}
+    for room, schedule in data.items():
+        new_schedule = []
+        for day in schedule:
+            new_day = []
+            for item in day:
+                if item:
+                    time_slots = item.split('][')
+                    if len(time_slots) > 1:
+                        for slot in time_slots:
+                            clean_slot = slot.replace("[", "").replace("]", "")
+                            new_day.append(clean_slot)
+                    else:
+                        new_day.append(item)
+                else:
+                    new_day.append('')  # Handle empty values
+            new_schedule.append(new_day)
+        new_data[room] = new_schedule
+    return new_data
+
+
+# ============================ Flask API Endpoint ============================
+@app.route('/run_scheduler', methods=['GET'])
+def run_scheduler():
+    try:
+        # Run the scraping and database update process
+        result = main_scheduler()
+        return jsonify({"message": result}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ============================ Main Scheduler Function ============================
+def main_scheduler():
+    # 1. Scrape data
+    class_usage = crawl_data()
+    # 2. Integrate data into 2D array
+    room_2d_array = integrate_schedule(class_usage)
+    # 3. Split time slots and remove brackets
+    new_room_2d_array = split_time_slots(room_2d_array)
+    # 4. Format data and generate the standard format list
+    formatted_schedule = format_schedule_data(new_room_2d_array)
+    # 5. Update database
+    update_room_availability(formatted_schedule)
+    return "Crawling and updating database successfully!"
+
 
 if __name__ == '__main__':
     print("\nRegistered routes:")
     for rule in app.url_map.iter_rules():
         print(f"→ {rule}")
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    # 启用 HTTPS
+    app.run(
+        host='0.0.0.0',  # 监听所有网络接口
+        port=8000,  # HTTPS 默认端口
+        ssl_context=('diicsu.top.pem', 'diicsu.top.key')  # 证书和私钥文件
+    )
+
+# if __name__ == '__main__':
+#     print("\nRegistered routes:")
+#     for rule in app.url_map.iter_rules():
+#         print(f"→ {rule}")
+#     app.run(host='0.0.0.0', port=8000, debug=True)

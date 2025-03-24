@@ -18,11 +18,13 @@
         }
 
         header {
-            width: 100%;
+            width: 90%;
             background-color: var(--primary-color);
             color: white;
             padding: 20px;
             border-radius: 10px;
+            margin-top: 30px;
+            margin-left: 80px;
             margin-bottom: 30px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             text-align: center;
@@ -53,7 +55,7 @@
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 25px;
             width: 100%;
-            max-width: 1200px;
+            /* max-width: 1200px; */
         }
 
         .reservation-card {
@@ -63,6 +65,7 @@
             box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
             transition: transform 0.2s, box-shadow 0.2s;
             position: relative;
+            max-width: 600px;
         }
 
         .reservation-card:hover {
@@ -208,6 +211,21 @@
             background: var(--pending-color);
         }
 
+        .status-indicator[data-status="changed"] {
+            background: #1e84d1;
+        }
+        
+
+        .status-indicator[data-status="changed"] {
+            background: #1e84d1;
+        }
+        .status-indicator[data-status="failed"] {
+            background: var(--danger-color);
+        }
+
+        .status-indicator[data-status="rejected"] {
+            background: var(--danger-color);
+        }
         .main-content {
             width: calc(100% - 200px);
             margin-left: 200px; 

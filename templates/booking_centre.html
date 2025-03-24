@@ -1,28 +1,29 @@
 <!-- booking_centre.html -->
 <!--
-author: Guanhang Zhang  &Xin Yu &Siyan Guo
-this version add reason window
-Version 4.0
+author: Guanhang Zhang  &Xin Yu
+this version fix the notification,add room management pae
+Version 3.0.2
 
 -->
 
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Classroom reservation system</title>
-    <script src="{{ url_for('static', filename='js/booking_centre.js') }}"></script>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/booking_centre.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+    <link rel="stylesheet" href="../static/css/booking_centre.css">
+    <link rel="stylesheet" href="../static/css/sidebar.css">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 
 <body>
-    <div class="hamburger-menu">
-            <i class="fas fa-bars"></i>
-    </div>
+{% include 'contact.html' %}
+<div class="hamburger-menu">
+        <i class="fas fa-bars"></i>
+ </div>
     <div id="bookingModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
@@ -32,79 +33,80 @@ Version 4.0
         </div>
     </div>
     <div class="main-container">
-        <!-- Sidebar -->
         <div class="sidebar">
-            <a class="nav-item active" href="{{ url_for('booking_centre') }}">
-                <i class="fas fa-calendar-alt nav-icon"></i>
-                Booking Center
-            </a>
-            <a class="nav-item" href="{{ url_for('my_reservation') }}">
-                <i class="fas fa-list-ul nav-icon"></i>
-                My Bookings
-            </a>
-            <a class="nav-item" href="{{ url_for('my_notification') }}">
-                <i class="fas fa-bell nav-icon"></i>
-                Notifications
-            </a>
-            <a class="nav-item" href="{{ url_for('user_profile') }}">
-                <i class="fas fa-user-circle nav-icon"></i>
-                My Profile
-            </a>
+
+          <a class="nav-item active" href="{{ url_for('booking_centre') }}">
+            <i class="fas fa-calendar-alt nav-icon"></i>
+            Booking Center
+          </a>
+          <a class="nav-item" href="{{ url_for('my_reservation') }}">
+            <i class="fas fa-list-ul nav-icon"></i>
+            My Bookings
+          </a>
+          <a class="nav-item" href="{{ url_for('my_notification') }}">
+            <i class="fas fa-bell nav-icon"></i>
+            Notifications
+          </a>
+          <a class="nav-item" href="{{ url_for('user_profile') }}">
+            <i class="fas fa-user-circle nav-icon"></i>
+            My Profile
+          </a>
             <div class="sidebar-logo">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
             </div>
         </div>
 
         <!-- Content Area -->
-    <div class="content-area">
-        <header>
-            <h1>Classroom Reservation System</h1>
-        </header>
-        <div class="container">
-            <!-- 筛选栏 -->
-            <div class="filters">
-                <input type="date" id="datePicker">
-                <select id="equipmentFilter">
-                    <option value="">All Equipment</option>
-                    <option value="Projector">Projector</option>
-                    <option value="Whiteboard">Whiteboard</option>
-                </select>
-                <input type="text" id="searchKeyword" placeholder="Search classroom name...">
-                <select id="capacityFilter">
-                    <option value="0">All capacity</option>
-                    <option value="30">More than 30 people</option>
-                    <option value="50">More than 50 people</option>
-                    <option value="100">More than 100 people</option>
-                </select>
-                <div class="time-filter">
-                    <select id="startTime">
-                        <option value="">Select start time</option>
+            <div class="container">
+                <h1>Classroom reservation system</h1>
+
+                <!-- 搜索和过滤区域 -->
+                <div class="filters">
+                    <!-- 在 filters div 中添加 -->
+                    <input type="date" id="datePicker">
+
+                    <select id="equipmentFilter">
+                        <option value="">All Equipment</option>
+                        <option value="Projector">Projector</option>
+                        <option value="Whiteboard">Whiteboard</option>
                     </select>
-                    <span>to</span>
-                    <select id="endTime">
-                        <option value="">Select end time</option>
+
+                    <input type="text" id="searchKeyword" placeholder="Search classroom name...">
+                    <select id="capacityFilter">
+                        <option value="0">All capacity</option>
+                        <option value="30">More than 30 people</option>
+                        <option value="50">More than 50 people</option>
+                        <option value="100">More than 100 people</option>
                     </select>
+                    <div class="time-filter">
+                        <select id="startTime">
+                            <option value="">Select start time</option>
+                        </select>
+                        <span>to</span>
+                        <select id="endTime">
+                            <option value="">Select end time</option>
+                        </select>
+                    </div>
                 </div>
+
+                <div id="classroomList" class="classroom-grid"></div>
             </div>
 
-            <!-- classroom list -->
-            <div id="classroomList" class="classroom-grid"></div>
-        </div>
-    </div>
-        <!-- reason window -->
+<!-- reason window -->
         <div id="reasonModal" class="modal">
             <div class="modal-content">
                 <span class="close-reason">&times;</span>
                 <h2>Please enter the reason for booking:</h2>
                 <textarea id="reasonInput" rows="4" placeholder="Enter your reason here..."></textarea>
-                <div class="button-container">
-                    <button id="submitReason">Submit</button>
-                </div>
-            </div>
+                 <div class="button-container">
+                     <button id="submitReason">Submit</button>
+                 </div>
+             </div>
         </div>
+
     </div>
-
+<!--    <script src="../static/js/booking_centre_admin.js"></script>-->
+      <script src="{{ url_for('static', filename='js/booking_centre.js') }}"></script>
 </body>
-
 
 </html>

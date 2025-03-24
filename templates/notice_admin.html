@@ -12,9 +12,8 @@
 <div class="hamburger-menu">
         <i class="fas fa-bars"></i>
 </div>
-    <div class="main-container">
+<div class="main-container">
         <div class="sidebar">
-
             <a class="nav-item" href="{{ url_for('booking_centre_admin') }}">
                 <i class="fas fa-calendar-alt nav-icon"></i>
                 Booking Center
@@ -35,6 +34,14 @@
                 <i class="fas fa-door-open nav-icon"></i>
                 Room Management
             </a>
+            <a class="nav-item" href="{{ url_for('room_issue_management') }}">
+                <i class="fas fa-tools nav-icon"></i>
+                Room Issue Management
+          </a>
+          <a class="nav-item" href="{{ url_for('user_management') }}">
+            <i class="fas fa-users nav-icon"></i>
+            User Management
+          </a>
             <a class="nav-item active" href="{{ url_for('notice_admin') }}">
                 <i class="fas fa-bell nav-icon"></i>
                 Notifications
@@ -51,25 +58,37 @@
                 <i class="fas fa-user-circle nav-icon"></i>
                 My Profile
             </a>
+            <a class="nav-item" href="{{ url_for('usage_report_center') }}">
+                <i class="fas fa-chart-line nav-icon"></i>
+                Usage Report Center
+            </a>
             <div class="sidebar-logo">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
             </div>
         </div>
         <!-- Content Area -->
-        <div class="content-area">
-                     <h1>Notification</h1>
-            <!-- Notification Center Example -->
-            <div class="notification-panel">
-                <div class="notification-item unread">
-                    <div class="notification-time">2023-10-01 09:00</div>
-                    <div class="notification-content">
-                        Your booking for "Innovation Room 101" has been confirmed (09:00-10:00)
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="container">
+    <h1>Notification Center</h1>
+
+    <!-- 选项卡 -->
+    <div class="notification-tabs">
+        <button class="tab active" data-tab="system">System Notifications</button>
+        <button class="tab" data-tab="personal">Personal Notifications</button>
     </div>
+
+    <!-- 系统通知面板 -->
+    <div class="notification-panel system-panel active">
+        <!-- 动态加载系统通知 -->
+    </div>
+
+    <!-- 个人通知面板 -->
+    <div class="notification-panel personal-panel">
+        <!-- 动态加载个人通知 -->
+    </div>
+</div>
+</div>
 
     <script src="../static/js/notice_admin.js"></script>
 </body>
 </html>
+

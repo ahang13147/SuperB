@@ -9,7 +9,7 @@ body {
 }
 
 .container {
-    max-width: 1200px;
+    /* max-width: 1200px; */
 }
 
 .content-area {
@@ -104,6 +104,7 @@ h1 {
 
 
 .classroom-card {
+    position: relative; /* to let the buttom at the end */
     background: white;
     border-radius: 8px;
     padding: 20px;
@@ -137,15 +138,21 @@ h1 {
 }
 
 button {
-    background-color: #3498db;
+background-image: linear-gradient(to left, #48c5efc2 10%, #6f86d6 130%);
     color: white;
     border: none;
     padding: 10px 20px;
-    border-radius: 4px;
+    border-radius: 10px;
     cursor: pointer;
     margin-top: 10px;
-    width: 100%;
+    width: 70%;
     transition: opacity 0.2s;
+    position: absolute;
+    bottom: 10px;
+    padding-left: 5px; 
+    padding-right: 5px; 
+    left: 50%; /* 水平居中 */
+    transform: translateX(-50%); 
 }
 
 button:hover:not(:disabled) {
@@ -161,6 +168,7 @@ button:disabled {
     margin: 10px 0;
     color: #666;
     line-height: 1.8;
+    padding-bottom: 20px;
 }
 
 .details p {
@@ -216,6 +224,7 @@ button:disabled {
     padding: 30px;
     width: 90%;
     max-width: 600px;
+    height: auto;
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     position: relative;
@@ -287,17 +296,27 @@ button:disabled {
     font-size: 1.1rem;
     font-weight: 600;
     width: auto;
-    margin: 20px auto 0;
     display: block;
     transition: transform 0.1s, box-shadow 0.2s;
     letter-spacing: 1px;
+    position: relative;
+    top: 20px;
     z-index: 1200;
+    justify-content: center !important;
+    align-items: center !important;
+
 }
 
-#confirmBooking:hover {
+/* #confirmBooking:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    position: relative;
+} */
+
+#confirmBooking:focus {
+    outline: none;
 }
+
 
 #availableTimes .time-slot.checked {
     border-color: #3498db !important;
@@ -480,4 +499,30 @@ button:disabled {
 
 .close-reason:hover {
     color: #2c3e50;
+}
+.issue-alert {
+    color: #856404;
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    padding: 8px;
+    margin: 10px 0;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+/* 不可用状态样式 */
+.classroom-card[style*="opacity:0.6"] {
+    position: relative;
+}
+
+.classroom-card[style*="opacity:0.6"]::after {
+    content: "UNAVAILABLE";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: red;
+    font-weight: bold;
+    font-size: 1.5em;
+    opacity: 1;
 }

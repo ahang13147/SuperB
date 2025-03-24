@@ -1,10 +1,10 @@
-let pendingBookingData = null; 
+let pendingBookingData = null;
 let classrooms = [];
-let currentClassroom = null; 
+let currentClassroom = null;
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('The document is loaded and initialization begins...');
 
-   
+
     let timeSlots = [
         "08:00-08:45",
         "08:55-09:40",
@@ -24,8 +24,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         capacityFilter: document.getElementById('capacityFilter'),
         startSelect: document.getElementById('startTime'),
         endSelect: document.getElementById('endTime'),
-        datePicker: document.getElementById('datePicker'), 
-        equipmentFilter: document.getElementById('equipmentFilter'), 
+        datePicker: document.getElementById('datePicker'),
+        equipmentFilter: document.getElementById('equipmentFilter'),
         modal: document.getElementById('bookingModal'),
         closeModal: document.querySelector('.close'),
         availableTimesContainer: document.getElementById('availableTimes'),
@@ -46,20 +46,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Get classroom data
     async function fetchClassrooms() {
-        console.log(elements.datePicker.value); 
+        console.log(elements.datePicker.value);
         const requestData = {
             capacity: parseInt(elements.capacityFilter.value) || undefined,
             room_name: elements.searchInput.value.trim() || undefined,
             date: elements.datePicker?.value || undefined,
-            start_time: elements.startSelect.value || undefined, 
-            end_time: elements.endSelect.value || undefined,    
+            start_time: elements.startSelect.value || undefined,
+            end_time: elements.endSelect.value || undefined,
             equipment: elements.equipmentFilter?.value || undefined
         };
 
         Object.keys(requestData).forEach(key => requestData[key] === undefined && delete requestData[key]);
 
         try {
-            const response = await fetch('http://localhost:8000/search-rooms', {
+            const response = await fetch('https://www.diicsu.top:8000/search-rooms', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestData)
@@ -71,21 +71,38 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const classroomMap = new Map();
 
-            responseData.results.forEach(room => {
+            // 1. 过滤掉状态为3的房间
+            const filteredRooms = responseData.results.filter(room => room.room_status !== 3);
+
+            // 2. 获取所有需要展示issue的房间ID
+            const issueRoomIds = filteredRooms
+                .filter(room => room.room_status === 1)
+                .map(room => room.room_id);
+
+            // 3. 批量获取issue数据
+            const issuesMap = await fetchIssuesForRooms(issueRoomIds);
+
+            filteredRooms.forEach(room => {
                 if (!classroomMap.has(room.room_id)) {
+                    const isUnavailable = room.room_status === 2;
+
                     classroomMap.set(room.room_id, {
-                        id: room.room_id,      
+                        id: room.room_id,
                         name: room.room_name,
-                        type: room.room_type,  
+                        type: room.room_type,
                         capacity: room.capacity,
                         equipment: room.equipment ? room.equipment.split(', ') : [],
-                        availableTimes: []
+                        availableTimes: [],
+                        status: room.room_status,
+                        issues: issuesMap.get(room.room_id) || [],
+                        disabled: isUnavailable // 标记不可预订
                     });
                 }
+
                 const classroom = classroomMap.get(room.room_id);
                 classroom.availableTimes.push({
                     time: `${room.available_begin}-${room.available_end}`,
-                    booked: room.availability === 2 
+                    booked: room.availability === 2 || classroom.disabled // 叠加不可预订状态
                 });
             });
 
@@ -97,11 +114,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // 新增：批量获取issue数据
+    async function fetchIssuesForRooms(roomIds) {
+        if (roomIds.length === 0) return new Map();
+
+        try {
+            const promises = roomIds.map(roomId =>
+                fetch(`https://www.diicsu.top:8000/get-issues/${roomId}`)
+                    .then(res => res.json())
+            );
+
+            const results = await Promise.all(promises);
+            return results.reduce((map, result, index) => {
+                map.set(roomIds[index], result.issues);
+                return map;
+            }, new Map());
+        } catch (error) {
+            console.error('Failed to fetch issues:', error);
+            return new Map();
+        }
+    }
     //  Rendering Classroom List
     function renderClassrooms() {
-        elements.classroomList.innerHTML = classrooms.map(classroom => `
-        <div class="classroom-card" data-classroom="${classroom.name}">
+            elements.classroomList.innerHTML = classrooms.map(classroom => `
+        <div class="classroom-card" data-classroom="${classroom.name}" ${classroom.disabled ? 'style="opacity:0.6"' : ''}>
             <h3>${classroom.name}</h3>
+            
+            ${classroom.status === 1 ? `
+                <div class="issue-alert">
+                    ⚠️ Issues: 
+                    ${classroom.issues.map(issue =>
+                `${issue.issue} (${issue.status})`
+            ).join(', ')}
+                </div>
+            ` : ''}
+
             <div class="details">
                 <p>Capacity: ${classroom.capacity} people</p>
                 <p>Equipment: ${classroom.equipment.join(', ')}</p>
@@ -109,14 +156,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <ul>
                     ${classroom.availableTimes.map(t => `
                         <li class="${t.booked ? 'booked-slot' : ''}">
-                            ${t.time} 
+                            ${t.time}
                             ${t.booked ? '<span class="booked-marker">⛔️</span>' : ''}
                         </li>
                     `).join('')}
                 </ul>
             </div>
-            <button>
-                Book Now
+            <button ${classroom.disabled ? 'disabled style="background:#ccc"' : ''}>
+                ${classroom.disabled ? 'Unavailable' : 'Book Now'}
             </button>
         </div>
     `).join('');
@@ -135,10 +182,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentClassroom = classroom;
         elements.availableTimesContainer.innerHTML = classroom.availableTimes.map(timeSlot => `
         <div class="time-slot ${timeSlot.booked ? 'time-slot-booked' : ''}">
-            <input 
-                type="radio" 
-                name="timeSlot" 
-                id="slot_${timeSlot.time.replace(/:/g, '')}" 
+            <input
+                type="radio"
+                name="timeSlot"
+                id="slot_${timeSlot.time.replace(/:/g, '')}"
                 value="${timeSlot.time}"
                 ${timeSlot.booked ? 'disabled' : ''}
             >
@@ -162,7 +209,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Initialize event listening
-     function initEventListeners() {
+    function initEventListeners() {
         ['input', 'change'].forEach(eventType => {
             elements.searchInput.addEventListener(eventType, fetchClassrooms);
             elements.capacityFilter.addEventListener(eventType, fetchClassrooms);
@@ -173,23 +220,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.confirmBookingButton.addEventListener('click', handleBookingConfirmation);
         });
 
-         // Disable Modal event listening
-        elements.closeModal.onclick = () => elements.modal.style.display = 'none';
-
-         // Prevents modal from closing when you click the date picker
-        elements.datePicker.addEventListener('click', (event) => {
-            event.stopPropagation();  
-
-        // Cause The pop-up closed event
-        document.querySelector('.close-reason').onclick = () => {
+        // 绑定关闭原因模态框事件
+        document.querySelector('.close-reason').addEventListener('click', () => {
             document.getElementById('reasonModal').style.display = 'none';
-        };
+        });
 
-        // Added Cause The event was submitted
+        // 绑定提交原因事件
         document.getElementById('submitReason').addEventListener('click', handleReasonSubmit);
 
+        // Disable Modal event listening
+        elements.closeModal.onclick = () => elements.modal.style.display = 'none';
 
-        
+        // Prevents modal from closing when you click the date picker
+        elements.datePicker.addEventListener('click', (event) => {
+            event.stopPropagation();
+            
+
         });
 
         // Turn off Modal event listening: It is only turned off by clicking on the modal background
@@ -199,7 +245,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         };
     }
-    
+
     // The modified handleBookingConfirmation function:
     async function handleBookingConfirmation() {
         const selectedTime = document.querySelector('input[name="timeSlot"]:checked');
@@ -221,16 +267,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const userId = 3;
 
         try {
-            const response = await fetch('http://localhost:8000/insert_booking', {
+            const response = await fetch('https://www.diicsu.top:8000/insert_booking', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    room_id: currentClassroom.id, 
+                    room_id: currentClassroom.id,
                     user_id: userId,
                     booking_date: bookingDate,
                     start_time: startTime,
                     end_time: endTime,
-                    reason: '' 
+                    reason: ''
                 })
             });
 
@@ -269,7 +315,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         try {
-            const response = await fetch('http://localhost:8000/insert_booking_with_reason', {
+            const response = await fetch('https://www.diicsu.top:8000/insert_booking_with_reason', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -301,65 +347,33 @@ document.addEventListener('DOMContentLoaded', async () => {
             `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         await fetchClassrooms();
         console.log('System initialization complete');
-        
+
     } catch (error) {
         console.error('Initialization error:', error);
         alert('System initialization failed');
     }
 });
-//add for menu
-document.addEventListener('DOMContentLoaded', function() {
+
+
+document.addEventListener('DOMContentLoaded', function () {
     const hamburger = document.querySelector('.hamburger-menu');
     const sidebar = document.querySelector('.sidebar');
 
-    // 汉堡菜单点击事件
-    hamburger.addEventListener('click', function() {
+    hamburger.addEventListener('click', function () {
         sidebar.classList.toggle('active');
     });
 
-    // 点击外部关闭侧边栏
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
             sidebar.classList.remove('active');
         }
     });
 
-    // 窗口大小变化时重置侧边栏
-    window.addEventListener('resize', function() {
+    window.addEventListener('resize', function () {
         if (window.innerWidth > 768) {
             sidebar.classList.remove('active');
         }
     });
 });
 
-function adaptTitle() {
-  const title = document.querySelector('h1');
-  if (window.innerWidth < 600) {
-    title.textContent = 'Classroom Booking';
-  } else {
-    title.textContent = 'Classroom reservation system';
-  }
-}
-window.addEventListener('resize', adaptTitle);
-adaptTitle();
 
-document.addEventListener('DOMContentLoaded', function() {
-    const hamburger = document.querySelector('.hamburger-menu');
-    const sidebar = document.querySelector('.sidebar');
-
-    hamburger.addEventListener('click', function() {
-        sidebar.classList.toggle('active');
-    });
-
-    document.addEventListener('click', function(e) {
-        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
-            sidebar.classList.remove('active');
-        }
-    });
-
-    window.addEventListener('resize', function() {
-        if (window.innerWidth > 768) {
-            sidebar.classList.remove('active');
-        }
-    });
-});

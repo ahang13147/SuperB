@@ -1,0 +1,113 @@
+/* 自定义简洁风格 */
+body {
+    background-color: #f8f9fa;
+    font-family: 'Arial', sans-serif;
+}
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.card-header {
+    background-color: #e3f2fd;
+    color: #2c3e50;
+    border-radius: 12px 12px 0 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th,
+td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+th {
+    background-color: #f0f7ff;
+    color: #2c3e50;
+}
+
+tr:hover {
+    background-color: #f5f9ff;
+}
+
+.btn-action {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    transition: background-color 0.3s;
+}
+.btn-edit {
+    background-color: #4ca9e7;
+    color: white;
+    padding: 4px 12px;
+    border: none;
+    transition: background-color 0.3s;
+}
+.btn-edit:hover {
+    background-color: #2980b9;;
+}
+.btn-delete {
+    background-color: #f56565;
+    color: white;
+    border: none;
+}
+.btn-delete:hover {
+    background-color: #c9303f;
+}
+/* 修改搜索框容器 */
+.search-box {
+    min-width: 280px;
+    /* 保证最小显示宽度 */
+    flex-grow: 1;
+    /* 在flex布局中自动扩展 */
+}
+
+/* 调整输入框本身 */
+#searchInput {
+    min-width: 100%;
+    /* 继承容器宽度 */
+    white-space: nowrap;
+    /* 防止文字换行 */
+    text-overflow: ellipsis;
+    /* 超长时显示省略号 */
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+    .card-header .d-flex {
+        flex-wrap: nowrap;
+        /* 禁止换行 */
+    }
+
+    .search-box {
+        min-width: auto;
+        /* 自动宽度 */
+        margin-right: 10px;
+        /* 增加右边距 */
+    }
+
+    #searchInput::placeholder {
+        font-size: 0.9em;
+        /* 缩小字体 */
+        content: "Search by ID, Name, or Role";
+    }
+}
+/* 新增渐变按钮样式 */
+.btn-primary {
+    background: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%) !important;
+    border: none;
+    color: #2c3e50 !important;
+    transition: all 0.3s ease !important;
+}
+
+/* 悬停状态加深渐变 */
+.btn-primary:hover {
+    background: linear-gradient(120deg, #8fb3fd 0%, #a8d5fa 100%) !important;
+    box-shadow: 0 2px 8px rgba(143, 179, 253, 0.4);
+}

@@ -1,7 +1,7 @@
-// flatpickr 初始化
+// flatpickr initialise
 const startDatePicker = flatpickr("#startDate", {
     dateFormat: "Y-m-d",
-    onChange: function(selectedDates) {
+    onChange: function (selectedDates) {
         endDatePicker.set('minDate', selectedDates[0] || new Date());
         validateTimes();
     }
@@ -12,14 +12,14 @@ const startTimePicker = flatpickr("#startTime", {
     noCalendar: true,
     dateFormat: "H:i",
     time_24hr: true,
-    onChange: function() {
+    onChange: function () {
         validateTimes();
     }
 });
 
 const endDatePicker = flatpickr("#endDate", {
     dateFormat: "Y-m-d",
-    onChange: function() {
+    onChange: function () {
         validateTimes();
     }
 });
@@ -29,12 +29,12 @@ const endTimePicker = flatpickr("#endTime", {
     noCalendar: true,
     dateFormat: "H:i",
     time_24hr: true,
-    onChange: function() {
+    onChange: function () {
         validateTimes();
     }
 });
 
-// 时间验证逻辑
+// Time verification logic
 function validateTimes() {
     const startDate = document.getElementById('startDate').value;
     const startTime = document.getElementById('startTime').value;
@@ -60,7 +60,7 @@ function validateTimes() {
     return true;
 }
 
-// 添加黑名单
+// Add blacklist
 async function addToBlacklist() {
     if (!validateTimes()) {
         alert('The decapsulating time must be later than the masking time！');
@@ -77,7 +77,7 @@ async function addToBlacklist() {
     if (userId && startDate && startTime && endDate && endTime && reason) {
         const requestBody = {
             user_id: parseInt(userId, 10),
-            added_by: 1, // 假设当前用户ID为1
+            added_by: 1, // Assume that the current user ID is 1
             start_date: startDate,
             start_time: startTime,
             end_date: endDate,
@@ -86,7 +86,7 @@ async function addToBlacklist() {
         };
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/insert-blacklist', {
+            const response = await fetch('https://www.diicsu.top:8000/insert-blacklist', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody),
@@ -98,14 +98,14 @@ async function addToBlacklist() {
             }
             else {
                 const errorData = await response.json();
-                alert(`fail to add：${errorData.message}`);
+                alert(`fail to add：${errorData.error}`);
             }
         } catch (error) {
             console.error('Request failed：', error);
             alert('Network error, please try again later');
         }
 
-        // 清空输入框
+        // Clear input field
         document.getElementById('userId').value = '';
         document.getElementById('startDate').value = '';
         document.getElementById('startTime').value = '';
@@ -117,11 +117,11 @@ async function addToBlacklist() {
     }
 }
 
-// 移除黑名单
+// Remove blacklist
 async function removeFromBlacklist(button, blacklistId) {
     if (confirm('Are you sure to unban the user？')) {
         try {
-            const response = await fetch('http://localhost:8000/delete_blacklist', {
+            const response = await fetch('https://www.diicsu.top:8000/delete_blacklist', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ blacklist_id: blacklistId })
@@ -143,7 +143,7 @@ async function removeFromBlacklist(button, blacklistId) {
     }
 }
 
-// 显示通知
+// Show notification
 function showNotification(message, type = 'info') {
     const colors = {
         success: '#2ecc71',
@@ -169,10 +169,10 @@ function showNotification(message, type = 'info') {
     setTimeout(() => notification.remove(), 3000);
 }
 
-// 加载黑名单数据
+// load blacklist data
 async function loadBlacklist() {
     try {
-        const response = await fetch('http://localhost:8000/get-blacklist');
+        const response = await fetch('https://www.diicsu.top:8000/get-blacklist');
         if (response.ok) {
             const result = await response.json();
             renderBlacklist(result.blacklists);
@@ -182,7 +182,7 @@ async function loadBlacklist() {
     }
 }
 
-// 渲染表格
+// Render form
 function renderBlacklist(data) {
     const tableBody = document.querySelector('#blacklistTable tbody');
     tableBody.innerHTML = '';
@@ -208,32 +208,32 @@ function renderBlacklist(data) {
     });
 }
 
-// 初始化加载
+// Initial load
 document.addEventListener('DOMContentLoaded', () => {
     loadBlacklist();
 });
 
 
-        // The data is initialized when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            loadBlacklist();
-        });
+// The data is initialized when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    loadBlacklist();
+});
 
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const hamburger = document.querySelector('.hamburger-menu');
     const sidebar = document.querySelector('.sidebar');
 
-    hamburger.addEventListener('click', function() {
+    hamburger.addEventListener('click', function () {
         sidebar.classList.toggle('active');
     });
 
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
             sidebar.classList.remove('active');
         }
     });
-    window.addEventListener('resize', function() {
+    window.addEventListener('resize', function () {
         if (window.innerWidth > 768) {
             sidebar.classList.remove('active');
         }

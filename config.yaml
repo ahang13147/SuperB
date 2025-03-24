@@ -1,13 +1,13 @@
 
-# Azure配置
-CLIENT_ID: "a6865feb-cbfc-4ba6-b4e1-8a632a2c7dc5"
-CLIENT_SECRET: "JCN8Q~kSfZZDK6eZnE4qYjoJ0bRfK0ZdDBFgPc4q"
+# Azure configuration
+CLIENT_ID: "736efa73-315a-4b77-a273-0447f5e2a27d"
+CLIENT_SECRET: "Cj.8Q~szh8vD3fqUi7i3VgJAgAyI1r.2brZhTdrC"
 AUTHORITY: "https://login.microsoftonline.com/common"
-REDIRECT_URI: "http://localhost:8000/auth_callback"
+REDIRECT_URI: "https://101.200.197.132:8000/auth_callback"
 
-# ---------------------------- 数据库连接配置 ----------------------------
+# ---------------------------- Database connection configuration ----------------------------
 db_config:
   host: "localhost"
   user: "root"
-  password: "zhang2004"  # 注意：删除操作中使用的是1234，请保持一致
+  password: "8e397a5310016d27"  # Note 1234 is used in the deletion operation, please keep it the same
   database: "booking_system_db"

@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_profile.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+  <link rel="stylesheet" href="{{url_for('static',filename='css/user_profile.css')}}">
+  <link rel="stylesheet" href="{{url_for('static',filename='css/sidebar.css')}}">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <title>My Profile</title>
   <script src="{{ url_for('static', filename='js/user_profile.js') }}"></script>
 </head>
 <body>
-  <div class="hamburger-menu">
-      <i class="fas fa-bars"></i>
-  </div>
+    <div class="hamburger-menu">
+        <i class="fas fa-bars"></i>
+    </div>
   <div class="main-container">
-    <!-- Sidebar -->
+    <!-- sidebar -->
     <div class="sidebar">
       <a class="nav-item" href="{{ url_for('booking_centre') }}">
         <i class="fas fa-calendar-alt nav-icon"></i>
@@ -29,25 +29,25 @@
         Notifications
       </a>
       <a class="nav-item active" href="{{ url_for('user_profile') }}">
-             <i class="fas fa-user-circle nav-icon"></i>
-             My Profile
+        <i class="fas fa-user-circle nav-icon"></i>
+        My Profile
       </a>
-        <div class="sidebar-logo">
+      <div class="sidebar-logo">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
-        </div>
+      </div>
     </div>
 
-    <!-- Content Area -->
+    <!-- content area-->
     <div class="content-area">
       <header>
         <h1>My Profile</h1>
       </header>
 
-      <!-- Personal Data Form -->
+      <!-- Personal data form -->
       <div class="profile-container">
         <div class="profile-header">
             <div class="profile-picture">
-                <img src="{{ url_for('static', filename='images/default_avatar.png') }}" alt="Logo" id="profile-image">
+                <img src="{{ url_for('static', filename='images/default_avatar.png') }}" alt="Profile Picture" id="profile-image">
                 <button class="edit-picture-btn" onclick="triggerFileInput()">
                     <i class="fas fa-camera"></i>
                 </button>
@@ -61,7 +61,7 @@
         <form id="profile-form">
           <div class="form-group">
             <label for="full-name">Full Name</label>
-            <input type="text" id="full-name" name="full-name" disabled>
+            <input type="text" id="full-name" name="full-name"disabled>
           </div>
           <div class="form-group">
             <label for="email">Email</label>
@@ -69,7 +69,7 @@
           </div>
           <div class="form-group">
             <label for="phone">Phone</label>
-            <input type="tel" id="phone" name="phone" disabled>
+            <input type="tel" id="phone" name="phone"disabled>
           </div>
 
           <div class="form-actions">
@@ -81,5 +81,7 @@
       </div>
     </div>
   </div>
+
+
 </body>
 </html>
