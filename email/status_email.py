@@ -557,18 +557,18 @@ def send_communication_email():
 @app.route('/send_email/broadcast_issue', methods=['POST'])
 def broadcast_issue_email():
     """
-    Broadcast a issue to all users.
+    Broadcast an issue to all users asynchronously.
 
     Request Format (JSON):
     {
-        "issue_id": "room "
+        "issue_id": 3
     }
 
     Response Format (JSON):
     {
         "status": "success" or "failed",
         "message": "...",
-        "booking_id": 123
+        "issue_id": 3
     }
     """
     data = request.get_json()
@@ -581,32 +581,30 @@ def broadcast_issue_email():
         return jsonify({'status': 'failed', 'message': 'issue_id must be an integer.', 'issue_id': None}), 400
 
     issue_info = fetch_issue_info(issue_id)
-    if issue_id:
+    if issue_info:
         issue_id, room_id, issue, status, start_date, start_time, end_date, end_time, added_by = issue_info
-        # print(room_id)
-        # room_name=get_room_name_by_id(room_id)
-        # All room_id should be supposed to be replaced into room_name.
-        # However, fetch_issue_info function directly return room_name as room_id
-        # So it is correct to use room_id here rather than room_name, this may cause misunderstanding.
-        # print(room_name)
+
         subject = f"Remind: Room {room_id} has an issue"
         body = f"""
-        Dear DIICSU students and staffs,<br><br>
+        Dear DIICSU students and staff,<br><br>
 
-        This is a reminder that an issue is occurring in room {room_id} . Below are issue details:<br><br>
-        <strong>Room Name:</strong> {room_id}<br>
+        This is a reminder that an issue is occurring in room {room_id}. Below are the issue details:<br><br>
+        <strong>Room:</strong> {room_id}<br>
         <strong>Start Time:</strong> {start_date} {start_time}<br>
-        <strong>End Time:</strong> {end_date} {end_time}<br><br>
+        <strong>End Time:</strong> {end_date if end_date else 'Not yet resolved'} {end_time if end_time else ''}<br><br>
         <strong>Issue Content:</strong> {issue}<br>
-        <strong>Issue Status:</strong> {status}<br>
-        
+        <strong>Issue Status:</strong> {status}<br><br>
 
-        Please head to the room in time. Thank you.
+        Please avoid using the room during the affected period. Thank you.
         """
-        broadcast_email(subject, body)
-        return jsonify({'status': 'success', 'message': 'Issue broadcast successfully!'})
+
+        # async process
+        process = Process(target=async_broadcast_email, args=(subject, body))
+        process.start()
+
+        return jsonify({'status': 'success', 'message': 'Issue broadcast is being sent in the background.', 'issue_id': issue_id})
     else:
-        return jsonify({'status': 'failed', 'message': 'Failed to send messages.'}), 404
+        return jsonify({'status': 'failed', 'message': 'Failed to fetch issue information.', 'issue_id': issue_id}), 404
 
 
 @app.route('/')
