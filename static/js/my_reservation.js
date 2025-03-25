@@ -47,11 +47,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Get and display reservation information (field name alignment)
     async function loadReservations() {
-        showLoading(); 
+        showLoading();
 
         try {
-            const response = await fetch(`http://localhost:8000/user-bookings?user_id=${DEFAULT_USER_ID}`);
-            const { bookings } = await response.json(); 
+            const response = await fetch(`https://www.diicsu.top:8000/user-bookings?user_id=${DEFAULT_USER_ID}`);
+            const { bookings } = await response.json();
 
             reservationsContainer.innerHTML = bookings
                 .map(reservation => renderReservation(reservation))
@@ -65,19 +65,19 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error:', error);
             reservationsContainer.innerHTML = `<p class="error">Failed to load reservations</p>`;
         } finally {
-            hideLoading(); 
+            hideLoading();
         }
     }
 
     function showCancelModal(e) {
         const card = e.target.closest('.reservation-card');
         const reservationData = {
-            booking_id: card.dataset.reservationId, 
+            booking_id: card.dataset.reservationId,
             booking_date: card.querySelector('[data-booking-date]').dataset.bookingDate,
             start_time: card.querySelector('[data-time-range]').dataset.timeRange.split('-')[0],
             end_time: card.querySelector('[data-time-range]').dataset.timeRange.split('-')[1],
             room_id: card.querySelector('[data-room-id]').dataset.roomId,
-            status: 'canceled' 
+            status: 'canceled'
         };
 
         modal.dataset.reservation = JSON.stringify(reservationData);
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const reservation = JSON.parse(modal.dataset.reservation);
 
         try {
-            const response = await fetch(`http://127.0.0.1:8000/cancel-booking/${reservation.booking_id}`, {
+            const response = await fetch(`https://www.diicsu.top:8000/cancel-booking/${reservation.booking_id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
             });
@@ -99,7 +99,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.querySelector('.status-indicator').style.backgroundColor = 'var(--danger-color)';
                 card.querySelector('.cancel-btn').disabled = true;
                 modal.style.display = 'none';
-                loadReservations(); 
+
+
+                  // todo :add send email to user
+                const emailResponse = await fetch('http://localhost:8000/send_email/cancelled_user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        booking_id: reservation.booking_id
+                    })
+                });
+                if (emailResponse.ok) {
+                    console.log('Cancellation email sent successfully.');
+                } else {
+                    console.error('Failed to send cancellation email.');
+                }
+
+                loadReservations();
             } else {
                 alert('Failed to cancel reservation');
             }
@@ -109,31 +125,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+
     loadReservations();
 
     closeModalBtn.addEventListener('click', () => modal.style.display = 'none');
     window.addEventListener('click', (e) => e.target === modal && (modal.style.display = 'none'));
 });
 
-//add for menu
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const hamburger = document.querySelector('.hamburger-menu');
     const sidebar = document.querySelector('.sidebar');
 
-    // 汉堡菜单点击事件
-    hamburger.addEventListener('click', function() {
+    hamburger.addEventListener('click', function () {
         sidebar.classList.toggle('active');
     });
 
-    // 点击外部关闭侧边栏
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
             sidebar.classList.remove('active');
         }
     });
 
-    // 窗口大小变化时重置侧边栏
-    window.addEventListener('resize', function() {
+    window.addEventListener('resize', function () {
         if (window.innerWidth > 768) {
             sidebar.classList.remove('active');
         }

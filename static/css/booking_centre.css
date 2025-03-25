@@ -1,32 +1,41 @@
+
 * {
     box-sizing: border-box;
-    margin: 0;
-    padding: 0;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f6fa;
-    margin: 0;
-    padding: 20px;
+    line-height: 1.6;
+    background-color: #f5f5f5;
 }
 
-header {
-    background-color: #2c3e50;
-    color: white;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 0.1px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.container {
+    /* max-width: 1200px; */
+}
+
+.content-area {
+    flex: 1;
+    padding: 30px;
+    background-color: #f7f7f7;
+}
+.main-container {
+  min-height: 100vh;
+  padding-left: 200px;
+  box-sizing: border-box;
+}
+
+
+h1 {
     text-align: center;
+    color: #2c3e50;
+    margin-bottom: 30px;
+    font-size: 2.5em;
 }
 
-header h1 {
-    margin: 0;
-    font-size: 2rem;
-}
-/*change the title*/
 @media (max-width: 768px) {
+    .main-container {
+    padding-left: 0;
+    box-sizing: content-box;
+  }
     .modal-content h2 {
         color: #2c3e50;
         margin-bottom: 1rem;
@@ -38,65 +47,38 @@ header h1 {
         font-size: 1.3rem !important;
         z-index: 2000;
     }
+
+    body {
+        font-size: 14px;
+    }
+
     h1 {
-        font-size: 24px;
-        margin-bottom: 20px;
-        padding: 0 10px;
-        line-height: 1.3;
-        white-space: nowrap;
-        text-align: center;
-        width: 100%;
-    }
-    /* 修复内容区域居中问题 */
-    .content-area {
-        margin-left: 0 !important;    /* 强制移除侧边栏占位 */
-        width: 100% !important;       /* 全屏宽度 */
-        padding: 30px 0 15px !important; /* 顶部留出汉堡菜单空间 */
-        display: flex !important;     /* 启用弹性布局 */
-        flex-direction: column;       /* 垂直排列子元素 */
-        align-items: center;          /* 水平居中 */
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
     }
 
-    /* 容器居中修正 */
-    .container {
-        width: 100%;
-        max-width: 100%;
-        padding: 0 15px;   /* 保持两侧呼吸空间 */
-    }
-
-    /* 标题强制居中 */
-    h1 {
-        text-align: center;
-        width: 100%;
-        padding: 0 10px;   /* 防止文字溢出 */
-    }
-
-    /* 筛选栏适配 */
     .filters {
-        justify-content: center;      /* 子元素居中 */
+        justify-content: center;
         width: 100%;
         min-width: 300px;
-        padding: 0;        /* 移除容器内边距 */
-        margin: 0 0 20px 0;/* 只保留底部外边距 */
+        padding: 0;
+        margin: 0 0 20px 0;
     }
 }
+
 
 .filters {
     display: flex;
     gap: 15px;
     margin-bottom: 30px;
     flex-wrap: wrap;
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .filters input[type="text"],
 .filters select {
     padding: 10px;
     border: 1px solid #ddd;
-    border-radius: 5px;
+    border-radius: 4px;
     flex: 1 1 200px;
     min-height: 40px;
 }
@@ -107,6 +89,7 @@ header h1 {
     gap: 10px;
     flex: 1 1 300px;
 }
+
 
 .time-filter select {
     flex: 1;
@@ -119,23 +102,21 @@ header h1 {
     gap: 20px;
 }
 
+
 .classroom-card {
+    position: relative; /* to let the buttom at the end */
     background: white;
     border-radius: 8px;
     padding: 20px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
 }
 
-.classroom-card h3 {
-    margin-top: 0;
-    color: #2c3e50;
-}
 
 .classroom-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-3px);
 }
+
 
 .status {
     display: inline-block;
@@ -144,6 +125,7 @@ header h1 {
     font-size: 0.9em;
     margin: 10px 0;
 }
+
 
 .available {
     background-color: #2ecc71;
@@ -156,15 +138,21 @@ header h1 {
 }
 
 button {
-    background-color: #3498db;
+background-image: linear-gradient(to left, #48c5efc2 10%, #6f86d6 130%);
     color: white;
     border: none;
     padding: 10px 20px;
-    border-radius: 5px;
+    border-radius: 10px;
     cursor: pointer;
     margin-top: 10px;
-    width: 100%;
-    transition: background-color 0.2s;
+    width: 70%;
+    transition: opacity 0.2s;
+    position: absolute;
+    bottom: 10px;
+    padding-left: 5px; 
+    padding-right: 5px; 
+    left: 50%; /* 水平居中 */
+    transform: translateX(-50%); 
 }
 
 button:hover:not(:disabled) {
@@ -180,6 +168,7 @@ button:disabled {
     margin: 10px 0;
     color: #666;
     line-height: 1.8;
+    padding-bottom: 20px;
 }
 
 .details p {
@@ -201,7 +190,7 @@ button:disabled {
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.4);
+    background-color: rgba(0, 0, 0, 0.4);
 }
 
 .modal-content {
@@ -235,8 +224,9 @@ button:disabled {
     padding: 30px;
     width: 90%;
     max-width: 600px;
+    height: auto;
     border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     position: relative;
     z-index: 2000;
 }
@@ -252,7 +242,6 @@ button:disabled {
     font-size: 1.8rem;
     z-index: 2000;
 }
-
 
 #availableTimes {
     display: grid;
@@ -307,22 +296,34 @@ button:disabled {
     font-size: 1.1rem;
     font-weight: 600;
     width: auto;
-    margin: 20px auto 0;
     display: block;
     transition: transform 0.1s, box-shadow 0.2s;
     letter-spacing: 1px;
+    position: relative;
+    top: 20px;
     z-index: 1200;
+    justify-content: center !important;
+    align-items: center !important;
+
 }
 
-#confirmBooking:hover {
+/* #confirmBooking:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    position: relative;
+} */
+
+#confirmBooking:focus {
+    outline: none;
 }
+
+
 #availableTimes .time-slot.checked {
     border-color: #3498db !important;
     background: #e3f2fd !important;
     box-shadow: 0 4px 6px rgba(52, 152, 219, 0.1);
 }
+
 .close {
     color: #6c757d;
     font-size: 32px;
@@ -348,15 +349,6 @@ button:disabled {
     border-color: #ff6b6b !important;
     opacity: 0.7;
 }
-
-/*.time-slot-booked::after {*/
-/*    content: "⛔️";*/
-/*    position: absolute;*/
-/*    right: 5px;*/
-/*    top: 50%;*/
-/*    transform: translateY(-50%);*/
-/*    font-size: 1.2em;*/
-/*}*/
 
 .time-slot-booked label {
     color: #ff6b6b !important;
@@ -413,13 +405,17 @@ button:disabled {
     color: white;
     padding: 15px 25px;
     border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     animation: slideIn 0.3s ease-out;
 }
 
 @keyframes slideIn {
-    from { transform: translateX(100%); }
-    to { transform: translateX(0); }
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
 }
 
 #reasonModal.modal {
@@ -481,15 +477,16 @@ button:disabled {
     box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 }
 
-#submitReason:hover {
+/* #submitReason:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
-}
+} */
 
-#submitReason:active {
+/* #submitReason:active {
+    position: relative;
     transform: translateY(0);
     box-shadow: 0 2px 6px rgba(52, 152, 219, 0.3);
-}
+} */
 
 .close-reason {
     color: #6c757d;
@@ -503,4 +500,30 @@ button:disabled {
 
 .close-reason:hover {
     color: #2c3e50;
+}
+.issue-alert {
+    color: #856404;
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    padding: 8px;
+    margin: 10px 0;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+/* 不可用状态样式 */
+.classroom-card[style*="opacity:0.6"] {
+    position: relative;
+}
+
+.classroom-card[style*="opacity:0.6"]::after {
+    content: "UNAVAILABLE";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: red;
+    font-weight: bold;
+    font-size: 1.5em;
+    opacity: 1;
 }

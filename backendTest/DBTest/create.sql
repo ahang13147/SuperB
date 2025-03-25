@@ -24,7 +24,12 @@ CREATE TABLE Users (
     username VARCHAR(255) NOT NULL,             -- Username
     email VARCHAR(255) NOT NULL UNIQUE,         -- User's email, must be unique
     phone_number VARCHAR(255) NOT NULL,        -- Hashed password for security
+<<<<<<< HEAD
     role ENUM('admin', 'professor', 'student', 'tutor') NOT NULL  -- User's role in the system
+=======
+    role ENUM('admin', 'professor', 'student', 'tutor') NOT NULL,  -- User's role in the system
+    avatar_path VARCHAR(200) DEFAULT 'default_avatar.png'
+>>>>>>> origin/feature/sendEmail_DB_and_Flask
 );
 
 -- 1.2 Rooms Table (Stores room details)
@@ -36,7 +41,11 @@ CREATE TABLE Rooms (
     equipment TEXT,                             -- Equipment available in the room
     location VARCHAR(255),                       -- Room's physical location
     room_type INT,                         -- Whether the room is normal      0: available for all staff and students   1: staff only   2: trusted user only
+<<<<<<< HEAD
     room_status INT     -- Room status: 0: available, 1: issue（可以定), 2: unavailable(不可以定） 3: 该房间被管理员删除
+=======
+    room_status INT DEFAULT 0     -- Room status: 0: available, 1: issue（可以定), 2: unavailable(不可以定） 3: 该房间被管理员删除
+>>>>>>> origin/feature/sendEmail_DB_and_Flask
 );
 
 -- 1.3 Room Availability Table (Stores room availability information for specific times)
@@ -59,7 +68,11 @@ CREATE TABLE Bookings (
     start_time TIME NOT NULL,                   -- Start time of the booking
     end_time TIME NOT NULL,
     booking_date DATE,                          -- End time of the booking
+<<<<<<< HEAD
     status ENUM('pending', 'approved', 'canceled', 'rejected','failed','changed') NOT NULL,  -- Booking status
+=======
+    status ENUM('pending', 'approved', 'canceled', 'rejected','failed','changed','finished') NOT NULL,  -- Booking status
+>>>>>>> origin/feature/sendEmail_DB_and_Flask
 	reason TEXT,
 
     FOREIGN KEY (user_id) REFERENCES Users(user_id),  -- Foreign key referencing Users table

@@ -81,6 +81,99 @@ def fetch_booking_info(booking_id):
         print(f"Database error: {err}")
         return None
 
+
+def fetch_issue_info(issue_id):
+    """
+    Fetch issue details from the database using issue_id.
+
+    Args:
+        issue_id (int): The ID of the issue to fetch.
+
+    Returns:
+        tuple: A tuple containing issue details
+               (issue_id, room_name, issue, status, start_date, start_time, end_date, end_time, added_by_email).
+               Returns None if no matching issue is found.
+    """
+    try:
+        conn = mysql.connector.connect(
+            host=db_config['host'],
+            user=db_config['user'],
+            password=db_config['password'],
+            database=db_config['database'],
+            ssl_disabled=True  # Disable SSL
+        )
+        cursor = conn.cursor()
+
+        query = """
+        SELECT 
+            i.issue_id,
+            r.room_name,
+            i.issue,
+            i.status,
+            i.start_date,
+            i.start_time,
+            i.end_date,
+            i.end_time,
+            u.email AS added_by_email
+        FROM Issues i
+        JOIN Rooms r ON i.room_id = r.room_id
+        JOIN Users u ON i.added_by = u.user_id
+        WHERE i.issue_id = %s
+        """
+        cursor.execute(query, (issue_id,))
+        issue_info = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if issue_info:
+            return issue_info
+        else:
+            print(f"Issue ID {issue_id} not found")
+            return None
+
+    except mysql.connector.Error as err:
+        print(f"Database error: {err}")
+        return None
+
+def get_room_name_by_id(room_id):
+    """
+    Fetch room name by room_id from the Rooms table.
+
+    Args:
+        room_id (int): ID of the room to look up.
+
+    Returns:
+        str: The name of the room if found, or None if not found.
+    """
+    try:
+        conn = mysql.connector.connect(
+            host=db_config['host'],
+            user=db_config['user'],
+            password=db_config['password'],
+            database=db_config['database'],
+            ssl_disabled=True
+        )
+        cursor = conn.cursor()
+
+        query = "SELECT room_name FROM Rooms WHERE room_id = %s"
+        cursor.execute(query, (room_id,))
+        result = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if result:
+            return result[0]  # room_name
+        else:
+            print(f"Room ID {room_id} not found.")
+            return None
+
+    except mysql.connector.Error as err:
+        print(f"Database error: {err}")
+        return None
+
+
 def send_email(to_email, subject, body):
     """
     Send an email to the specified recipient.
@@ -99,6 +192,43 @@ def send_email(to_email, subject, body):
         print(f'Email sent to {to_email}')
     except Exception as e:
         print(f'Failed to send email: {e}')
+
+
+def broadcast_email(subject, body):
+    """
+    Broadcast an email to all users in the database.
+
+    Args:
+        subject (str): The subject of the email.
+        body (str): The body of the email.
+    """
+    try:
+        # Establish database connection
+        conn = mysql.connector.connect(
+            host=db_config['host'],
+            user=db_config['user'],
+            password=db_config['password'],
+            database=db_config['database'],
+            ssl_disabled=True  # Disable SSL
+        )
+        cursor = conn.cursor()
+
+        # Query to fetch all user emails
+        query = "SELECT email FROM Users"
+        cursor.execute(query)
+        users = cursor.fetchall()
+
+        # Send email to each user
+        for user in users:
+            to_email = user[0]
+            send_email(to_email, subject, body)  # Send email to the user
+
+        cursor.close()
+        conn.close()
+        print(f"Broadcast email sent to {len(users)} users.")
+
+    except mysql.connector.Error as err:
+        print(f"Database error: {err}")
 
 # -------------------------------
 # 以下各接口均从 JSON 请求中获取 booking_id，并在返回 JSON 中包含 booking_id
@@ -340,6 +470,94 @@ def send_remind_email():
         return jsonify({'status': 'success', 'message': 'Reminder email sent!', 'booking_id': booking_id})
     else:
         return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+
+
+@app.route('/send_email/communicate', methods=['POST'])
+def send_communication_email():
+    """
+    Send a reminder email notifying the user that their booking is about to begin.
+
+    Request Format (JSON):
+    {
+        "email": "2542881@dundee.ac.uk"
+        "content":"I want to report issues"
+    }
+
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+    }
+    """
+    data = request.get_json()
+    if not data or 'email' not in data:
+        return jsonify({'status': 'failed', 'message': 'Failed to get email'}), 400
+
+    email = str(data.get('email'))
+    content = str(data.get(''))
+
+    subject = f"Private_message from {email}"
+    body = f"""
+    Dear Administrator,<br><br>
+
+    {content}
+    
+
+    Please head to the room in time. Thank you.
+    """
+    send_email(email, subject, body)
+    return jsonify({'status': 'success', 'message': 'Reminder email sent!'})
+
+
+@app.route('/send_email/broadcast_issue', methods=['POST'])
+def broadcast_issue_email():
+    """
+    Broadcast a issue to all users.
+
+    Request Format (JSON):
+    {
+        "issue_id": "room "
+    }
+
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+        "booking_id": 123
+    }
+    """
+    data = request.get_json()
+    if not data or 'issue_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Please provide a valid issue ID.', 'issue_id': None}), 400
+
+    try:
+        issue_id = int(data.get('issue_id'))
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'issue_id must be an integer.', 'issue_id': None}), 400
+
+    issue_info = fetch_issue_info(issue_id)
+    if issue_id:
+        issue_id, room_id, issue, status, start_date, start_time, end_date, end_time, added_by = issue_info
+        room_name=get_room_name_by_id(room_id)
+        subject = f"Remind: Room {room_name} has an issue"
+        body = f"""
+        Dear DIICSU students and staffs,<br><br>
+
+        This is a reminder that an issue is occurring in room {room_name} . Below are issue details:<br><br>
+        <strong>Room Name:</strong> {room_name}<br>
+        <strong>Start Time:</strong> {start_date} {start_time}<br>
+        <strong>End Time:</strong> {end_date} {end_time}<br><br>
+        <strong>Issue Content:</strong> {issue}<br>
+        <strong>Issue Status:</strong> {status}<br>
+        
+
+        Please head to the room in time. Thank you.
+        """
+        broadcast_email(subject, body)
+        return jsonify({'status': 'success', 'message': 'Issue broadcast successfully!'})
+    else:
+        return jsonify({'status': 'failed', 'message': 'Failed to send messages.'}), 404
+
 
 @app.route('/')
 def index():

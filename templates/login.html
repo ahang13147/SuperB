@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Microsoft Account login</title>
-    <link rel="stylesheet" href="{{ url_for('../static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -15,13 +15,18 @@
             <p>Please use a Microsoft work or school account to continue</p>
         </div>
 
-        <a href="http://192.168.31.235:8000" class="login-btn">
+        <a href="/auth" class="login-btn">
             <i class="fab fa-microsoft"></i>
             Sign in with your Microsoft account
         </a>
 
+        <a href="/login_via_code" class="login-btn">
+            <i class="fas fa-key"></i>
+            Sign in with verification code
+        </a>
+
         <div class="terms">
-            By continuing, you agree with us<a href="#">terms of service</a> 和 <a href="#">privacy policy</a>
+            By continuing, you agree with us <a href="#">terms of service</a> and <a href="#">privacy policy</a>
         </div>
     </div>
 </body>
@@ -82,6 +87,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            margin-bottom: 15px; /* Add margin to space out buttons */
+            text-decoration: none; /* Remove underline from button text */
         }
 
         .login-btn:hover {

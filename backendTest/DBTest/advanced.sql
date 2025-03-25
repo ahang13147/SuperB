@@ -1,3 +1,10 @@
+-- @version: 3/18/2025
+-- @author: Xin Yu, Siyan Guo, Zibang Nie
+-- @description: This SQL script creates a booking system database, which includes tables for Users, Rooms, Bookings, Approvals, Notifications, and Reports.
+-- It provides a structure to manage users, room bookings, approval processes, notifications, and report generation.
+-- ADD: add new feild of rooms
+
+
 USE `booking_system_db`;
 
 
@@ -19,14 +26,14 @@ END //
 DELIMITER ;
 
 
--- 触发器：当 Bookings 表中记录的 status 字段更新为 'approved' 时，
+-- 触发器：当 Bookings 表中记录的 status 字段更新为 'approved'或者changed时候 时，
 -- 更新对应 Room_availability 的 availability 为 2（已预订）。
 DELIMITER //
-CREATE TRIGGER update_availability_on_booking_approve
+CREATE TRIGGER update_availability_on_booking_approve_or_changed
 AFTER UPDATE ON Bookings
 FOR EACH ROW
 BEGIN
-    IF NEW.status = 'approved' AND OLD.status <> 'approved' THEN
+    IF NEW.status IN ('approved', 'changed') THEN
         UPDATE Room_availability
         SET availability = 2
         WHERE room_id = NEW.room_id
@@ -36,6 +43,7 @@ BEGIN
     END IF;
 END //
 DELIMITER ;
+
 
 -- 触发器：当 Bookings 表中记录的 status 字段更新为 'canceled' 时，
 -- 更新对应 Room_availability 的 availability 为 0（可用）。
@@ -57,8 +65,11 @@ DELIMITER ;
 
 
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> origin/feature/sendEmail_DB_and_Flask
 DELIMITER //
 
 CREATE PROCEDURE reassignBookings(IN unavailable_room_id INT)
@@ -68,7 +79,16 @@ BEGIN
     DECLARE v_start_time TIME;
     DECLARE v_end_time TIME;
     DECLARE v_booking_date DATE;
+<<<<<<< HEAD
     DECLARE done INT DEFAULT FALSE;
+=======
+    DECLARE v_username VARCHAR(255);
+    DECLARE v_orig_roomname VARCHAR(255);
+    DECLARE v_new_roomname VARCHAR(255);
+    DECLARE done INT DEFAULT FALSE;
+
+    -- Cursor: 获取所有预定了该不可用房间的预订记录（且日期大于等于今天，且状态未取消、拒绝或失败）
+>>>>>>> origin/feature/sendEmail_DB_and_Flask
     DECLARE cur CURSOR FOR
          SELECT booking_id, user_id, start_time, end_time, booking_date
          FROM Bookings
@@ -78,6 +98,12 @@ BEGIN
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
+<<<<<<< HEAD
+=======
+    -- 获取原房间名称
+    SELECT room_name INTO v_orig_roomname FROM Rooms WHERE room_id = unavailable_room_id;
+
+>>>>>>> origin/feature/sendEmail_DB_and_Flask
     OPEN cur;
     read_loop: LOOP
        FETCH cur INTO v_booking_id, v_user_id, v_start_time, v_end_time, v_booking_date;
@@ -85,19 +111,37 @@ BEGIN
            LEAVE read_loop;
        END IF;
 
+<<<<<<< HEAD
        -- Set capacity threshold (for example, 10 seats)
        SET @capacity_threshold = 10;
 
        -- Get the original room's capacity and equipment details
+=======
+       -- 获取预定该房间的用户的用户名
+       SELECT username INTO v_username FROM Users WHERE user_id = v_user_id;
+
+       -- 设置容量允许的误差阈值（例如10个座位）
+       SET @capacity_threshold = 10;
+
+       -- 获取原房间的容量和设备信息
+>>>>>>> origin/feature/sendEmail_DB_and_Flask
        SELECT capacity, equipment INTO @orig_capacity, @orig_equipment
        FROM Rooms
        WHERE room_id = unavailable_room_id;
 
+<<<<<<< HEAD
        -- Find a suitable replacement room:
        -- 1. The room must be available (room_status = 0)
        -- 2. Capacity difference within the threshold
        -- 3. Equipment matches (exact match in this example)
        -- 4. No booking conflicts for the same date and time slot
+=======
+       -- 查找一个合适的替代房间：
+       -- 1. 该房间必须可用（room_status = 0）
+       -- 2. 容量差在允许阈值内
+       -- 3. 设备要求（这里要求完全匹配）
+       -- 4. 在预定的日期和时间段内，该房间没有冲突预定
+>>>>>>> origin/feature/sendEmail_DB_and_Flask
        SELECT room_id INTO @new_room_id FROM Rooms
        WHERE room_status = 0
          AND room_id <> unavailable_room_id
@@ -112,6 +156,7 @@ BEGIN
        LIMIT 1;
 
        IF @new_room_id IS NOT NULL THEN
+<<<<<<< HEAD
           -- Update booking record with the new room and mark as 'changed'
           UPDATE Bookings
           SET room_id = @new_room_id,
@@ -130,6 +175,46 @@ BEGIN
 
           INSERT INTO Notifications(user_id, message, notification_action)
           VALUES (v_user_id, 'No suitable replacement room found. Your booking has been cancelled.', 'cancellation');
+=======
+          -- 如果找到合适的替代房间，获取新房间名称
+          SELECT room_name INTO v_new_roomname FROM Rooms WHERE room_id = @new_room_id;
+
+          -- 更新预定记录，设置新房间并标记状态为'changed'
+          UPDATE Bookings
+          SET room_id = @new_room_id,
+              status = 'changed',
+              reason = CONCAT('Booking reassigned from room ', v_orig_roomname, ' (ID: ', unavailable_room_id, ') to room ', v_new_roomname, ' (ID: ', @new_room_id, ').')
+          WHERE booking_id = v_booking_id;
+
+          -- 插入通知消息：详细说明原预定信息和替换后的房间信息
+          INSERT INTO Notifications(user_id, message, notification_action)
+          VALUES (v_user_id,
+                  CONCAT(
+                      'Dear ', v_username, ' (User ID: ', v_user_id, '), ',
+                      'due to an issue with your originally booked room ', v_orig_roomname, ' (Room ID: ', unavailable_room_id, '), ',
+                      'scheduled on ', v_booking_date, ' from ', v_start_time, ' to ', v_end_time, ', ',
+                      'your booking has been successfully reassigned to room ', v_new_roomname, ' (Room ID: ', @new_room_id, ').'
+                  ),
+                  'reminder');
+       ELSE
+          -- 如果没有找到合适的替代房间，则更新预定状态为'failed'
+          UPDATE Bookings
+          SET status = 'failed',
+              reason = CONCAT('No suitable replacement room found for room ', v_orig_roomname, ' (ID: ', unavailable_room_id, ') during ', v_booking_date, ' from ', v_start_time, ' to ', v_end_time, '.')
+          WHERE booking_id = v_booking_id;
+
+          -- 插入通知消息：详细说明原因及预定取消的情况，提示用户需要重新预定
+          INSERT INTO Notifications(user_id, message, notification_action)
+          VALUES (v_user_id,
+                  CONCAT(
+                      'Dear ', v_username, ' (User ID: ', v_user_id, '), ',
+                      'due to an issue with your originally booked room ', v_orig_roomname, ' (Room ID: ', unavailable_room_id, '), ',
+                      'scheduled on ', v_booking_date, ' from ', v_start_time, ' to ', v_end_time, ', ',
+                      'we were unable to find a suitable replacement room matching the required equipment and capacity. ',
+                      'As a result, your booking has been cancelled. Please rebook manually if necessary.'
+                  ),
+                  'cancellation');
+>>>>>>> origin/feature/sendEmail_DB_and_Flask
        END IF;
 
     END LOOP;
@@ -140,6 +225,11 @@ DELIMITER ;
 
 
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> origin/feature/sendEmail_DB_and_Flask
 DROP TRIGGER IF EXISTS trg_after_room_unavailable;
 
 DELIMITER //
@@ -158,13 +248,22 @@ DELIMITER ;
 
 
 
+<<<<<<< HEAD
 DELIMITER //
 
 -- 触发器：在插入一条 Issue 后自动发送通知，并根据 Issue 状态更新 Rooms 表的 room_status
+=======
+
+
+DELIMITER //
+
+-- Trigger: After an Issue is inserted, automatically send a notification and update the room status.
+>>>>>>> origin/feature/sendEmail_DB_and_Flask
 CREATE TRIGGER after_issue_insert
 AFTER INSERT ON Issues
 FOR EACH ROW
 BEGIN
+<<<<<<< HEAD
     -- 插入通知（保持原来的内容）
     INSERT INTO Notifications (user_id, message, notification_action)
     VALUES (
@@ -174,6 +273,31 @@ BEGIN
     );
 
     -- 根据 Issue 的状态更新 Rooms 表的 room_status
+=======
+    DECLARE v_username VARCHAR(255);
+    DECLARE v_roomname VARCHAR(255);
+
+    -- Get the username of the reporter and the room name.
+    SELECT username INTO v_username FROM Users WHERE user_id = NEW.added_by;
+    SELECT room_name INTO v_roomname FROM Rooms WHERE room_id = NEW.room_id;
+
+    -- Insert a detailed notification message.
+    INSERT INTO Notifications (user_id, message, notification_action)
+    VALUES (
+        NULL,
+        CONCAT(
+            'Attention: Admin ', v_username,
+            ' (ID: ', NEW.added_by,
+            ') has reported a new issue for room ', v_roomname,
+            ' (Room ID: ', NEW.room_id,
+            '). Issue details: ', NEW.issue,
+            '. Current status: ', NEW.status, '.'
+        ),
+        'alert'
+    );
+
+    -- Update room status.
+>>>>>>> origin/feature/sendEmail_DB_and_Flask
     IF NEW.status = 'resolved' THEN
         UPDATE Rooms SET room_status = 0 WHERE room_id = NEW.room_id;
     ELSEIF NEW.status IN ('fault', 'in_maintenance') THEN
@@ -184,11 +308,16 @@ BEGIN
 END;
 //
 
+<<<<<<< HEAD
 -- 触发器：在更新 Issue 时，如果 status 发生变化，则自动发送通知，并根据新状态更新 Rooms 表的 room_status
+=======
+-- Trigger: When an Issue is updated, send a status change notification.
+>>>>>>> origin/feature/sendEmail_DB_and_Flask
 CREATE TRIGGER after_issue_update
 AFTER UPDATE ON Issues
 FOR EACH ROW
 BEGIN
+<<<<<<< HEAD
     IF NEW.status <> OLD.status THEN
         INSERT INTO Notifications (user_id, message, notification_action)
         VALUES (
@@ -198,6 +327,33 @@ BEGIN
         );
 
         -- 根据新的 Issue 状态更新 Rooms 表的 room_status
+=======
+    DECLARE v_username VARCHAR(255);
+    DECLARE v_roomname VARCHAR(255);
+
+    -- Get the username of the reporter and the room name.
+    SELECT username INTO v_username FROM Users WHERE user_id = NEW.added_by;
+    SELECT room_name INTO v_roomname FROM Rooms WHERE room_id = NEW.room_id;
+
+    IF NEW.status <> OLD.status THEN
+        -- Insert a detailed notification message.
+        INSERT INTO Notifications (user_id, message, notification_action)
+        VALUES (
+            NULL,
+            CONCAT(
+                'Notice: admin ', v_username,
+                ' (ID: ', NEW.added_by,
+                ') reported an issue status changed for room ', v_roomname,
+                ' (Room ID: ', NEW.room_id,
+                ', Issue ID: ', NEW.issue_id,
+                '). Status changed from ', OLD.status,
+                ' to ', NEW.status, '.'
+            ),
+            'changed'
+        );
+
+        -- Update room status.
+>>>>>>> origin/feature/sendEmail_DB_and_Flask
         IF NEW.status = 'resolved' THEN
             UPDATE Rooms SET room_status = 0 WHERE room_id = NEW.room_id;
         ELSEIF NEW.status IN ('fault', 'in_maintenance') THEN
@@ -213,12 +369,18 @@ DELIMITER ;
 
 
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> origin/feature/sendEmail_DB_and_Flask
 DELIMITER //
 
 CREATE TRIGGER trg_booking_status_change
 AFTER UPDATE ON Bookings
 FOR EACH ROW
 BEGIN
+<<<<<<< HEAD
     -- 1) 先声明所有需要的变量
     DECLARE msg VARCHAR(512);
 
@@ -238,6 +400,65 @@ BEGIN
             SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has failed. Booking failed, possibly due to room conflict (someone else booked the room).');
         ELSE
             SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') status has been updated to ', NEW.status, '.');
+=======
+    DECLARE msg VARCHAR(512);
+    DECLARE v_username VARCHAR(255);
+    DECLARE v_roomname VARCHAR(255);
+
+    -- 查询用户名称和房间名称
+    SELECT username INTO v_username FROM Users WHERE user_id = NEW.user_id;
+    SELECT room_name INTO v_roomname FROM Rooms WHERE room_id = NEW.room_id;
+
+    IF NEW.status <> OLD.status THEN
+        IF NEW.status = 'approved' THEN
+            SET msg = CONCAT(
+                'Dear ', v_username, ' (User ID: ', NEW.user_id, '), ',
+                'your booking (Booking ID: ', NEW.booking_id, ') for room ', v_roomname, ' (Room ID: ', NEW.room_id, '), ',
+                'scheduled on ', NEW.booking_date, ' from ', NEW.start_time, ' to ', NEW.end_time, ', ',
+                'has been approved by the administrator.'
+            );
+        ELSEIF NEW.status = 'rejected' THEN
+            SET msg = CONCAT(
+                'Dear ', v_username, ' (User ID: ', NEW.user_id, '), ',
+                'your booking (Booking ID: ', NEW.booking_id, ') for room ', v_roomname, ' (Room ID: ', NEW.room_id, '), ',
+                'scheduled on ', NEW.booking_date, ' from ', NEW.start_time, ' to ', NEW.end_time, ', ',
+                'has been rejected by the administrator.'
+            );
+        ELSEIF NEW.status = 'changed' THEN
+            SET msg = CONCAT(
+                'Dear ', v_username, ' (User ID: ', NEW.user_id, '), ',
+                'due to room issues, your booking (Booking ID: ', NEW.booking_id, ') originally scheduled for room ', v_roomname, ' (Room ID: ', NEW.room_id, '), ',
+                'on ', NEW.booking_date, ' from ', NEW.start_time, ' to ', NEW.end_time, ', ',
+                'has been reallocated to an alternative arrangement.'
+            );
+        ELSEIF NEW.status = 'pending' THEN
+            SET msg = CONCAT(
+                'Dear ', v_username, ' (User ID: ', NEW.user_id, '), ',
+                'your booking (Booking ID: ', NEW.booking_id, ') for room ', v_roomname, ' (Room ID: ', NEW.room_id, '), ',
+                'scheduled on ', NEW.booking_date, ' from ', NEW.start_time, ' to ', NEW.end_time, ', ',
+                'is now pending. Please wait for admin review.'
+            );
+        ELSEIF NEW.status = 'canceled' THEN
+            SET msg = CONCAT(
+                'Dear ', v_username, ' (User ID: ', NEW.user_id, '), ',
+                'your booking(Booking ID: ', NEW.booking_id, ') for room ', v_roomname, ' (Room ID: ', NEW.room_id, ') has been canceled, ',
+                'which was scheduled on ', NEW.booking_date, ' from ', NEW.start_time, ' to ', NEW.end_time, '.'
+            );
+        ELSEIF NEW.status = 'failed' THEN
+            SET msg = CONCAT(
+                'Dear ', v_username, ' (User ID: ', NEW.user_id, '), ',
+                'your booking (Booking ID: ', NEW.booking_id, ') for room ', v_roomname, ' (Room ID: ', NEW.room_id, '), ',
+                'scheduled on ', NEW.booking_date, ' from ', NEW.start_time, ' to ', NEW.end_time, ', ',
+                'has failed, possibly due to a room conflict with another booking.'
+            );
+        ELSE
+            SET msg = CONCAT(
+                'Dear ', v_username, ' (User ID: ', NEW.user_id, '), ',
+                'the status of your booking (Booking ID: ', NEW.booking_id, ') for room ', v_roomname, ' (Room ID: ', NEW.room_id, '), ',
+                'scheduled on ', NEW.booking_date, ' from ', NEW.start_time, ' to ', NEW.end_time, ', ',
+                'has been updated to ', NEW.status, '.'
+            );
+>>>>>>> origin/feature/sendEmail_DB_and_Flask
         END IF;
 
         INSERT INTO Notifications(user_id, message, notification_action)
@@ -256,5 +477,86 @@ BEGIN
         );
     END IF;
 END //
+<<<<<<< HEAD
 DELIMITER ;
 
+=======
+
+DELIMITER ;
+
+
+
+
+
+
+
+
+
+
+DELIMITER //
+
+CREATE TRIGGER trg_after_booking_insert
+AFTER INSERT ON Bookings
+FOR EACH ROW
+BEGIN
+    DECLARE notif_msg VARCHAR(512);
+    DECLARE v_username VARCHAR(255);
+    DECLARE v_roomname VARCHAR(255);
+    DECLARE notif_action ENUM('confirmation', 'reminder', 'cancellation', 'changed', 'failed', 'rejected', 'alert', 'info');
+
+    -- 查询用户名称和房间名称
+    SELECT username INTO v_username FROM Users WHERE user_id = NEW.user_id;
+    SELECT room_name INTO v_roomname FROM Rooms WHERE room_id = NEW.room_id;
+
+    IF NEW.status = 'pending' THEN
+        SET notif_msg = CONCAT(
+            'Dear ', v_username, ' (User ID: ', NEW.user_id, '), ',
+            'your booking (Booking ID: ', NEW.booking_id, ') for room ', v_roomname, ' (Room ID: ', NEW.room_id, ') ',
+            'scheduled on ', NEW.booking_date, ' from ', NEW.start_time, ' to ', NEW.end_time,
+            ' is now pending. Please wait for admin review.'
+        );
+        SET notif_action = 'reminder';
+    ELSEIF NEW.status = 'approved' THEN
+        SET notif_msg = CONCAT(
+            'Dear ', v_username, ' (User ID: ', NEW.user_id, '), ',
+            'your booking (Booking ID: ', NEW.booking_id, ') for room ', v_roomname, ' (Room ID: ', NEW.room_id, ') ',
+            'scheduled on ', NEW.booking_date, ' from ', NEW.start_time, ' to ', NEW.end_time,
+            ' has been approved automatically. Please arrive at your reserved room on time.'
+        );
+        SET notif_action = 'confirmation';
+    ELSE
+        SET notif_msg = CONCAT(
+            'Your booking (Booking ID: ', NEW.booking_id, ') for room ', v_roomname, ' (Room ID: ', NEW.room_id, ') ',
+            'scheduled on ', NEW.booking_date, ' from ', NEW.start_time, ' to ', NEW.end_time,
+            ' has been added with status "', NEW.status, '".'
+        );
+        SET notif_action = 'info';
+    END IF;
+
+    INSERT INTO Notifications(user_id, message, notification_action)
+    VALUES (NEW.user_id, notif_msg, notif_action);
+END //
+
+DELIMITER ;
+
+
+
+
+
+-- 开启事件调度器（如果尚未开启）
+SET GLOBAL event_scheduler = ON;
+
+DELIMITER //
+
+CREATE EVENT ev_remove_blacklist_entries
+ON SCHEDULE EVERY 1 MINUTE
+DO
+BEGIN
+    DELETE FROM Blacklist
+    WHERE end_date = CURDATE()
+      AND end_time <= CURTIME();
+END;
+//
+
+DELIMITER ;
+>>>>>>> origin/feature/sendEmail_DB_and_Flask

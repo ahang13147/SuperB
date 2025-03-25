@@ -1,14 +1,14 @@
 // adminSidebar.js
-// ============ 动态加载侧边栏 ============
+// ============ Load the sidebar dynamically ============
 function loadSidebar() {
-  fetch('/adminSidebar')  // 调用 Flask 路由
+  fetch('/adminSidebar')  // Call Flask routing
     .then(response => response.text())
     .then(data => {
-      // 插入侧边栏到容器
+      // Insert sidebar into container
       const sidebarContainer = document.querySelector('.main-container');
       if (sidebarContainer) {
         sidebarContainer.insertAdjacentHTML('afterbegin', data);
-        // 加载完成后自动高亮当前页
+        // Automatically highlight the current page after loading
         highlightCurrentPage();
       }
     })
@@ -16,30 +16,30 @@ function loadSidebar() {
       console.error('Error loading sidebar:', error);
     });
 }
-// ========== 自动高亮当前页面 ==========
+// ========== Automatically highlight the current page ==========
 function highlightCurrentPage() {
-  // 获取当前页面路径（标准化处理）
+  // Get the current page path (standardized processing)
   const currentPath = window.location.pathname
     .split("/")
     .pop()
     .toLowerCase()
     .replace(/(\.html|\/)/g, "");
 
-  // 遍历侧边栏所有导航项
+  // Traverse all navigation items in the sidebar
   document.querySelectorAll(".adminSidebar .nav-item").forEach(item => {
-    // 提取导航项路径（同样标准化）
+    // Extract navigation item path (again standardized)
     const itemPath = item.getAttribute("href")
       .toLowerCase()
       .replace(/(\.html|\/)/g, "");
 
-    // 精确匹配路径
+    // Exact matching path
     if (currentPath === itemPath) {
       item.classList.add("active");
     }
   });
 }
 
-// ========== 初始化侧边栏 ==========
+// ========== Initialize the sidebar ==========
 document.addEventListener("DOMContentLoaded", function() {
-  loadSidebar(); // 页面加载时执行
+  loadSidebar(); 
 });

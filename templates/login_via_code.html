@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification Login</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 8px; /* 减少圆角弧度 */
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            width: 450px;
+        }
+
+        .title {
+            font-family: 'Segoe UI', sans-serif;
+            color: #2F2F2F;
+            font-size: 28px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 0.5px;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .input-group {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        input {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            flex: 1;
+            margin-right: 10px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+            width: calc(100% - 12px); /* 调整验证码输入框宽度 */
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #4a90e2;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #4a90e2 0%, #2d74da 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 160px; /* 固定按钮宽度 */
+        }
+
+        .send-btn:disabled {
+            background: #cccccc;
+            background-image: none;
+            cursor: not-allowed;
+        }
+
+        .verify-code-input {
+            margin-bottom: 25px;
+            padding-right: 20px; /* 右侧对齐调整 */
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .login-btn {
+            linear-gradient(135deg, #6b81c0 0%, #1f418f 100%)
+            color: white;
+        }
+
+        .getback-btn {
+            background: #2F2F2F;
+            color: white;
+        }
+
+        .hint-text {
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <a class="back-btn" href="{{ url_for('login') }}">←</a>
+
+    <div class="container">
+        <h1 class="title">Login Via Code</h1> <!-- 新增标题 -->
+        <div class="hint-text">Please enter your E-mail address:</div>
+        <div class="input-group">
+            <input type="email" id="email" placeholder="example@dundee.ac.uk">
+            <button class="send-btn" id="sendBtn" onclick="sendCode()">Click to send verify code</button>
+        </div>
+
+        <div class="hint-text">Please enter your verify code:</div>
+        <input type="number" id="code" class="verify-code-input" onwheel="return false;">
+
+        <div class="button-group">
+            <button class="btn getback-btn" onclick="window.location.href='{{ url_for('login') }}'">Get Back</button>
+            <button class="btn login-btn" onclick="login()">Login</button>
+        </div>
+    </div>
+
+    <script>
+        let isCounting = false;
+        let timer;
+
+        function sendCode() {
+            if(isCounting) return;
+
+            const email = document.getElementById('email').value;
+
+            // 判断邮箱是否符合@dundee.ac.uk后缀
+            if (!validateEmail(email)) {
+                alert('Please enter a valid email address ending with @dundee.ac.uk');
+                return;
+            }
+
+            if (!email.endsWith('@dundee.ac.uk')) {
+                alert('Please enter an email address with the domain @dundee.ac.uk');
+                return;
+            }
+
+            const btn = document.getElementById('sendBtn');
+            btn.disabled = true;
+            isCounting = true;
+            let count = 60;
+
+            fetch('https://www.diicsu.top:8000/send_verification', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: email })
+            }).catch(error => {
+                alert('Failed to send verification code');
+            });
+
+            timer = setInterval(() => {
+                btn.textContent = `Please try after ${count} seconds`;
+                if (count-- <= 0) {
+                    clearInterval(timer);
+                    btn.disabled = false;
+                    isCounting = false;
+                    btn.textContent = 'Click to send verify code';
+                }
+            }, 1000);
+        }
+
+        function login() {
+            const code = document.getElementById('code').value;
+            const email = document.getElementById('email').value;
+
+            fetch('https://www.diicsu.top:8000/verify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: email, code: code })
+            }).then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.href = data.redirect; // 修改此行;
+                } else {
+                    alert('The account or the verify code is wrong, please try again.');
+                }
+            }).catch(() => {
+                alert('Verification failed, please try again.');
+            });
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+    </script>
+</body>
+</html>

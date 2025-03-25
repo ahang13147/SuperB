@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Suspension Notice</title>
+  <link rel="stylesheet" href="static/css/black.css">
+  <script defer src="static/js/black.js"></script>
+</head>
+<body>
+  <div class="jail-notice">
+    <!-- Animated Lock -->
+    <div class="animated-lock">🔒</div>
+
+    <!-- Title -->
+    <h1>💥 Oops, You've Been Caught!</h1>
+
+    <!-- Reason for Ban -->
+    <div class="reason-bubble shake">
+      <p>🚫 Reason: <span class="highlight" id="banReason"></span></p>
+      <div class="speech-bubble" id="randomMessage"></div>
+    </div>
+
+    <!-- Ban Duration -->
+    <div class="sentence-clock">
+      <p>⏳ Suspension Duration: <span class="countdown" id="banDuration"></span></p>
+    </div>
+
+    <!-- Fun Button -->
+    <button class="apology-button" id="apologyButton">😭 I'm Sorry</button>
+  </div>
+
+  <!-- Sound Effect -->
+  <audio id="soundEffect" src="static/audio/sad-trombone.mp3"></audio>
+</body>
+</html>

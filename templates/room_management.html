@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -36,9 +35,19 @@
             Room Management
         </a>
         <a class="nav-item" href="{{ url_for('room_issue_management') }}">
+<<<<<<< HEAD
             <i class="fas fa-door-open nav-icon"></i>
             Room Issue Management
         </a>
+=======
+            <i class="fas fa-tools nav-icon"></i>
+            Room Issue Management
+        </a>
+          <a class="nav-item" href="{{ url_for('user_management') }}">
+            <i class="fas fa-users nav-icon"></i>
+            User Management
+          </a>
+>>>>>>> origin/feature/sendEmail_DB_and_Flask
         <a class="nav-item" href="{{ url_for('notice_admin') }}">
             <i class="fas fa-bell nav-icon"></i>
             Notifications
@@ -55,63 +64,153 @@
             <i class="fas fa-user-circle nav-icon"></i>
             My Profile
         </a>
-            <div class="sidebar-logo">
+            <a class="nav-item" href="{{ url_for('usage_report_center') }}">
+                <i class="fas fa-chart-line nav-icon"></i>
+                Usage Report Center
+            </a>
+        <div class="sidebar-logo">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
-            </div>
+        </div>
     </div>
 
     <div class="content-area">
         <h1>Room Management</h1>
+        <div class="tab-control">
+            <button class="tab-btn active" onclick="showTab('active')">Active</button>
+            <button class="tab-btn" onclick="showTab('deleted')">Deleted</button>
+        </div>
+        <button class="add-room-btn" onclick="openAddRoomModal()">Add Room</button>
 
+        <!-- 桌面端表格容器 -->
+        <div class="room-table-container">
+            <table class="room-table" id="activeTable">
+                <thead>
+                    <tr>
+                        <th>Room ID</th>
+                        <th>Name</th>
+                        <th>Capacity</th>
+                        <th>Location</th>
+                        <th>Equipment</th>
+                        <th>Room Type</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="room-list-container">
+                    <!-- 动态加载pending房间数据 -->
+                </tbody>
+            </table>
 
-            <div class="room-list">
-                <div class="room-list-container">
-                    <!-- 动态加载房间数据 -->
-                </div>
-            </div>
-
-            </div>
+            <table class="room-table" id="deletedTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Room ID</th>
+                        <th>Name</th>
+                        <th>Capacity</th>
+                        <th>Location</th>
+                        <th>Equipment</th>
+                        <th>Room Type</th>
+                        <th>Deleted At</th>
+                    </tr>
+                </thead>
+                <tbody class="deleted-list-container">
+                    <!-- 动态加载deleted房间数据 -->
+                </tbody>
+            </table>
         </div>
 
-
-        <div class="add-room-form">
-            <h2>Add New Room</h2>
-            <input type="text" id="roomName" placeholder="Room Name" required>
-            <input type="number" id="capacity" placeholder="Capacity" required>
-            <input type="text" id="location" placeholder="Location" required>
-            <input type="text" id="equipment" placeholder="Equipment" required>
-            <button onclick="addRoom()">Add Room</button>
+        <!-- 移动端卡片容器 -->
+        <div class="room-cards-container">
+            <!-- 动态加载卡片内容 -->
         </div>
+    </div>
+</div>
 
-        <div id="editModal" class="modal">
-            <div class="modal-content">
-                <h2>Edit Room</h2>
-                <input type="text" id="editRoomId" disabled>
-                <input type="text" id="editRoomName" placeholder="Room Name">
-                <input type="number" id="editCapacity" placeholder="Capacity">
-                <input type="text" id="editLocation" placeholder="Location">
-                <input type="text" id="editEquipment" placeholder="Equipment">
-                <div style="margin-top: 20px; display: flex; gap: 10px;">
-                    <button onclick="saveRoom()" style="flex:1;">Save</button>
-                    <button onclick="closeEditModal()" class="cancel-btn" style="flex:1;">Cancel</button>
-                </div>
-            </div>
+<!-- 编辑房间模态框 -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <h2>Edit Room</h2>
+        <div class="input-group">
+            <label for="editRoomId">Room ID</label>
+            <input type="text" id="editRoomId" disabled>
         </div>
-
-
-        <div id="addSuccessModal" class="success-modal">
-            <div class="success-modal-content">
-                <h2>Success!</h2>
-                <p>Room added successfully.</p>
-            </div>
+        <div class="input-group">
+            <label for="editRoomName">Room Name</label>
+            <input type="text" id="editRoomName" placeholder="Enter room name" required>
         </div>
-
-        <div id="deleteSuccessModal" class="success-modal">
-            <div class="success-modal-content">
-                <h2>Success!</h2>
-                <p>Room deleted successfully.</p>
-            </div>
+        <div class="input-group">
+            <label for="editCapacity">Capacity</label>
+            <input type="number" id="editCapacity" placeholder="Enter capacity" required>
         </div>
+        <div class="input-group">
+            <label for="editLocation">Location</label>
+            <input type="text" id="editLocation" placeholder="Enter location" required>
+        </div>
+        <div class="input-group">
+            <label for="editEquipment">Equipment</label>
+            <input type="text" id="editEquipment" placeholder="Enter equipment" required>
+        </div>
+        <div class="input-group">
+            <label for="editRoomType">Room Type</label>
+            <select id="editRoomType" required>
+                <option value="0">Available for all</option>
+                <option value="1">Staff only</option>
+                <option value="2">Trusted user only</option>
+            </select>
+        </div>
+        <div class="modal-actions">
+            <button onclick="saveRoom()" class="save-btn">Save</button>
+            <button onclick="closeEditModal()" class="cancel-btn">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- 添加房间模态框 -->
+<div id="addRoomModal" class="modal">
+    <div class="modal-content">
+        <h2>Add New Room</h2>
+        <div class="input-group">
+            <label for="roomName">Room Name</label>
+            <input type="text" id="roomName" placeholder="Enter room name" required>
+        </div>
+        <div class="input-group">
+            <label for="capacity">Capacity</label>
+            <input type="number" id="capacity" placeholder="Enter capacity" required>
+        </div>
+        <div class="input-group">
+            <label for="location">Location</label>
+            <input type="text" id="location" placeholder="Enter location" required>
+        </div>
+        <div class="input-group">
+            <label for="equipment">Equipment</label>
+            <input type="text" id="equipment" placeholder="Enter equipment" required>
+        </div>
+        <div class="input-group">
+            <label for="roomType">Room Type</label>
+            <select id="roomType" required>
+                <option value="0">Available for all</option>
+                <option value="1">Staff only</option>
+                <option value="2">Trusted user only</option>
+            </select>
+        </div>
+        <div class="modal-actions">
+            <button onclick="addRoom()" class="save-btn">Save</button>
+            <button onclick="closeAddRoomModal()" class="cancel-btn">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- 成功提示模态框 -->
+<div id="addSuccessModal" class="success-modal">
+    <div class="success-modal-content">
+        <h2>Success!</h2>
+        <p>Room added successfully.</p>
+    </div>
+</div>
+
+<div id="deleteSuccessModal" class="success-modal">
+    <div class="success-modal-content">
+        <h2>Success!</h2>
+        <p>Room deleted successfully.</p>
     </div>
 </div>
 
