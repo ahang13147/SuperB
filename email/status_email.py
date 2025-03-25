@@ -275,7 +275,41 @@ def async_broadcast_email(subject, body):
             print(f"[Broadcast] General error: {e}")
 
 
+def broadcast_email_to_all_administrators(subject, body):
+    """
+    Send an email to all users with the 'admin' role.
 
+    Args:
+        subject (str): The subject of the email.
+        body (str): The body of the email.
+    """
+    try:
+        conn = mysql.connector.connect(
+            host=db_config['host'],
+            user=db_config['user'],
+            password=db_config['password'],
+            database=db_config['database'],
+            ssl_disabled=True
+        )
+        cursor = conn.cursor()
+
+        # 查询所有管理员用户的邮箱
+        query = "SELECT email FROM Users WHERE role = 'admin'"
+        cursor.execute(query)
+        admins = cursor.fetchall()
+
+        for admin in admins:
+            admin_email = admin[0]
+            send_email(admin_email, subject, body)
+
+        cursor.close()
+        conn.close()
+        print(f"[Admin Broadcast] Email sent to {len(admins)} administrators.")
+
+    except mysql.connector.Error as err:
+        print(f"[Admin Broadcast] Database error: {err}")
+    except Exception as e:
+        print(f"[Admin Broadcast] General error: {e}")
 
 
 # -------------------------------
@@ -605,6 +639,54 @@ def broadcast_issue_email():
         return jsonify({'status': 'success', 'message': 'Issue broadcast is being sent in the background.', 'issue_id': issue_id})
     else:
         return jsonify({'status': 'failed', 'message': 'Failed to fetch issue information.', 'issue_id': issue_id}), 404
+
+
+@app.route('/send_email/broadcast_pending', methods=['POST'])
+def broadcast_pending_email():
+    """
+    broadcast a email to notify all administrators that there is a pending booking.
+
+    Request Format (JSON):
+    {
+        "booking_id": 123
+    }
+
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+    }
+    """
+    data = request.get_json()
+    if not data or 'booking_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.', 'booking_id': None}), 400
+
+    try:
+        booking_id = int(data.get('booking_id'))
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'booking_id must be an integer.', 'booking_id': None}), 400
+
+    booking_info = fetch_booking_info(booking_id)
+    if booking_info:
+        booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
+
+        subject = f"Reminder: Your Booking for Room {room_name} is Approaching"
+        body = f"""
+        Dear {user_email},<br><br>
+
+        This is a pending booking request waiting to be disposed. Below are booking details:<br><br>
+        <strong>Booking ID:</strong> {booking_id}<br>
+        <strong>Room Name:</strong> {room_name}<br>
+        <strong>Room Location:</strong> {room_location}<br>
+        <strong>Start Time:</strong> {start_time}<br>
+        <strong>End Time:</strong> {end_time}<br><br>
+
+        Please head to the room in time. Thank you.
+        """
+        broadcast_email_to_all_administrators(subject, body)
+        return jsonify({'status': 'success', 'message': 'Reminder email sent!', 'booking_id': booking_id})
+    else:
+        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
 
 
 @app.route('/')
