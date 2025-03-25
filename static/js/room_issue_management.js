@@ -13,8 +13,6 @@ flatpickr("#editStartTime", {
 });
 
 // 获取所有问题并显示
-// 获取所有问题并显示
-// 获取所有问题并显示
 function fetchAndDisplayIssues() {
     // 获取搜索框和下拉框的值
     const roomId = document.getElementById('searchRoomId').value;
@@ -51,6 +49,7 @@ function fetchAndDisplayIssues() {
                             <option value="fault" ${issue.status === 'fault' ? 'selected' : ''}>Fault</option>
                             <option value="in maintenance" ${issue.status === 'in_maintenance' ? 'selected' : ''}>In Maintenance</option>
                             <option value="resolved" ${issue.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+                            <option value="severe" ${issue.status === 'severe' ? 'selected' : ''}>Severe</option>
                         </select>
                     </td>
                     <td id="endTime-${issue.issue_id}">${issue.end_date ? issue.end_date + ' ' + issue.end_time : ''}</td>
