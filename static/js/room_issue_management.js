@@ -95,7 +95,8 @@ document.getElementById('issueForm').addEventListener('submit', function (event)
             if (data.message === 'Issue created successfully') {
                 showAlert('Issue added successfully!', 'success');
 
-                                       //todo: add send email to all users
+
+                //todo: add send email to all users
             fetch('http://localhost:8000/send_email/broadcast_issue', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
