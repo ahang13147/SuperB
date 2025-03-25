@@ -11,21 +11,10 @@ import mysql.connector
 =======
 import requests
 import random
->>>>>>> origin/feature/sendEmail_DB_and_Flask
 from bs4 import BeautifulSoup
 import json
 import re
 import time
-<<<<<<< HEAD
-import yaml
-import msal
-import csv
-import requests
-from datetime import datetime, timedelta, date
-import pymysql
-
-
-=======
 from datetime import date, datetime, timedelta
 import yaml
 import msal
@@ -33,17 +22,12 @@ import csv
 import pymysql
 
 from werkzeug.utils import secure_filename
->>>>>>> origin/feature/sendEmail_DB_and_Flask
 
 app = Flask(__name__)
 # 设置 session 持久化
 app.config['SESSION_PERMANENT'] = True  # 启用持久会话
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=3)  # Set session duration to 3 hours
-<<<<<<< HEAD
-CORS(app, supports_credentials=True, origins=["http://localhost:8000"])  # 允许所有来源访问
-=======
 CORS(app, supports_credentials=True, origins=["https://www.diicsu.top:8000"])  # 允许所有来源访问
->>>>>>> origin/feature/sendEmail_DB_and_Flask
 app.secret_key = 'your-secret-key-here'
 
 
@@ -770,32 +754,6 @@ def role_required(role):
 def logout():
     return redirect(auth.log_out(url_for("index", _external=True)))
 
-<<<<<<< HEAD
-
-# @app.route('/profile')
-# def profile():
-#     # 显示用户信息
-#     if 'access_token' not in session:
-#         return redirect(url_for('index'))
-#
-#     headers = {'Authorization': f'Bearer {session["access_token"]}'}
-#     user_info = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers).json()
-#
-#     # 渲染本地HTML文件并传递用户信息
-#     return render_template(
-#         'booking_centre.html',
-#         name=user_info.get('displayName', '未知用户'),
-#         email=user_info.get('mail', '无邮箱信息'),
-#         id=user_info.get('id', '')
-#     )
-
-# @app.route('/user_profile')
-# def booking_centre():
-#     return render_template('user_profile.html')
-
-
-=======
->>>>>>> origin/feature/sendEmail_DB_and_Flask
 # 路由：渲染 booking_centre.html
 @app.route('/booking_centre')
 @login_required  # 确保用户已登录
@@ -917,25 +875,17 @@ def trust_list():
 def room_issue_management():
     return render_template('room_issue_management.html')
 
-<<<<<<< HEAD
-=======
 @app.route('/black')
 # @login_required
 def black():
     return render_template('black.html')
 
->>>>>>> origin/feature/sendEmail_DB_and_Flask
 
 # 路由：渲染 login.html
 @app.route('/login')
 def login():
     return render_template('login.html')
 
-<<<<<<< HEAD
-
-# TODO: 原函数
-
-=======
 @app.route('/login_via_code')
 def login_via_code():
     return render_template('login_via_code.html')
@@ -961,7 +911,6 @@ def is_user_blacklisted( ):
         conn.close()
 
 # TODO: 原函数
->>>>>>> origin/feature/sendEmail_DB_and_Flask
 # profile route
 @app.route('/profile')
 def profile():
@@ -999,11 +948,7 @@ def profile():
     try:
         print(f"Calling role API with email: {user_email}")
         role_response = requests.get(
-<<<<<<< HEAD
-            f"https://101.200.197.132:8000/login_get_role?email={user_email}",
-=======
             f"https://www.diicsu.top:8000/login_get_role?email={user_email}",
->>>>>>> origin/feature/sendEmail_DB_and_Flask
             verify=False  # 忽略证书验证
         )
         print(f"Role API response status: {role_response.status_code}, body: {role_response.text}")
@@ -1777,155 +1722,6 @@ def get_user():
 
 
 from datetime import timedelta
-<<<<<<< HEAD
-
-
-@app.route('/display-issues', methods=['GET'])
-def get_all_issues():
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)  # 使用字典游标
-
-        # 获取查询参数
-        status = request.args.get('status')
-        room_id = request.args.get('room_id')
-
-        # 构建查询条件和参数
-        conditions = []
-        params = []
-
-        if status:
-            conditions.append("i.status = %s")
-            params.append(status)
-
-        if room_id:
-            # 验证room_id是否为有效整数
-            if not room_id.isdigit():
-                return jsonify({"error": "room_id must be a valid integer"}), 400
-            conditions.append("i.room_id = %s")
-            params.append(int(room_id))
-
-        # 构建基础SQL查询
-        base_query = """
-            SELECT 
-                i.issue_id,
-                i.room_id,
-                r.room_name,
-                i.issue,
-                i.status,
-                i.start_date,
-                i.start_time,
-                i.end_date,
-                i.end_time,
-                i.added_by,
-                u.username AS reporter_name
-            FROM Issues i
-            LEFT JOIN Rooms r ON i.room_id = r.room_id
-            LEFT JOIN Users u ON i.added_by = u.user_id
-        """
-
-        # 添加WHERE条件
-        if conditions:
-            base_query += " WHERE " + " AND ".join(conditions)
-
-        # 添加排序
-        base_query += " ORDER BY i.start_date DESC"
-
-        # 执行查询
-        cursor.execute(base_query, tuple(params))
-        issues = cursor.fetchall()
-
-        # 统一格式化时间字段
-        for issue in issues:
-            # 处理日期
-            for date_field in ['start_date', 'end_date']:
-                if issue[date_field]:
-                    issue[date_field] = issue[date_field].strftime("%Y-%m-%d")
-
-            # 处理时间
-            for time_field in ['start_time', 'end_time']:
-                time_value = issue[time_field]
-                if time_value:
-                    if isinstance(time_value, timedelta):  # 处理timedelta类型
-                        # 将timedelta转换为时间字符串 (HH:MM:SS)
-                        total_seconds = int(time_value.total_seconds())
-                        hours, remainder = divmod(total_seconds, 3600)
-                        minutes, seconds = divmod(remainder, 60)
-                        issue[time_field] = f"{hours:02}:{minutes:02}:{seconds:02}"
-                    elif isinstance(time_value, str):  # 如果已经是字符串
-                        issue[time_field] = time_value
-                    else:  # 处理datetime.time类型
-                        issue[time_field] = time_value.strftime("%H:%M:%S")
-                else:
-                    issue[time_field] = None
-
-        return jsonify({
-            "count": len(issues),
-            "issues": issues
-        })
-
-    except mysql.connector.Error as e:
-        print(f"Database error: {str(e)}")
-        return jsonify({"error": "Database error", "details": str(e)}), 500
-    except Exception as e:
-        print(f"Unexpected error: {str(e)}")
-        return jsonify({"error": "Internal server error", "details": str(e)}), 500
-    finally:
-        if 'cursor' in locals():
-            cursor.close()
-        if 'conn' in locals():
-            conn.close()
-
-
-# todo: add new function(03180117)
-@app.route('/notifications', methods=['GET'])
-def get_notifications():
-    try:
-        # 1. 通过 session 获取当前用户的 user_id
-        user_id = get_user_id_by_email()
-        print(user_id)
-        if not user_id:
-            return jsonify({"error": "Not logged in or user not found"}), 401
-
-        # 2. 查询该用户的通知
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        query = """
-            SELECT 
-                notification_id,
-                user_id,
-                message,
-                notification_action,
-                created_at
-            FROM Notifications
-            WHERE user_id = %s OR user_id IS NULL
-            ORDER BY created_at DESC
-        """
-        cursor.execute(query, (user_id,))
-        notifications = cursor.fetchall()
-
-        # 3. 返回该用户的通知列表
-        return jsonify({
-            "count": len(notifications),
-            "notifications": notifications
-        })
-
-    except mysql.connector.Error as e:
-        print(f"Database error: {str(e)}")
-        return jsonify({"error": "Database error", "details": str(e)}), 500
-    except Exception as e:
-        print(f"Unexpected error: {str(e)}")
-        return jsonify({"error": "Internal server error", "details": str(e)}), 500
-    finally:
-        if 'cursor' in locals():
-            cursor.close()
-        if 'conn' in locals():
-            conn.close()
-
-
-# ---------------------------- update ----------------------------
-=======
->>>>>>> origin/feature/sendEmail_DB_and_Flask
 
 
 @app.route('/display-issues', methods=['GET'])
@@ -2180,6 +1976,8 @@ def get_top_booked_rooms():
             conn.close()
 
 # ---------------------------- update ----------------------------
+=======
+>>>>>>> origin/feature/sendEmail_DB_and_Flask
 
 @app.route('/update_user_admin', methods=['PUT'])
 def update_user_admin():
@@ -2620,8 +2418,6 @@ def update_issue(issue_id):
         return jsonify({'error': str(e)}), 500
 
 
-<<<<<<< HEAD
-=======
 #todo: new function for change unread to read for notification page
 @app.route('/update_notification_status', methods=['POST'])
 def update_notification_status():
@@ -2657,7 +2453,6 @@ def update_notification_status():
         conn.close()
 
 
->>>>>>> origin/feature/sendEmail_DB_and_Flask
 # ---------------------------- insert ----------------------------
 
 @app.route('/insert_booking', methods=['POST'])
@@ -3052,9 +2847,6 @@ def add_issue():
         return jsonify({'error': str(e)}), 500
 
 
-<<<<<<< HEAD
-#Syllabus crawling part
-=======
 @app.route('/insert_users_admin', methods=['POST'])
 def insert_use_adminr():
     data = request.get_json()
@@ -3163,7 +2955,6 @@ def insert_room_availability():
         connection.close()
 # -----------------------------------update room availibility-------------------------
 
->>>>>>> origin/feature/sendEmail_DB_and_Flask
 # ============================ Utility Functions ============================
 def get_week_dates():
     """Calculate the dates for each day of the current week (from Monday to Sunday)"""
@@ -3240,11 +3031,7 @@ def crawl_data():
     # Get the current year
     current_year = current_date.today().year
     # Read the current week from the file
-<<<<<<< HEAD
-    weeks = load_weeks('timetable/insert_room_availability_info/data/weeks.csv')
-=======
     weeks = load_weeks('weeks.csv')
->>>>>>> origin/feature/sendEmail_DB_and_Flask
     current_week = get_current_week(weeks)
     # Check if the current date is before September 1st
     if current_date.month < 9 or (current_date.month == 9 and current_date.day < 1):
@@ -3466,83 +3253,6 @@ def main_scheduler():
     update_room_availability(formatted_schedule)
     return "Crawling and updating database successfully!"
 
-<<<<<<< HEAD
-
-#initialize_room_availability_table
-# Define room time slots (available time slots for each room)
-availability_times = [
-    ("08:00", "08:45"),
-    ("08:55", "09:40"),
-    ("10:00", "10:45"),
-    ("10:55", "11:40"),
-    ("14:00", "14:45"),
-    ("14:55", "15:40"),
-    ("16:00", "16:45"),
-    ("16:55", "17:40"),
-    ("19:00", "19:45"),
-    ("19:55", "20:40")
-]
-
-# Function to insert room availability data
-@app.route('/insert_room_availability', methods=['GET'])
-def insert_room_availability():
-    connection = get_db_connection()
-    cursor = connection.cursor()
-
-    # Get all room_ids
-    cursor.execute("SELECT room_id FROM Rooms")
-    rooms = cursor.fetchall()
-
-    # Get today's date and calculate all dates for this week (from Monday to Sunday)
-    today = datetime.today()
-    start_of_week = today - timedelta(days=today.weekday())  # Monday's date this week
-    dates_this_week = [start_of_week + timedelta(days=i) for i in range(7)]  # All 7 days of the week
-
-    # Insert room availability records for each room and time slot
-    try:
-        for room in rooms:
-            room_id = room[0]
-
-            # Insert records for each time slot and date for the current room
-            for start_time, end_time in availability_times:
-                for date in dates_this_week:
-                    cursor.execute("""
-                        INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, availability)
-                        VALUES (%s, %s, %s, %s, 0)  -- Set availability to 0 (not available)
-                    """, (room_id, start_time, end_time, date.strftime('%Y-%m-%d')))
-
-        # Commit transaction
-        connection.commit()
-        return jsonify({"message": "Room availability records have been successfully inserted!"}), 200
-
-    except pymysql.MySQLError as e:
-        print(f"Database error: {e}")
-        connection.rollback()
-        return jsonify({"error": str(e)}), 500
-
-    finally:
-        # Close database connection
-        cursor.close()
-        connection.close()
-
-# if __name__ == '__main__':
-#     print("\nRegistered routes:")
-#     for rule in app.url_map.iter_rules():
-#         print(f"→ {rule}")
-#     app.run(debug=True)
-=======
->>>>>>> origin/feature/sendEmail_DB_and_Flask
-
-# if __name__ == '__main__':
-#     print("\nRegistered routes:")
-#     for rule in app.url_map.iter_rules():
-#         print(f"→ {rule}")
-#     # 启用 HTTPS
-#     app.run(
-#         host='0.0.0.0',  # 监听所有网络接口
-#         port=8000,  # HTTPS 默认端口
-#         ssl_context=('cert.pem', 'key.pem')  # 证书和私钥文件
-#     )
 
 if __name__ == '__main__':
     print("\nRegistered routes:")

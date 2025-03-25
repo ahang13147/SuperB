@@ -65,11 +65,6 @@ DELIMITER ;
 
 
 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> origin/feature/sendEmail_DB_and_Flask
 DELIMITER //
 
 CREATE PROCEDURE reassignBookings(IN unavailable_room_id INT)
@@ -79,16 +74,12 @@ BEGIN
     DECLARE v_start_time TIME;
     DECLARE v_end_time TIME;
     DECLARE v_booking_date DATE;
-<<<<<<< HEAD
-    DECLARE done INT DEFAULT FALSE;
-=======
     DECLARE v_username VARCHAR(255);
     DECLARE v_orig_roomname VARCHAR(255);
     DECLARE v_new_roomname VARCHAR(255);
     DECLARE done INT DEFAULT FALSE;
 
     -- Cursor: 获取所有预定了该不可用房间的预订记录（且日期大于等于今天，且状态未取消、拒绝或失败）
->>>>>>> origin/feature/sendEmail_DB_and_Flask
     DECLARE cur CURSOR FOR
          SELECT booking_id, user_id, start_time, end_time, booking_date
          FROM Bookings
@@ -98,12 +89,9 @@ BEGIN
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
-<<<<<<< HEAD
-=======
     -- 获取原房间名称
     SELECT room_name INTO v_orig_roomname FROM Rooms WHERE room_id = unavailable_room_id;
 
->>>>>>> origin/feature/sendEmail_DB_and_Flask
     OPEN cur;
     read_loop: LOOP
        FETCH cur INTO v_booking_id, v_user_id, v_start_time, v_end_time, v_booking_date;
@@ -111,12 +99,6 @@ BEGIN
            LEAVE read_loop;
        END IF;
 
-<<<<<<< HEAD
-       -- Set capacity threshold (for example, 10 seats)
-       SET @capacity_threshold = 10;
-
-       -- Get the original room's capacity and equipment details
-=======
        -- 获取预定该房间的用户的用户名
        SELECT username INTO v_username FROM Users WHERE user_id = v_user_id;
 
@@ -124,24 +106,15 @@ BEGIN
        SET @capacity_threshold = 10;
 
        -- 获取原房间的容量和设备信息
->>>>>>> origin/feature/sendEmail_DB_and_Flask
        SELECT capacity, equipment INTO @orig_capacity, @orig_equipment
        FROM Rooms
        WHERE room_id = unavailable_room_id;
 
-<<<<<<< HEAD
-       -- Find a suitable replacement room:
-       -- 1. The room must be available (room_status = 0)
-       -- 2. Capacity difference within the threshold
-       -- 3. Equipment matches (exact match in this example)
-       -- 4. No booking conflicts for the same date and time slot
-=======
        -- 查找一个合适的替代房间：
        -- 1. 该房间必须可用（room_status = 0）
        -- 2. 容量差在允许阈值内
        -- 3. 设备要求（这里要求完全匹配）
        -- 4. 在预定的日期和时间段内，该房间没有冲突预定
->>>>>>> origin/feature/sendEmail_DB_and_Flask
        SELECT room_id INTO @new_room_id FROM Rooms
        WHERE room_status = 0
          AND room_id <> unavailable_room_id
@@ -156,26 +129,6 @@ BEGIN
        LIMIT 1;
 
        IF @new_room_id IS NOT NULL THEN
-<<<<<<< HEAD
-          -- Update booking record with the new room and mark as 'changed'
-          UPDATE Bookings
-          SET room_id = @new_room_id,
-              status = 'changed',
-              reason = CONCAT('Room reassigned to room ID: ', @new_room_id)
-          WHERE booking_id = v_booking_id;
-
-          INSERT INTO Notifications(user_id, message, notification_action)
-          VALUES (v_user_id, CONCAT('Your booking has been reassigned to room ', @new_room_id, '.'), 'reminder');
-       ELSE
-          -- If no suitable replacement room is found, mark the booking as 'failed'
-          UPDATE Bookings
-          SET status = 'failed',
-              reason = 'No suitable replacement room found'
-          WHERE booking_id = v_booking_id;
-
-          INSERT INTO Notifications(user_id, message, notification_action)
-          VALUES (v_user_id, 'No suitable replacement room found. Your booking has been cancelled.', 'cancellation');
-=======
           -- 如果找到合适的替代房间，获取新房间名称
           SELECT room_name INTO v_new_roomname FROM Rooms WHERE room_id = @new_room_id;
 
@@ -214,7 +167,6 @@ BEGIN
                       'As a result, your booking has been cancelled. Please rebook manually if necessary.'
                   ),
                   'cancellation');
->>>>>>> origin/feature/sendEmail_DB_and_Flask
        END IF;
 
     END LOOP;
@@ -225,11 +177,8 @@ DELIMITER ;
 
 
 
-<<<<<<< HEAD
-=======
 
 
->>>>>>> origin/feature/sendEmail_DB_and_Flask
 DROP TRIGGER IF EXISTS trg_after_room_unavailable;
 
 DELIMITER //
@@ -248,32 +197,15 @@ DELIMITER ;
 
 
 
-<<<<<<< HEAD
-DELIMITER //
-
--- 触发器：在插入一条 Issue 后自动发送通知，并根据 Issue 状态更新 Rooms 表的 room_status
-=======
 
 
 DELIMITER //
 
 -- Trigger: After an Issue is inserted, automatically send a notification and update the room status.
->>>>>>> origin/feature/sendEmail_DB_and_Flask
 CREATE TRIGGER after_issue_insert
 AFTER INSERT ON Issues
 FOR EACH ROW
 BEGIN
-<<<<<<< HEAD
-    -- 插入通知（保持原来的内容）
-    INSERT INTO Notifications (user_id, message, notification_action)
-    VALUES (
-        NULL,
-        CONCAT('New issue created for room ', NEW.room_id, ': ', NEW.issue, '. Status: ', NEW.status),
-        'alert'
-    );
-
-    -- 根据 Issue 的状态更新 Rooms 表的 room_status
-=======
     DECLARE v_username VARCHAR(255);
     DECLARE v_roomname VARCHAR(255);
 
@@ -297,7 +229,6 @@ BEGIN
     );
 
     -- Update room status.
->>>>>>> origin/feature/sendEmail_DB_and_Flask
     IF NEW.status = 'resolved' THEN
         UPDATE Rooms SET room_status = 0 WHERE room_id = NEW.room_id;
     ELSEIF NEW.status IN ('fault', 'in_maintenance') THEN
@@ -308,26 +239,11 @@ BEGIN
 END;
 //
 
-<<<<<<< HEAD
--- 触发器：在更新 Issue 时，如果 status 发生变化，则自动发送通知，并根据新状态更新 Rooms 表的 room_status
-=======
 -- Trigger: When an Issue is updated, send a status change notification.
->>>>>>> origin/feature/sendEmail_DB_and_Flask
 CREATE TRIGGER after_issue_update
 AFTER UPDATE ON Issues
 FOR EACH ROW
 BEGIN
-<<<<<<< HEAD
-    IF NEW.status <> OLD.status THEN
-        INSERT INTO Notifications (user_id, message, notification_action)
-        VALUES (
-            NULL,
-            CONCAT('Issue ', NEW.issue_id, ' status changed from ', OLD.status, ' to ', NEW.status),
-            'changed'
-        );
-
-        -- 根据新的 Issue 状态更新 Rooms 表的 room_status
-=======
     DECLARE v_username VARCHAR(255);
     DECLARE v_roomname VARCHAR(255);
 
@@ -353,7 +269,6 @@ BEGIN
         );
 
         -- Update room status.
->>>>>>> origin/feature/sendEmail_DB_and_Flask
         IF NEW.status = 'resolved' THEN
             UPDATE Rooms SET room_status = 0 WHERE room_id = NEW.room_id;
         ELSEIF NEW.status IN ('fault', 'in_maintenance') THEN
@@ -369,38 +284,14 @@ DELIMITER ;
 
 
 
-<<<<<<< HEAD
-=======
 
 
->>>>>>> origin/feature/sendEmail_DB_and_Flask
 DELIMITER //
 
 CREATE TRIGGER trg_booking_status_change
 AFTER UPDATE ON Bookings
 FOR EACH ROW
 BEGIN
-<<<<<<< HEAD
-    -- 1) 先声明所有需要的变量
-    DECLARE msg VARCHAR(512);
-
-    -- 2) 然后再写逻辑，比如 IF 判断
-    IF NEW.status <> OLD.status THEN
-        IF NEW.status = 'approved' THEN
-            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has been approved. Approved by administrator.');
-        ELSEIF NEW.status = 'rejected' THEN
-            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has been rejected. Rejected by administrator.');
-        ELSEIF NEW.status = 'changed' THEN
-            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has been changed. The room has issues and has been reallocated for you.');
-        ELSEIF NEW.status = 'pending' THEN
-            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') is now pending. Your booking is pending review.');
-        ELSEIF NEW.status = 'canceled' THEN
-            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has been canceled. You have successfully canceled your booking.');
-        ELSEIF NEW.status = 'failed' THEN
-            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has failed. Booking failed, possibly due to room conflict (someone else booked the room).');
-        ELSE
-            SET msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') status has been updated to ', NEW.status, '.');
-=======
     DECLARE msg VARCHAR(512);
     DECLARE v_username VARCHAR(255);
     DECLARE v_roomname VARCHAR(255);
@@ -458,7 +349,6 @@ BEGIN
                 'scheduled on ', NEW.booking_date, ' from ', NEW.start_time, ' to ', NEW.end_time, ', ',
                 'has been updated to ', NEW.status, '.'
             );
->>>>>>> origin/feature/sendEmail_DB_and_Flask
         END IF;
 
         INSERT INTO Notifications(user_id, message, notification_action)
@@ -477,10 +367,6 @@ BEGIN
         );
     END IF;
 END //
-<<<<<<< HEAD
-DELIMITER ;
-
-=======
 
 DELIMITER ;
 
@@ -559,4 +445,3 @@ END;
 //
 
 DELIMITER ;
->>>>>>> origin/feature/sendEmail_DB_and_Flask

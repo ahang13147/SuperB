@@ -86,11 +86,7 @@ async function addToBlacklist() {
         };
 
         try {
-<<<<<<< HEAD
-            const response = await fetch('http://localhost:8000/insert-blacklist', {
-=======
             const response = await fetch('https://www.diicsu.top:8000/insert-blacklist', {
->>>>>>> origin/feature/sendEmail_DB_and_Flask
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody),
