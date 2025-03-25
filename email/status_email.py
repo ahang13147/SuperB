@@ -12,6 +12,8 @@ from flask import Flask, render_template, request, jsonify
 from flask_mail import Mail, Message
 import mysql.connector
 from datetime import datetime, timedelta
+from flask import Flask, request, jsonify
+from multiprocessing import Process
 
 app = Flask(__name__)
 
@@ -193,6 +195,15 @@ def send_email(to_email, subject, body):
     except Exception as e:
         print(f'Failed to send email: {e}')
 
+# Move async_send function outside the route handler
+def async_send(email, subject, body):
+    with app.app_context():
+        try:
+            send_email(email, subject, body)
+            print(f"[Process] Email sent to {email}")
+        except Exception as e:
+            print(f"Failed to send email: {e}")
+
 
 def broadcast_email(subject, body):
     """
@@ -229,6 +240,43 @@ def broadcast_email(subject, body):
 
     except mysql.connector.Error as err:
         print(f"Database error: {err}")
+
+
+def async_broadcast_email(subject, body):
+    """
+    Async version of broadcast_email, runs in a separate process.
+    """
+    with app.app_context():  # 保证子进程中有 Flask 上下文（用于 send_email 等）
+        try:
+            conn = mysql.connector.connect(
+                host=db_config['host'],
+                user=db_config['user'],
+                password=db_config['password'],
+                database=db_config['database'],
+                ssl_disabled=True
+            )
+            cursor = conn.cursor()
+
+            query = "SELECT email FROM Users"
+            cursor.execute(query)
+            users = cursor.fetchall()
+
+            for user in users:
+                to_email = user[0]
+                send_email(to_email, subject, body)
+
+            cursor.close()
+            conn.close()
+            print(f"[Broadcast] Email sent to {len(users)} users.")
+
+        except mysql.connector.Error as err:
+            print(f"[Broadcast] Database error: {err}")
+        except Exception as e:
+            print(f"[Broadcast] General error: {e}")
+
+
+
+
 
 # -------------------------------
 # 以下各接口均从 JSON 请求中获取 booking_id，并在返回 JSON 中包含 booking_id
@@ -475,11 +523,11 @@ def send_remind_email():
 @app.route('/send_email/communicate', methods=['POST'])
 def send_communication_email():
     """
-    Send a reminder email notifying the user that their booking is about to begin.
+    Send a communication email in a separate process to avoid blocking the frontend.
 
     Request Format (JSON):
     {
-        "email": "2542881@dundee.ac.uk"
+        "email": "2542881@dundee.ac.uk",
         "content":"I want to report issues"
     }
 
@@ -494,19 +542,16 @@ def send_communication_email():
         return jsonify({'status': 'failed', 'message': 'Failed to get email'}), 400
 
     email = str(data.get('email'))
-    content = str(data.get(''))
+    content = str(data.get('content'))
 
     subject = f"Private_message from {email}"
-    body = f"""
-    Dear Administrator,<br><br>
+    body = f"""Message Content:<br><br>{content}<br><br>"""
 
-    {content}
-    
+    # 创建子进程并运行邮件发送函数
+    process = Process(target=async_send, args=(email, subject, body))
+    process.start()
 
-    Please head to the room in time. Thank you.
-    """
-    send_email(email, subject, body)
-    return jsonify({'status': 'success', 'message': 'Reminder email sent!'})
+    return jsonify({'status': 'success', 'message': 'Email is being sent in the background'})
 
 
 @app.route('/send_email/broadcast_issue', methods=['POST'])
@@ -538,13 +583,18 @@ def broadcast_issue_email():
     issue_info = fetch_issue_info(issue_id)
     if issue_id:
         issue_id, room_id, issue, status, start_date, start_time, end_date, end_time, added_by = issue_info
-        room_name=get_room_name_by_id(room_id)
-        subject = f"Remind: Room {room_name} has an issue"
+        # print(room_id)
+        # room_name=get_room_name_by_id(room_id)
+        # All room_id should be supposed to be replaced into room_name.
+        # However, fetch_issue_info function directly return room_name as room_id
+        # So it is correct to use room_id here rather than room_name, this may cause misunderstanding.
+        # print(room_name)
+        subject = f"Remind: Room {room_id} has an issue"
         body = f"""
         Dear DIICSU students and staffs,<br><br>
 
-        This is a reminder that an issue is occurring in room {room_name} . Below are issue details:<br><br>
-        <strong>Room Name:</strong> {room_name}<br>
+        This is a reminder that an issue is occurring in room {room_id} . Below are issue details:<br><br>
+        <strong>Room Name:</strong> {room_id}<br>
         <strong>Start Time:</strong> {start_date} {start_time}<br>
         <strong>End Time:</strong> {end_date} {end_time}<br><br>
         <strong>Issue Content:</strong> {issue}<br>
