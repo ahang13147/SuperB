@@ -2177,6 +2177,25 @@ def update_booking_status(booking_id):
                 (room_id, booking_date, start_time, end_time)
             )
 
+
+            #todo
+            # 查询那些被更新为 failed 的预订的 booking_id（排除掉当前审批的那个 booking）
+            cursor.execute(
+                """
+                SELECT booking_id FROM Bookings
+                WHERE room_id = %s
+                  AND booking_date = %s
+                  AND start_time = %s
+                  AND end_time = %s
+                  AND status = 'failed'
+                  AND booking_id <> %s
+                """,
+                (room_id, booking_date, start_time, end_time, booking_id)
+            )
+            failed_rows = cursor.fetchall()
+            failed_booking_ids = [row['booking_id'] for row in failed_rows]
+
+
             # 4. 更新 Room_availability 表，将对应记录的 availability 设为 2（已预订）
             cursor.execute(
                 """
@@ -2207,7 +2226,8 @@ def update_booking_status(booking_id):
         return jsonify({
             "message": f"Booking status updated to {updated_booking['status']}",
             "booking_id": updated_booking['booking_id'],
-            "status": updated_booking['status']
+            "status": updated_booking['status'],
+            "failed_bookings": failed_booking_ids
         })
 
     except mysql.connector.Error as e:

@@ -129,6 +129,25 @@ function handleApproval(action, card) {
                 console.error('Error sending rejection email:', err);
             });
         }
+        if (updatedBooking.failed_bookings && updatedBooking.failed_bookings.length > 0) {
+            updatedBooking.failed_bookings.forEach(failedId => {
+                console.log(`Calling send_email/failed for booking id: ${failedId}`);
+                fetch('http://localhost:8000/send_email/failed', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ booking_id: failedId })
+                })
+                .then(resp => resp.json())
+                .then(emailData => {
+                    console.log(`Failed email sent for booking id: ${failedId}`, emailData);
+                })
+                .catch(err => {
+                    console.error(`Error sending failed email for booking id: ${failedId}`, err);
+                });
+            });
+        }
+
+
 
 
             // Update local data
