@@ -312,6 +312,49 @@ def broadcast_email_to_all_administrators(subject, body):
         print(f"[Admin Broadcast] General error: {e}")
 
 
+def async_broadcast_email_to_all_administrators(subject, body):
+    """
+    Async version of broadcast_email_to_all_administrators, runs in a separate process.
+
+    This function will fetch all administrators from the database and send them an email.
+    """
+    with app.app_context():  # Ensure Flask app context is used in the subprocess
+        try:
+            conn = mysql.connector.connect(
+                host=db_config['host'],
+                user=db_config['user'],
+                password=db_config['password'],
+                database=db_config['database'],
+                ssl_disabled=True
+            )
+            cursor = conn.cursor()
+
+            # Query to fetch all admin emails
+            query = "SELECT email FROM Users WHERE role = 'admin'"
+            cursor.execute(query)
+            admins = cursor.fetchall()
+
+            for admin in admins:
+                admin_email = admin[0]
+                send_email(admin_email, subject, body)
+
+            cursor.close()
+            conn.close()
+            print(f"[Admin Broadcast] Email sent to {len(admins)} administrators.")
+
+        except mysql.connector.Error as err:
+            print(f"[Admin Broadcast] Database error: {err}")
+        except Exception as e:
+            print(f"[Admin Broadcast] General error: {e}")
+
+
+def broadcast_email_to_all_administrators(subject, body):
+    """
+    Launch email broadcasting in a separate process to avoid blocking the main thread.
+    """
+    process = Process(target=async_broadcast_email_to_all_administrators, args=(subject, body))
+    process.start()
+
 # -------------------------------
 # 以下各接口均从 JSON 请求中获取 booking_id，并在返回 JSON 中包含 booking_id
 # -------------------------------
@@ -644,7 +687,7 @@ def broadcast_issue_email():
 @app.route('/send_email/broadcast_pending', methods=['POST'])
 def broadcast_pending_email():
     """
-    broadcast a email to notify all administrators that there is a pending booking.
+    Broadcast an email to notify all administrators that there is a pending booking.
 
     Request Format (JSON):
     {
@@ -683,8 +726,12 @@ def broadcast_pending_email():
 
         Please head to the room in time. Thank you.
         """
-        broadcast_email_to_all_administrators(subject, body)
-        return jsonify({'status': 'success', 'message': 'Reminder email sent!', 'booking_id': booking_id})
+
+        # Create a new process to run the email broadcasting asynchronously
+        process = Process(target=async_broadcast_email_to_all_administrators, args=(subject, body))
+        process.start()
+
+        return jsonify({'status': 'success', 'message': 'Reminder email is being sent in the background!', 'booking_id': booking_id})
     else:
         return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
 
