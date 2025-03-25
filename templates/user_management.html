@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 自定义 CSS -->
+    <link rel="stylesheet" href="../static/css/user_management.css">
+    <link rel="stylesheet" href="../static/css/sidebar.css">
+
+</head>
+<body>
+        <div class="sidebar">
+        
+            <a class="nav-item active" href="{{ url_for('booking_centre_admin') }}">
+                <i class="fas fa-calendar-alt nav-icon"></i>
+                Booking Center
+            </a>
+            <a class="nav-item" href="{{ url_for('my_reservation_admin') }}">
+                <i class="fas fa-list-ul nav-icon"></i>
+                My Bookings
+            </a>
+            <a class="nav-item" href="{{ url_for('Approval_Center') }}">
+                <i class="fas fa-check-circle nav-icon"></i>
+                Approval Management
+            </a>
+            <a class="nav-item" href="{{ url_for('cancel_reservation') }}">
+                <i class="fas fa-calendar-times nav-icon"></i>
+                Cancel Reservation
+            </a>
+            <a class="nav-item" href="{{ url_for('room_management') }}">
+                <i class="fas fa-door-open nav-icon"></i>
+                Room Management
+            </a>
+            <a class="nav-item" href="{{ url_for('room_issue_management') }}">
+                <i class="fas fa-tools nav-icon"></i>
+                Room Issue Management
+            </a>
+            <a class="nav-item" href="{{ url_for('notice_admin') }}">
+                <i class="fas fa-bell nav-icon"></i>
+                Notifications
+            </a>
+            <a class="nav-item" href="{{ url_for('blacklist') }}">
+                <i class="fas fa-ban nav-icon"></i>
+                Black List
+            </a>
+            <a class="nav-item" href="{{ url_for('trust_list') }}">
+                <i class="fas fa-shield-alt nav-icon"></i>
+                Trust List
+            </a>
+            <a class="nav-item" href="{{ url_for('my_profile_admin') }}">
+                <i class="fas fa-user-circle nav-icon"></i>
+                My Profile
+            </a>
+            <a class="nav-item" href="{{ url_for('usage_report_center') }}">
+                <i class="fas fa-list-ul nav-icon"></i>
+                Usage Report Center
+            </a>
+            <div class="sidebar-logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+            </div>
+        </div>
+    <div class="content-area">
+
+        <div class="container mt-5">
+            <h1 class="text-center mb-4" style="color: #2c3e50;">User Management</h1>
+
+            
+            <!-- 用户列表的卡片 -->
+            <div class="card mt-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">Users List</h3>
+            
+                    <div class="d-flex align-items-center">
+                        <!-- 搜索框前置 -->
+                        <div class="search-box me-2 flex-grow-1">
+                            <input type="text" class="form-control" placeholder="Search by ID, Name, or Role">
+                        </div>
+                        <!-- 触发按钮 -->
+                        <button type="button" class="btn btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                            Add User
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover m-0">
+                            <thead>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Phone Number</th>
+                                    <th>Role</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <!-- 动态添加用户行 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        <!-- 添加用户的弹窗 -->
+        <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addUserModalLabel">Add New User</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addUserForm">
+                            <div class="mb-3">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-control" id="username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Role</label>
+                                <select class="form-select" id="role" required>
+                                    <option value="admin">Admin</option>
+                                    <option value="professor">Professor</option>
+                                    <option value="student">Student</option>
+                                    <option value="tutor">Tutor</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" form="addUserForm" class="btn btn-primary">Add User</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 编辑模态框 -->
+        <div class="modal fade" id="editModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit User</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editForm">
+                            <div class="mb-3">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-control" id="editUsername" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="editEmail" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="editPhone" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Role</label>
+                                <select class="form-select" id="editRole" required>
+                                    <option value="admin">Admin</option>
+                                    <option value="professor">Professor</option>
+                                    <option value="student">Student</option>
+                                    <option value="tutor">Tutor</option>
+                                </select>
+                            </div>
+                            <input type="hidden" id="editUserId">
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="saveEdit()">Save changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+    <!-- 自定义 JavaScript -->
+    <script src="../static/js/user_management.js"></script>
+</div>
+</body>
+</html>
