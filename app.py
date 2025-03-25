@@ -2,12 +2,13 @@
 #  @author: Xin Yu, Siyan Guo, Zibang Nie
 # add: finished-workflow-booking get api
 from contextlib import closing
-
 from flask import Flask, redirect, request, session, url_for, render_template, jsonify
 from flask_mail import Mail, Message
 from functools import wraps
 from flask_cors import CORS
 import mysql.connector
+<<<<<<< HEAD
+=======
 import requests
 import random
 from bs4 import BeautifulSoup
@@ -1975,6 +1976,8 @@ def get_top_booked_rooms():
             conn.close()
 
 # ---------------------------- update ----------------------------
+=======
+>>>>>>> origin/feature/sendEmail_DB_and_Flask
 
 @app.route('/update_user_admin', methods=['PUT'])
 def update_user_admin():

@@ -87,7 +87,7 @@ def send_email(to_email, subject, body):
         print(f'发送邮件失败: {e}')
 
 
-@app.route('/send_reminder', methods=['POST'])
+@app.route('/send_email/remind', methods=['POST'])
 def send_reminder():
     """根据 booking_id 发送房间预定提醒邮件"""
     # 从前端表单获取 booking_id
