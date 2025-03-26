@@ -8,7 +8,7 @@ Description: This Flask application sends reminder emails to users about their r
              The response to each request is a JSON object containing the status of the email operation and the booking_id.
 """
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 from flask_mail import Mail, Message
 import mysql.connector
 from datetime import datetime, timedelta
@@ -641,7 +641,6 @@ def send_communication_email():
 
     Request Format (JSON):
     {
-        "email": "2542881@dundee.ac.uk",
         "content":"I want to report issues"
     }
 
@@ -651,18 +650,19 @@ def send_communication_email():
         "message": "...",
     }
     """
+    user_email = session.get('user_email')
     data = request.get_json()
-    if not data or 'email' not in data:
-        return jsonify({'status': 'failed', 'message': 'Failed to get email'}), 400
+    if not data or 'content' not in data:
+        return jsonify({'status': 'failed', 'message': 'Failed to get content'}), 400
 
-    email = str(data.get('email'))
-    content = str(data.get('content'))
 
-    subject = f"Private_message from {email}"
+    content = str(data.get('message'))
+
+    subject = f"Private_message from {user_email}"
     body = f"""Message Content:<br><br>{content}<br><br>"""
 
     # 创建子进程并运行邮件发送函数
-    process = Process(target=async_send, args=(email, subject, body))
+    process = Process(target=async_broadcast_email_to_all_administrators, args=(subject, body))
     process.start()
 
     return jsonify({'status': 'success', 'message': 'Email is being sent in the background'})
