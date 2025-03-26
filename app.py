@@ -2849,9 +2849,15 @@ def insert_booking_with_reason():
         """
         cursor.execute(query, (user_id, room_id, start_time, end_time, booking_date, reason))
         conn.commit()
+        #
+        # return jsonify({"status": "success", "message": "Booking request submitted, awaiting approval."})
 
-        return jsonify({"status": "success", "message": "Booking request submitted, awaiting approval."})
-
+        booking_id = cursor.lastrowid
+        return jsonify({
+            "status": "success",
+            "message": "Booking request submitted, awaiting approval.",
+            "booking_id": booking_id
+        })
     except mysql.connector.Error as err:
         conn.rollback()
         return jsonify({"status": "error", "error": str(err)}), 400
