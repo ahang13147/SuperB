@@ -11,11 +11,14 @@
 
     <!-- Flatpickr CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="../static/css/sidebar.css">
-    <link rel="stylesheet" href="../static/css/room_issue_management.css">
+    <link rel="stylesheet" href="{{url_for('static',filename='css/sidebar.css')}}">
+    <link rel="stylesheet" href="{{url_for('static',filename='css/room_issue_management.css')}}">
 </head>
 
 <body>
+    <div class="hamburger-menu">
+        <i class="fas fa-bars"></i>
+    </div>
     <div class="main-container">
         <div class="sidebar">
         
@@ -40,9 +43,13 @@
                 Room Management
             </a>
             <a class="nav-item active" href="{{ url_for('room_issue_management') }}">
-                <i class="fas fa-door-open nav-icon"></i>
+                <i class="fas fa-tools nav-icon"></i>
                 Room Issue Management
             </a>
+          <a class="nav-item" href="{{ url_for('user_management') }}">
+            <i class="fas fa-users nav-icon"></i>
+            User Management
+          </a>
             <a class="nav-item" href="{{ url_for('notice_admin') }}">
                 <i class="fas fa-bell nav-icon"></i>
                 Notifications
@@ -59,7 +66,10 @@
                 <i class="fas fa-user-circle nav-icon"></i>
                 My Profile
             </a>
-        
+            <a class="nav-item" href="{{ url_for('usage_report_center') }}">
+                <i class="fas fa-chart-line nav-icon"></i>
+                Usage Report Center
+            </a>
             <div class="sidebar-logo">
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
             </div>
@@ -103,6 +113,7 @@
                     <option value="fault">Fault</option>
                     <option value="in_maintenance">In Maintenance</option>
                     <option value="resolved">Resolved</option>
+                    <option value="severe">Severe</option>
                 </select>
             </div>
         </div>
@@ -117,6 +128,7 @@
                         <tr>
                             <th>Issue ID</th>
                             <th>Room ID</th>
+                            <th>Room Name</th>
                             <th>Reporter Name</th>
                             <th>Issue</th>
                             <th>Start Time</th>
@@ -126,14 +138,14 @@
                         </tr>
                     </thead>
                     <tbody id="issuesTableBody">
-                        <!-- 动态添加问题行 -->
+                        <!-- Add problem rows dynamically -->
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- 编辑模态框 -->
+    <!-- Edit the modal box -->
     <div class="modal fade" id="editModal">
         <div class="modal-dialog">
             <div class="modal-content">

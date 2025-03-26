@@ -67,7 +67,7 @@ function renderReservation(reservation) {
         showLoading();
 
         try {
-            const response = await fetch(`http://127.0.0.1:8000/bookings`);
+            const response = await fetch(`https://www.diicsu.top:8000/bookings`);
             const { bookings } = await response.json();
 
 
@@ -113,16 +113,16 @@ function renderReservation(reservation) {
       const reservation = JSON.parse(modal.dataset.reservation);
 
       try {
-        // 正确构造 URL：使用模板字符串插入 booking_id
+        // Construct the URL correctly: Insert booking_id using a template string
         const response = await fetch(
-          `http://127.0.0.1:8000/cancel-booking/${reservation.booking_id}`, // 移除多余符号并插入变量
+          `https://www.diicsu.top:8000/cancel-booking/${reservation.booking_id}`, // Remove redundant symbols and insert variables
           {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
           }
         );
 
-        // 后续逻辑保持不变
+        // The subsequent logic remains unchanged
         if (response.ok) {
           const card = document.querySelector(`[data-reservation-id="${reservation.booking_id}"]`);
           card.querySelector('.status-indicator').textContent = 'canceled';

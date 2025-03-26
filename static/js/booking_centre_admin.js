@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         Object.keys(requestData).forEach(key => requestData[key] === undefined && delete requestData[key]);
 
         try {
-            const response = await fetch('http://localhost:8000/search-rooms', {
+            const response = await fetch('https://www.diicsu.top:8000/search-rooms', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestData)
@@ -71,21 +71,38 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const classroomMap = new Map();
 
-            responseData.results.forEach(room => {
+            // 1. 过滤掉状态为3的房间
+            const filteredRooms = responseData.results.filter(room => room.room_status !== 3);
+
+            // 2. 获取所有需要展示issue的房间ID
+            const issueRoomIds = filteredRooms
+                .filter(room => room.room_status === 1)
+                .map(room => room.room_id);
+
+            // 3. 批量获取issue数据
+            const issuesMap = await fetchIssuesForRooms(issueRoomIds);
+
+            filteredRooms.forEach(room => {
                 if (!classroomMap.has(room.room_id)) {
+                    const isUnavailable = room.room_status === 2;
+
                     classroomMap.set(room.room_id, {
                         id: room.room_id,
                         name: room.room_name,
                         type: room.room_type,
                         capacity: room.capacity,
                         equipment: room.equipment ? room.equipment.split(', ') : [],
-                        availableTimes: []
+                        availableTimes: [],
+                        status: room.room_status,
+                        issues: issuesMap.get(room.room_id) || [],
+                        disabled: isUnavailable // 标记不可预订
                     });
                 }
+
                 const classroom = classroomMap.get(room.room_id);
                 classroom.availableTimes.push({
                     time: `${room.available_begin}-${room.available_end}`,
-                    booked: room.availability === 2
+                    booked: room.availability === 2 || classroom.disabled // 叠加不可预订状态
                 });
             });
 
@@ -97,11 +114,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // 新增：批量获取issue数据
+    async function fetchIssuesForRooms(roomIds) {
+        if (roomIds.length === 0) return new Map();
+
+        try {
+            const promises = roomIds.map(roomId =>
+                fetch(`https://www.diicsu.top:8000/get-issues/${roomId}`)
+                    .then(res => res.json())
+            );
+
+            const results = await Promise.all(promises);
+            return results.reduce((map, result, index) => {
+                map.set(roomIds[index], result.issues);
+                return map;
+            }, new Map());
+        } catch (error) {
+            console.error('Failed to fetch issues:', error);
+            return new Map();
+        }
+    }
     //  Rendering Classroom List
     function renderClassrooms() {
-        elements.classroomList.innerHTML = classrooms.map(classroom => `
-        <div class="classroom-card" data-classroom="${classroom.name}">
+            elements.classroomList.innerHTML = classrooms.map(classroom => `
+        <div class="classroom-card" data-classroom="${classroom.name}" ${classroom.disabled ? 'style="opacity:0.6"' : ''}>
             <h3>${classroom.name}</h3>
+            
+            ${classroom.status === 1 ? `
+                <div class="issue-alert">
+                    ⚠️ Issues: 
+                    ${classroom.issues.map(issue =>
+                `${issue.issue} (${issue.status})`
+            ).join(', ')}
+                </div>
+            ` : ''}
+
             <div class="details">
                 <p>Capacity: ${classroom.capacity} people</p>
                 <p>Equipment: ${classroom.equipment.join(', ')}</p>
@@ -115,8 +162,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     `).join('')}
                 </ul>
             </div>
-            <button>
-                Book Now
+            <button ${classroom.disabled ? 'disabled style="background:#ccc"' : ''}>
+                ${classroom.disabled ? 'Unavailable' : 'Book Now'}
             </button>
         </div>
     `).join('');
@@ -162,7 +209,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Initialize event listening
-     function initEventListeners() {
+    function initEventListeners() {
         ['input', 'change'].forEach(eventType => {
             elements.searchInput.addEventListener(eventType, fetchClassrooms);
             elements.capacityFilter.addEventListener(eventType, fetchClassrooms);
@@ -173,21 +220,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.confirmBookingButton.addEventListener('click', handleBookingConfirmation);
         });
 
-         // Disable Modal event listening
+        // Disable Modal event listening
         elements.closeModal.onclick = () => elements.modal.style.display = 'none';
 
-         // Prevents modal from closing when you click the date picker
+        // Prevents modal from closing when you click the date picker
         elements.datePicker.addEventListener('click', (event) => {
             event.stopPropagation();
 
-//        // Cause The pop-up closed event
-//        document.querySelector('.close-reason').onclick = () => {
-//            document.getElementById('reasonModal').style.display = 'none';
-//        };
-//
-//        // Added Cause The event was submitted
-//        document.getElementById('submitReason').addEventListener('click', handleReasonSubmit);
-//
+            //        // Cause The pop-up closed event
+            //        document.querySelector('.close-reason').onclick = () => {
+            //            document.getElementById('reasonModal').style.display = 'none';
+            //        };
+            //
+            //        // Added Cause The event was submitted
+            //        document.getElementById('submitReason').addEventListener('click', handleReasonSubmit);
+            //
 
 
         });
@@ -221,7 +268,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const userId = 3;
 
         try {
-            const response = await fetch('http://localhost:8000/insert_booking', {
+            const response = await fetch('https://www.diicsu.top:8000/insert_booking', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -253,6 +300,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             alert('Booking successful!');
             elements.modal.style.display = 'none';
+
+            // 新增：调用后端发送邮件接口
+            await fetch('http://localhost:8000/send_email/success', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    booking_id: data.booking_id  // 确保后端返回了 booking_id
+                })
+            });
             await fetchClassrooms();
         } catch (error) {
             console.error('Booking Error:', error);
@@ -269,7 +325,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         try {
-            const response = await fetch('http://localhost:8000/insert_booking_with_reason', {
+            const response = await fetch('https://www.diicsu.top:8000/insert_booking_with_reason', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -309,21 +365,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const hamburger = document.querySelector('.hamburger-menu');
     const sidebar = document.querySelector('.sidebar');
 
-    hamburger.addEventListener('click', function() {
+    hamburger.addEventListener('click', function () {
         sidebar.classList.toggle('active');
     });
 
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
             sidebar.classList.remove('active');
         }
     });
 
-    window.addEventListener('resize', function() {
+    window.addEventListener('resize', function () {
         if (window.innerWidth > 768) {
             sidebar.classList.remove('active');
         }

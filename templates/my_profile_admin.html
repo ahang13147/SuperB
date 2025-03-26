@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="../static/css/my_profile_admin.css">
-    <link rel="stylesheet" href="../static/css/sidebar.css">
+  <link rel="stylesheet" href="{{url_for('static',filename='css/my_profile_admin.css')}}">
+    <link rel="stylesheet" href="{{url_for('static',filename='css/sidebar.css')}}">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <title>My Profile</title>
 </head>
@@ -36,9 +36,13 @@
             Room Management
           </a>
             <a class="nav-item" href="{{ url_for('room_issue_management') }}">
-                <i class="fas fa-door-open nav-icon"></i>
+                <i class="fas fa-tools nav-icon"></i>
                 Room Issue Management
             </a>
+          <a class="nav-item" href="{{ url_for('user_management') }}">
+            <i class="fas fa-users nav-icon"></i>
+            User Management
+          </a>
           <a class="nav-item" href="{{ url_for('notice_admin') }}">
             <i class="fas fa-bell nav-icon"></i>
             Notifications
@@ -51,14 +55,20 @@
             <i class="fas fa-shield-alt nav-icon"></i>
             Trust List
           </a>
-          <a class="nav-item active" href="{{ url_for('my_profile_admin') }}">
+          <a class="nav-item" href="{{ url_for('my_profile_admin') }}">
             <i class="fas fa-user-circle nav-icon"></i>
             My Profile
           </a>
-
-         <div class="sidebar-logo">
+            <a class="nav-item active" href="{{ url_for('usage_report_center') }}">
+                <i class="fas fa-chart-line nav-icon"></i>
+                Usage Report Center
+            </a>
+         <!-- <div class="sidebar-logo">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
-         </div>
+         </div> -->
+          <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+          </div>
 
         </div>
 

@@ -24,7 +24,8 @@ CREATE TABLE Users (
     username VARCHAR(255) NOT NULL,             -- Username
     email VARCHAR(255) NOT NULL UNIQUE,         -- User's email, must be unique
     phone_number VARCHAR(255) NOT NULL,        -- Hashed password for security
-    role ENUM('admin', 'professor', 'student', 'tutor') NOT NULL  -- User's role in the system
+    role ENUM('admin', 'professor', 'student', 'tutor') NOT NULL,  -- User's role in the system
+    avatar_path VARCHAR(200) DEFAULT 'default_avatar.png'
 );
 
 -- 1.2 Rooms Table (Stores room details)
@@ -59,7 +60,7 @@ CREATE TABLE Bookings (
     start_time TIME NOT NULL,                   -- Start time of the booking
     end_time TIME NOT NULL,
     booking_date DATE,                          -- End time of the booking
-    status ENUM('pending', 'approved', 'canceled', 'rejected','failed','changed') NOT NULL,  -- Booking status
+    status ENUM('pending', 'approved', 'canceled', 'rejected','failed','changed','finished') NOT NULL,  -- Booking status
 	reason TEXT,
 
     FOREIGN KEY (user_id) REFERENCES Users(user_id),  -- Foreign key referencing Users table

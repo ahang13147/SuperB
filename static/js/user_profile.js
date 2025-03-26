@@ -1,9 +1,28 @@
 // Configures constants
-const API_BASE = 'http://localhost:8000';
-const DEFAULT_USER_ID = 3;
+const API_BASE = 'https://www.diicsu.top:8000'; // Change the IP address to the server address
+const DEFAULT_USER_ID = 1;  // Default user ID, used for backup only
 
 // Initialize the page
-document.addEventListener('DOMContentLoaded', initializeProfile);
+document.addEventListener('DOMContentLoaded', () => {
+    initializeProfile();
+
+    // Make sure to bind events only after the DOM has loaded
+    const form = document.getElementById('profile-form');
+    if (form) {
+        form.addEventListener('submit', handleFormSubmit);
+    } else {
+        console.error('无法找到profile-form表单元素');
+    }
+});
+
+async function handleFormSubmit(e) {
+    e.preventDefault();
+    try {
+        await updateUserProfile();
+    } catch (error) {
+        showError(error.message);
+    }
+}
 
 // Main initialization function
 async function initializeProfile() {
@@ -23,7 +42,7 @@ async function fetchUserData() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            // body: JSON.stringify({ user_id: DEFAULT_USER_ID }),
+            credentials: 'include' // Let the request carry a Cookie
         });
 
         if (!response.ok) {
@@ -55,7 +74,11 @@ function updateProfileUI(user) {
 // Edit mode switch
 function toggleEditMode() {
     const inputs = document.querySelectorAll('#profile-form input');
-    inputs.forEach(input => input.disabled = false);
+    inputs.forEach(input => {
+        if (input.id !== 'email') { // Skip the mailbox input box
+            input.disabled = false;
+        }
+    });
     document.getElementById('edit-btn').style.display = 'none';
     document.getElementById('save-btn').style.display = 'inline-block';
     document.getElementById('cancel-btn').style.display = 'inline-block';
@@ -74,27 +97,10 @@ function cancelEditMode() {
     initializeProfile();
 }
 
-// Form submission processing
-document.addEventListener('DOMContentLoaded', function() {
-    const profileForm = document.getElementById('profile-form');
-    if (profileForm) {
-        profileForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            try {
-                await updateUserProfile();
-            } catch (error) {
-                showError(error.message);
-            }
-        });
-    } else {
-        console.error('Profile form not found!');
-    }
-});
-
 // Update user profile
 async function updateUserProfile() {
     const updateData = {
-        user_id: DEFAULT_USER_ID,
+        user_id: DEFAULT_USER_ID, // You are advised to obtain the ID of the current user based on the session
         username: document.getElementById('full-name').value,
         email: document.getElementById('email').value,
         phone_number: document.getElementById('phone').value
@@ -106,6 +112,7 @@ async function updateUserProfile() {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',  // Carry Cookie
             body: JSON.stringify(updateData),
         });
 
@@ -163,25 +170,20 @@ function handleImageUpload(event) {
     reader.readAsDataURL(file);
 }
 
-
-//add for menu
 document.addEventListener('DOMContentLoaded', function() {
     const hamburger = document.querySelector('.hamburger-menu');
     const sidebar = document.querySelector('.sidebar');
 
-    // 汉堡菜单点击事件
     hamburger.addEventListener('click', function() {
         sidebar.classList.toggle('active');
     });
 
-    // 点击外部关闭侧边栏
     document.addEventListener('click', function(e) {
         if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
             sidebar.classList.remove('active');
         }
     });
 
-    // 窗口大小变化时重置侧边栏
     window.addEventListener('resize', function() {
         if (window.innerWidth > 768) {
             sidebar.classList.remove('active');
