@@ -97,7 +97,7 @@ document.getElementById('issueForm').addEventListener('submit', function (event)
 
 
                 //todo: add send email to all users
-            fetch('http://localhost:8000/send_email/broadcast_issue', {
+            fetch('https://www.diicsu.top:8000/send_email/broadcast_issue', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ issue_id: data.issue_id })

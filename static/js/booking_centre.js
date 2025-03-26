@@ -301,7 +301,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.modal.style.display = 'none';
 
             // todo: add new function for send email
-            await fetch('http://localhost:8000/send_email/success', {
+            await fetch('https://www.diicsu.top:8000/send_email/success', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
