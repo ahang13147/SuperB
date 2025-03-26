@@ -31,4 +31,3 @@ user interface:
 10:The layout of User report is too cramped, and the button for invoking the menu does not respond when clicked.
 ![alt text](TestImages/13.jpg)
 
-10:The sidebar cannot be closed after being invoked.
