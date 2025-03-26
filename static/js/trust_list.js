@@ -1,4 +1,4 @@
-const API_BASE = 'https://www.diicsu.top:8000';
+const API_BASE = 'http://localhost:8000';
 const ENDPOINTS = {
     GET_ALL: '/get_room_trusted_users',
     ADD: '/insert_trusted_user',
@@ -55,6 +55,18 @@ function renderData(data) {
             </ul>
         `;
         container.appendChild(box);
+    });
+}
+
+function searchTrustedList() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('.room-box').forEach(box => {
+        const roomInfo = box.querySelector('h3').textContent.toLowerCase();
+        const roomId = roomInfo.match(/id: (\d+)/)?.[1] || '';
+        const roomName = roomInfo.replace(/\(id: \d+\)/g, '').trim();
+
+        const match = roomId.includes(query) || roomName.includes(query);
+        box.style.display = match ? 'block' : 'none';
     });
 }
 
@@ -177,14 +189,6 @@ function showSuccessModal(message) {
     }, 3000);
 }
 
-function searchTrustedList() {
-    const query = document.getElementById('searchInput').value.toLowerCase();
-    document.querySelectorAll('.room-box').forEach(box => {
-        const roomId = box.querySelector('h3').textContent.match(/ID: (\d+)/)[1];
-        box.style.display = roomId.includes(query) ? 'block' : 'none';
-    });
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     const hamburger = document.querySelector('.hamburger-menu');
     const sidebar = document.querySelector('.sidebar');
@@ -205,4 +209,3 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
-

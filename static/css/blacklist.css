@@ -39,7 +39,33 @@ h1 {
     --border-color: #dee2e6;
 }
 
+/* 搜索框样式 */
+.search-container {
+    margin: 20px auto;
+    max-width: 600px;
+    padding: 0 20px;
+}
 
+#searchBlacklistInput {
+    padding: 12px 20px 12px 40px;
+    width: 100%;
+    border: 2px solid #e2e8f0;
+    border-radius: 30px;
+    font-size: 1em;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    background-color: #fff;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23a0aec0' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 15px center;
+    background-size: 16px;
+}
+
+#searchBlacklistInput:focus {
+    border-color: #4299e1;
+    outline: none;
+    box-shadow: 0 2px 15px rgba(66, 153, 225, 0.2);
+}
 
 .table-wrapper {
     padding-left: 10px;
@@ -150,24 +176,23 @@ input {
     border-color: #dc3545 !important;
 }
 
-
 @media (max-width: 768px) {
   .main-container {
     padding-left: 0;
     box-sizing: content-box;
   }
     body {
-
         font-size: 14px;
     }
-
-
 
     h1 {
         font-size: 1.5rem;
         margin-bottom: 1rem;
     }
 
+    .search-container {
+        padding: 0 15px;
+    }
 
     .table-wrapper {
         max-height: none;
@@ -177,7 +202,6 @@ input {
 
     table {
         min-width: 100%;
-
     }
 
     thead {
@@ -187,8 +211,6 @@ input {
     tbody tr {
         display: block;
         margin: 0 auto 1rem;
-
-
         background: white;
         border-radius: 8px;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
@@ -216,7 +238,6 @@ input {
         gap: 8px;
     }
 
-
     .add-section {
         padding: 15px;
         margin-top: 1rem;
@@ -236,7 +257,6 @@ input {
         justify-content: center;
         padding: 12px;
     }
-
 
     .flatpickr-input {
         font-size: 14px;
