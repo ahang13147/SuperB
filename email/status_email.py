@@ -176,6 +176,43 @@ def get_room_name_by_id(room_id):
         return None
 
 
+def get_user_info_by_id(user_id):
+    """
+    Fetch user's name and email by user_id from the users table.
+
+    Args:
+        user_id (int): ID of the user to look up.
+
+    Returns:
+        tuple: (username, email) if found, or None if not found.
+    """
+    try:
+        conn = mysql.connector.connect(
+            host=db_config['host'],
+            user=db_config['user'],
+            password=db_config['password'],
+            database=db_config['database'],
+            ssl_disabled=True
+        )
+        cursor = conn.cursor()
+
+        query = "SELECT username, email FROM users WHERE user_id = %s"
+        cursor.execute(query, (user_id,))
+        result = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if result:
+            return result[0], result[1]  # username, email
+        else:
+            print(f"User ID {user_id} not found.")
+            return None
+    except Exception as e:
+        print(f"Error fetching user info: {e}")
+        return None
+
+
 def send_email(to_email, subject, body):
     """
     Send an email to the specified recipient.
@@ -348,12 +385,12 @@ def async_broadcast_email_to_all_administrators(subject, body):
             print(f"[Admin Broadcast] General error: {e}")
 
 
-def broadcast_email_to_all_administrators(subject, body):
-    """
-    Launch email broadcasting in a separate process to avoid blocking the main thread.
-    """
-    process = Process(target=async_broadcast_email_to_all_administrators, args=(subject, body))
-    process.start()
+# def broadcast_email_to_all_administrators(subject, body):
+#     """
+#     Launch email broadcasting in a separate process to avoid blocking the main thread.
+#     """
+#     process = Process(target=async_broadcast_email_to_all_administrators, args=(subject, body))
+#     process.start()
 
 # -------------------------------
 # 以下各接口均从 JSON 请求中获取 booking_id，并在返回 JSON 中包含 booking_id
@@ -715,7 +752,7 @@ def broadcast_pending_email():
 
         subject = f"Reminder: Your Booking for Room {room_name} is Approaching"
         body = f"""
-        Dear {user_email},<br><br>
+        Dear Administrator,<br><br>
 
         This is a pending booking request waiting to be disposed. Below are booking details:<br><br>
         <strong>Booking ID:</strong> {booking_id}<br>
@@ -736,10 +773,54 @@ def broadcast_pending_email():
         return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
 
 
-@app.route('/')
-def index():
-    """Render the main page"""
-    return render_template('total_email.html')
+@app.route('/send_email/broadcast_break_faith', methods=['POST'])
+def broadcast_break_faith_email():
+    """
+    Broadcast an email to notify all administrators and related user that this user breaks faith.
+
+    Request Format (JSON):
+    {
+        "user_id": 123
+    }
+
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+    }
+    """
+    data = request.get_json()
+    if not data or 'user_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Missing user_id in JSON body'}), 400
+
+    try:
+        user_id = int(data['user_id'])
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'user_id must be an integer'}), 400
+
+    user_info = get_user_info_by_id(user_id)
+    if user_info:
+        user_name, user_email = user_info
+
+        subject = "Reminder: A user who cancels booking too many times has been added to blacklist"
+        body = f"""
+        A user who cancels booking too many times has been added to blacklist. Below are details:<br><br>
+        <strong>User name:</strong> {user_name}<br>
+        <strong>User id:</strong> {user_id}<br>
+        <strong>Reason:</strong> This user has canceled bookings too many times (over 3 times) in one day.<br>
+        """
+
+        process = Process(target=async_broadcast_email_to_all_administrators, args=(subject, body))
+        process.start()
+
+        process1 = Process(target=async_send, args=(user_email, subject, body))
+        process1.start()
+
+        return jsonify({'status': 'success', 'message': 'Emails have been sent!'})
+    else:
+        return jsonify({'status': 'failed', 'message': 'No user found with the provided ID.'}), 404
+
 
 if __name__ == '__main__':
     app.run(debug=True)
+
