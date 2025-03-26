@@ -11,3 +11,10 @@ user interface:
 
 4:When I enter the user interface, I find that the sidebar gap is too large
 ![alt text](TestImages/image-9.png)
+
+5:There is no feedback if you click the sidebar on the usage report center interface in the mobile admin system
+![alt text](TestImages/image-10.png)
+
+6:The mobile sidebar of the admin system cannot reclaim the sidebar by clicking the area to the right of the sidebar
+![alt text](TestImages/image-11.png)
+
