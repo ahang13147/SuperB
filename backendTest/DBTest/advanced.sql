@@ -1,4 +1,4 @@
--- @version: 3/18/2025
+-- @version: 3/25/2025
 -- @author: Xin Yu, Siyan Guo, Zibang Nie
 -- @description: This SQL script creates a booking system database, which includes tables for Users, Rooms, Bookings, Approvals, Notifications, and Reports.
 -- It provides a structure to manage users, room bookings, approval processes, notifications, and report generation.
@@ -439,7 +439,7 @@ ON SCHEDULE EVERY 1 MINUTE
 DO
 BEGIN
     DELETE FROM Blacklist
-    WHERE end_date = CURDATE()
+    WHERE end_date <= CURDATE()
       AND end_time <= CURTIME();
 END;
 //
