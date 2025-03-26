@@ -2793,11 +2793,14 @@ def insert_booking():
         cursor.execute(query, (user_id, room_id, start_time, end_time, booking_date, status, reason))
         conn.commit()
 
+        # todo:0326
+        booking_id = cursor.lastrowid
+
         return jsonify({
             "status": "success",
-            "message": "Booking successful" if status == 'approved' else "Booking request submitted, awaiting approval."
+            "message": "Booking successful" if status == 'approved' else "Booking request submitted, awaiting approval.",
+            "booking_id": booking_id
         })
-
     except mysql.connector.Error as err:
         conn.rollback()
         return jsonify({"status": "error", "error": str(err)}), 400
