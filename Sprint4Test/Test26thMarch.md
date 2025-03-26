@@ -18,3 +18,17 @@ user interface:
 6:The mobile sidebar of the admin system cannot reclaim the sidebar by clicking the area to the right of the sidebar
 ![alt text](TestImages/image-11.png)
 
+
+7:The status of the issue management interface on the mobile device cannot be displayed.
+![alt text](TestImages/10.png)
+
+8:There is no sidebar button to invoke User management (Resolved).
+![alt text](TestImages/11.jpg)
+
+9: The User report cannot be opened, and the text is mixed with icons (Resolved).
+![alt text](TestImages/12.jpg)
+
+10:The layout of User report is too cramped, and the button for invoking the menu does not respond when clicked.
+![alt text](TestImages/13.jpg)
+
+10:The sidebar cannot be closed after being invoked.
