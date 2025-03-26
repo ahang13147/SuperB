@@ -5,3 +5,9 @@ user interface:
 
 2:When I go to notifications in the admin interface, After I click booking management, room management, and user management in the sidebar there are no response.
 ![alt text](TestImages/image-7.png)
+
+3:When I went to admin's usage report center, the screen was not centered
+![alt text](TestImages/image-8.png)
+
+4:When I enter the user interface, I find that the sidebar gap is too large
+![alt text](TestImages/image-9.png)
