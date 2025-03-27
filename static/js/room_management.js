@@ -37,10 +37,9 @@ let deletedRooms = [];
 // 加载房间数据
 async function loadRooms() {
     try {
-        const response = await fetch('https://101.200.197.132:8000/rooms');
+        const response = await fetch('http://localhost:8000/rooms');
         const data = await response.json();
-         activeRooms = data.rooms.filter(room => room.room_status !== 2); // 过滤掉已删除的房间
-        deletedRooms = data.rooms.filter(room => room.room_status === 2); // 只保留已删除的房间
+        activeRooms = data.rooms;
         renderTables();
     } catch (error) {
         console.error('Failed to load:', error);
@@ -158,7 +157,7 @@ async function saveRoom() {
     };
 
     try {
-        const response = await fetch(`https://101.200.197.132:8000/update-room/${currentEditingRoomId}`, {
+        const response = await fetch(`http://localhost:8000/update-room/${currentEditingRoomId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updatedData)
@@ -183,7 +182,7 @@ async function saveRoom() {
 async function softDeleteRoom(roomId) {
     if (confirm(`Are you sure to delete ${roomId} 吗？`)) {
         try {
-            const response = await fetch('https://101.200.197.132:8000/update_room_status', {
+            const response = await fetch('http://localhost:8000/update_room_status', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -197,7 +196,6 @@ async function softDeleteRoom(roomId) {
             if (response.ok) {
                 // 从 activeRooms 中移除该房间
                 const index = activeRooms.findIndex(r => r.room_id == roomId);
-                
                 if (index > -1) {
                     const deletedRoom = activeRooms.splice(index, 1)[0];
                     deletedRooms.push({ ...deletedRoom, deletedAt: new Date() });
@@ -216,48 +214,10 @@ async function softDeleteRoom(roomId) {
 
 // 切换标签页
 function showTab(tabId) {
-    // 桌面端表格切换
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.room-table').forEach(t => t.style.display = 'none');
     document.querySelector(`#${tabId}Table`).style.display = 'table';
     document.querySelector(`[onclick="showTab('${tabId}')"]`).classList.add('active');
-
-    // 新增移动端卡片切换逻辑
-    const cardsContainer = document.querySelector('.room-cards-container');
-    if (window.innerWidth <= 768) {
-        cardsContainer.innerHTML = (tabId === 'active' ? activeRooms : deletedRooms).map(room => `
-            <div class="room-card" data-room-id="${room.room_id}">
-                <div class="card-header">
-                    <span class="card-id">ID: ${room.room_id}</span>
-                    <h3 class="card-title">${room.room_name}</h3>
-                </div>
-                <div class="card-details">
-                <div>
-                    <span class="card-label">Capacity:</span>
-                    <span class="card-value">${room.capacity}</span>
-                </div>
-                <div>
-                    <span class="card-label">Location:</span>
-                    <span class="card-value">${room.location}</span>
-                </div>
-                <div>
-                    <span class="card-label">Equipment:</span>
-                    <span class="card-value">${room.equipment}</span>
-                </div>
-                <div>
-                    <span class="card-label">Room Type:</span>
-                    <span class="card-value">${getRoomTypeText(room.room_type)}</span>
-                </div>
-                </div>
-                ${tabId === 'active' ? `
-                <div class="card-actions">
-                    <button class="edit-btn" onclick="openEditModal(${room.room_id})">Edit</button>
-                    <button class="delete-btn" onclick="softDeleteRoom('${room.room_id}')">Delete</button>
-                </div>
-                ` : ''}
-            </div>
-        `).join('');
-    }
 }
 
 // 打开添加房间模态框
@@ -272,7 +232,6 @@ function closeAddRoomModal() {
 
 // 添加新房间
 async function addRoom() {
-    
     const newRoom = {
         room_name: document.getElementById('roomName').value,
         capacity: parseInt(document.getElementById('capacity').value),
@@ -282,15 +241,14 @@ async function addRoom() {
     };
 
     try {
-        const response = await fetch('https://101.200.197.132:8000/insert_room', {
+        const response = await fetch('http://localhost:8000/insert_room', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newRoom)
         });
 
         if (response.ok) {
-            const result = await response.json();
-            activeRooms.push({ ...newRoom, room_id: result.room_id });
+            activeRooms.push({ ...newRoom, room_id: Date.now() });
             renderTables();
             closeAddRoomModal();
             showAddSuccessModal();
@@ -312,4 +270,137 @@ function showDeleteSuccessModal() {
     const successModal = document.getElementById('deleteSuccessModal');
     successModal.style.display = 'flex';
     setTimeout(() => successModal.style.display = 'none', 2000);
+}
+
+// 打开恢复房间模态框
+function openRestoreRoomModal() {
+    document.getElementById('restoreRoomModal').style.display = 'flex';
+}
+
+// 关闭恢复房间模态框
+function closeRestoreRoomModal() {
+    document.getElementById('restoreRoomModal').style.display = 'none';
+}
+
+// 确认恢复房间
+async function confirmRestoreRoom() {
+    const roomId = document.getElementById('restoreRoomId').value;
+
+    if (!roomId) {
+        alert('Please enter a valid Room ID.');
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:8000/update_room_status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                room_id: roomId,
+                action: 'restore' // 操作类型为恢复
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            // 从 deletedRooms 中移除该房间，并添加到 activeRooms
+            const index = deletedRooms.findIndex(r => r.room_id == roomId);
+            if (index > -1) {
+                const restoredRoom = deletedRooms.splice(index, 1)[0];
+                activeRooms.push(restoredRoom);
+                renderTables();
+                closeRestoreRoomModal();
+                alert('Room restored successfully.');
+            } else {
+                alert('Room not found in deleted list.');
+            }
+        } else {
+            alert(`Failed to restore room: ${result.error}`);
+        }
+    } catch (error) {
+        console.error('Request error:', error);
+        alert('Network request failed');
+    }
+}
+
+// 搜索房间功能
+function searchRooms() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const activeTbody = document.querySelector('#activeTable tbody');
+    const deletedTbody = document.querySelector('#deletedTable tbody');
+    const cardsContainer = document.querySelector('.room-cards-container');
+
+    // 过滤 activeRooms
+    const filteredActiveRooms = activeRooms.filter(room =>
+        room.room_id.toString().includes(searchTerm) ||
+        room.room_name.toLowerCase().includes(searchTerm)
+    );
+
+    // 过滤 deletedRooms
+    const filteredDeletedRooms = deletedRooms.filter(room =>
+        room.room_id.toString().includes(searchTerm) ||
+        room.room_name.toLowerCase().includes(searchTerm)
+    );
+
+    // 渲染过滤后的 activeRooms
+    activeTbody.innerHTML = filteredActiveRooms.map(room => `
+        <tr class="room-item" data-room-id="${room.room_id}">
+            <td>${room.room_id}</td>
+            <td>${room.room_name}</td>
+            <td>${room.capacity}</td>
+            <td>${room.location}</td>
+            <td>${room.equipment}</td>
+            <td>${getRoomTypeText(room.room_type)}</td>
+            <td class="room-actions">
+                <button class="edit-btn" onclick="openEditModal(${room.room_id})">Edit</button>
+                <button class="delete-btn" onclick="softDeleteRoom(${room.room_id})">Delete</button>
+            </td>
+        </tr>
+    `).join('');
+
+    // 渲染过滤后的 deletedRooms
+    deletedTbody.innerHTML = filteredDeletedRooms.map(room => `
+        <tr class="deleted-item">
+            <td>${room.room_id}</td>
+            <td>${room.room_name}</td>
+            <td>${room.capacity}</td>
+            <td>${room.location}</td>
+            <td>${room.equipment}</td>
+            <td>${getRoomTypeText(room.room_type)}</td>
+            <td>${new Date().toLocaleString()}</td>
+        </tr>
+    `).join('');
+
+    // 渲染过滤后的卡片（移动端）
+    cardsContainer.innerHTML = filteredActiveRooms.map(room => `
+        <div class="room-card" data-room-id="${room.room_id}">
+            <div class="card-header">
+                <span class="card-id">ID: ${room.room_id}</span>
+                <h3 class="card-title">${room.room_name}</h3>
+            </div>
+            <div class="card-details">
+                <div>
+                    <span class="card-label">Capacity:</span>
+                    <span class="card-value">${room.capacity}</span>
+                </div>
+                <div>
+                    <span class="card-label">Location:</span>
+                    <span class="card-value">${room.location}</span>
+                </div>
+                <div>
+                    <span class="card-label">Equipment:</span>
+                    <span class="card-value">${room.equipment}</span>
+                </div>
+                <div>
+                    <span class="card-label">Room Type:</span>
+                    <span class="card-value">${getRoomTypeText(room.room_type)}</span>
+                </div>
+            </div>
+            <div class="card-actions">
+                <button class="edit-btn" onclick="openEditModal(${room.room_id})">Edit</button>
+                <button class="delete-btn" onclick="softDeleteRoom(${room.room_id})">Delete</button>
+            </div>
+        </div>
+    `).join('');
 }

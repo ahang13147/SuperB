@@ -44,6 +44,93 @@ h1 {
     color: white;
 }
 
+.button-container {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.add-room-btn, .restore-room-btn {
+    background: #48bb78;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background 0.3s;
+}
+
+.add-room-btn:hover {
+    background: #38a169;
+}
+
+.restore-room-btn {
+    background: #4299e1;
+}
+
+.restore-room-btn:hover {
+    background: #3182ce;
+}
+
+.search-container {
+    display: flex;
+    margin: 20px 0;
+    justify-content: center;
+    position: relative;
+}
+
+#searchInput {
+    padding: 12px 20px 12px 40px; /* 左侧留出图标空间 */
+    border: 2px solid #e2e8f0;
+    border-radius: 30px; /* 更圆的边角 */
+    font-size: 1em;
+    width: 350px; /* 稍宽一些 */
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    background-color: #fff;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23a0aec0' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 15px center;
+    background-size: 16px;
+}
+
+#searchInput:focus {
+    border-color: #4299e1;
+    outline: none;
+    box-shadow: 0 2px 15px rgba(66, 153, 225, 0.2);
+    width: 400px; /* 聚焦时稍微变宽 */
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    #searchInput {
+        width: 90%;
+        padding-left: 35px;
+    }
+
+    #searchInput:focus {
+        width: 95%;
+    }
+}
+
+.search-btn {
+    padding: 10px 20px;
+    background: #4299e1;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.search-btn:hover {
+    background: #3182ce;
+     border-color: #cbd5e0;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
 .room-table-container {
     background: white;
     padding: 20px;
@@ -134,24 +221,6 @@ button {
 .delete-btn {
     background: #f56565;
     color: white;
-}
-
-.add-room-btn {
-    background: #48bb78;
-    color: white;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    margin-bottom: 20px;
-    font-size: 1em;
-    transition: background 0.3s;
-    display: block;
-    margin: 0 auto 20px;
-}
-
-.add-room-btn:hover {
-    background: #38a169;
 }
 
 .modal {
@@ -344,14 +413,13 @@ button {
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     }
 
-   
     .edit-btn, .delete-btn {
         padding: 6px 12px;
         font-size: 0.9em;
     }
 }
 
-/* @media (max-width: 480px) {
+@media (max-width: 480px) {
     .room-table th,
     .room-table td {
         font-size: 0.85em;
@@ -360,4 +428,4 @@ button {
     .tab-btn {
         padding: 8px 12px;
     }
-} */
+}

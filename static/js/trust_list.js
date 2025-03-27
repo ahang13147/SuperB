@@ -1,4 +1,4 @@
-const API_BASE = 'https://www.diicsu.top:8000';
+const API_BASE = 'http://localhost:8000';
 const ENDPOINTS = {
     GET_ALL: '/get_room_trusted_users',
     ADD: '/insert_trusted_user',
@@ -58,6 +58,18 @@ function renderData(data) {
     });
 }
 
+function searchTrustedList() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('.room-box').forEach(box => {
+        const roomInfo = box.querySelector('h3').textContent.toLowerCase();
+        const roomId = roomInfo.match(/id: (\d+)/)?.[1] || '';
+        const roomName = roomInfo.replace(/\(id: \d+\)/g, '').trim();
+
+        const match = roomId.includes(query) || roomName.includes(query);
+        box.style.display = match ? 'block' : 'none';
+    });
+}
+
 function openAddTrustedModal() {
     document.getElementById('addTrustedModal').style.display = 'flex';
 }
@@ -70,7 +82,7 @@ async function addTrustedUser() {
     const roomId = document.getElementById('roomId').value.trim();
     const userId = document.getElementById('userId').value.trim();
     const notes = document.getElementById('notes').value.trim();
-    const addedBy = 1; // 假设当前用户ID为1
+    const addedBy = 1; // Assume the current user ID is 1
 
     if (!validateInput(roomId, userId, notes, addedBy)) return;
 
@@ -87,14 +99,18 @@ async function addTrustedUser() {
         });
 
         const result = await response.json();
-        if (!response.ok) throw new Error(result.message);
+        if (!response.ok) throw new Error(result.error);
 
         showSuccessModal('User added successfully!');
         closeAddTrustedModal();
         clearForm();
         await loadData();
     } catch (error) {
-        showNotification(error.message, 'error');
+          // Print to the console
+        console.error('Error:', error);
+
+        // An error box pops up
+        alert(`Failed to add trusted user: ${error.message}`);
     }
 }
 
@@ -177,32 +193,43 @@ function showSuccessModal(message) {
     }, 3000);
 }
 
-function searchTrustedList() {
-    const query = document.getElementById('searchInput').value.toLowerCase();
-    document.querySelectorAll('.room-box').forEach(box => {
-        const roomId = box.querySelector('h3').textContent.match(/ID: (\d+)/)[1];
-        box.style.display = roomId.includes(query) ? 'block' : 'none';
-    });
-}
 
 document.addEventListener('DOMContentLoaded', function() {
+    //Handle menu grouped clicks
+    document.querySelectorAll('.group-header').forEach(header => {
+        header.addEventListener('click', function() {
+            const group = this.closest('.menu-group');
+            group.classList.toggle('active');
+
+            // Closes other expanded menu groups
+            document.querySelectorAll('.menu-group').forEach(otherGroup => {
+                if (otherGroup !== group) {
+                    otherGroup.classList.remove('active');
+                }
+            });
+        });
+    });
+
+    // Mobile burger menu switching
     const hamburger = document.querySelector('.hamburger-menu');
     const sidebar = document.querySelector('.sidebar');
 
-    hamburger.addEventListener('click', function() {
+    hamburger.addEventListener('click', function(e) {
+        e.stopPropagation();
         sidebar.classList.toggle('active');
     });
 
+    // Click outside to close the sidebar
     document.addEventListener('click', function(e) {
-        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+        if (sidebar.classList.contains('active') &&
+            !e.target.closest('.sidebar') &&
+            !e.target.closest('.hamburger-menu')) {
             sidebar.classList.remove('active');
         }
     });
 
-    window.addEventListener('resize', function() {
-        if (window.innerWidth > 768) {
-            sidebar.classList.remove('active');
-        }
+    // Prevent a click inside the sidebar from triggering a close
+    sidebar.addEventListener('click', function(e) {
+        e.stopPropagation();
     });
 });
-
