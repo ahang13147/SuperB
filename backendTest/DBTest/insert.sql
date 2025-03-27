@@ -7,6 +7,24 @@
 USE `booking_system_db`;
 
 
+<<<<<<< HEAD
+INSERT INTO Users (username, email, phone_number, role) VALUES
+('Alex', 'BookingSystem.SuperB@outlook.com', '18889635156', 'student'),
+('Xin Yu', '2543651@dundee.ac.uk', '18889935156', 'admin'),
+('Siyan Guo', '2543137@dundee.ac.uk', 'hash3', 'admin'),
+('Yi Su', '2544215@dundee.ac.uk', 'hash4', 'professor'),
+('Marco_Admin', 'diicsupriority@outlook.com', '17779635156', 'admin'),
+('Xv Liu', '2543149@dundee.ac.uk', '18879635156', 'tutor'),
+('Zibang Nie', '2542881@dundee.ac.uk', '19979635156', 'student'),
+('Guanhang Zhang ', '2542841@dundee.ac.uk', '19979635156', 'student'),
+('Jiawei You', '2542692@dundee.ac.uk', '19979635333', 'student'),
+('Yi Dai', '2542942@dundee.ac.uk', '19979635999', 'student'),
+('tutor3', 'tutor2@example.com', 'hash8', 'tutor'),
+('student4', 'student3@example.com', 'hash9', 'student'),
+('tutor4', 'tutor3333@example.com', 'hash8', 'tutor'),
+('student5', 'student5@example.com', 'hash9', 'student'),
+('prof3', 'prof3@example.com', 'hash10', 'professor');
+=======
 INSERT INTO Users (username, email, phone_number, role, avatar_path) VALUES
 ('Alex', 'BookingSystem.SuperB@outlook.com', '18889635156', 'student',''),
 ('Xin Yu', '2543651@dundee.ac.uk', '18889935156', 'admin',''),
@@ -23,6 +41,7 @@ INSERT INTO Users (username, email, phone_number, role, avatar_path) VALUES
 ('tutor4', 'tutor3333@example.com', 'hash8', 'tutor',''),
 ('student5', 'student5@example.com', 'hash9', 'student',''),
 ('prof3', 'prof3@example.com', 'hash10', 'professor','');
+>>>>>>> feature/email
 
 INSERT INTO Rooms (room_name, capacity, equipment, location, room_type,room_status)
 VALUES
@@ -62,6 +81,19 @@ VALUES
 
 INSERT INTO Bookings (user_id, room_id, start_time, end_time, booking_date, status, reason)
 VALUES
+<<<<<<< HEAD
+(1, 1, '08:00:00', '08:45:00', '2025-03-17', 'approved', ''),
+(5, 1, '08:55:00', '09:40:00', '2025-03-18', 'approved', ''),
+(1, 2, '10:00:00', '10:45:00', '2025-03-19', 'pending', 'Awaiting approval'),
+(5, 2, '10:55:00', '11:40:00', '2025-03-17', 'approved', ''),
+(1, 3, '14:00:00', '14:45:00', '2025-03-18', 'approved', ''),
+(5, 3, '14:55:00', '15:40:00', '2025-03-19', 'approved', ''),
+(1, 4, '16:00:00', '16:45:00', '2025-03-17', 'pending', 'Awaiting approval'),
+(5, 4, '16:55:00', '17:40:00', '2025-03-18', 'approved', ''),
+(1, 5, '19:00:00', '19:45:00', '2025-03-19', 'approved', ''),
+(5, 5, '19:55:00', '20:40:00', '2025-03-17', 'approved', ''),
+(7, 6, '08:00:00', '08:45:00', '2025-03-19', 'approved', '');
+=======
 (1, 1, '08:00:00', '08:45:00', '2025-03-17', 'finished', ''),
 (5, 1, '08:55:00', '09:40:00', '2025-03-18', 'finished', ''),
 (1, 2, '10:00:00', '10:45:00', '2025-03-19', 'finished', 'Awaiting approval'),
@@ -73,6 +105,7 @@ VALUES
 (1, 5, '19:00:00', '19:45:00', '2025-03-19', 'finished', ''),
 (5, 5, '19:55:00', '20:40:00', '2025-03-17', 'finished', '');
 
+>>>>>>> feature/email
 
 -- Insert sample data into Notifications table
 INSERT INTO Notifications (user_id, message, notification_action,status) VALUES

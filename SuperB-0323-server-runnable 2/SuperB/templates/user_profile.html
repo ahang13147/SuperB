@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{url_for('static',filename='css/user_profile.css')}}">
+  <link rel="stylesheet" href="{{url_for('static',filename='css/sidebar.css')}}">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <title>My Profile</title>
+  <script src="{{ url_for('static', filename='js/user_profile.js') }}"></script>
+</head>
+<body>
+    <div class="hamburger-menu">
+        <i class="fas fa-bars"></i>
+    </div>
+  <div class="main-container">
+    <!-- sidebar -->
+    <div class="sidebar">
+      <a class="nav-item" href="{{ url_for('booking_centre') }}">
+        <i class="fas fa-calendar-alt nav-icon"></i>
+        Booking Center
+      </a>
+      <a class="nav-item" href="{{ url_for('my_reservation') }}">
+        <i class="fas fa-list-ul nav-icon"></i>
+        My Bookings
+      </a>
+      <a class="nav-item" href="{{ url_for('my_notification') }}">
+        <i class="fas fa-bell nav-icon"></i>
+        Notifications
+      </a>
+      <a class="nav-item active" href="{{ url_for('user_profile') }}">
+        <i class="fas fa-user-circle nav-icon"></i>
+        My Profile
+      </a>
+    </div>
+
+    <!-- content area-->
+    <div class="content-area">
+      <header>
+        <h1>My Profile</h1>
+      </header>
+
+      <!-- Personal data form -->
+      <div class="profile-container">
+        <div class="profile-header">
+            <div class="profile-picture">
+                <img src="{{ url_for('static', filename='images/default_avatar.png') }}" alt="Profile Picture" id="profile-image">
+                <button class="edit-picture-btn" onclick="triggerFileInput()">
+                    <i class="fas fa-camera"></i>
+                </button>
+                <input type="file" id="file-input" style="display: none;" onchange="handleImageUpload(event)">
+            </div>
+            <h2 id="username"></h2>
+            <p id="user-id">User ID</p>
+            <p id="role-type">(Student)</p>
+        </div>
+
+        <form id="profile-form">
+          <div class="form-group">
+            <label for="full-name">Full Name</label>
+            <input type="text" id="full-name" name="full-name"disabled>
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" disabled>
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone</label>
+            <input type="tel" id="phone" name="phone"disabled>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" id="edit-btn" onclick="toggleEditMode()">Edit Profile</button>
+            <button type="submit" id="save-btn" style="display: none;">Save Changes</button>
+            <button type="button" id="cancel-btn" style="display: none;" onclick="cancelEditMode()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+
+</body>
+</html>

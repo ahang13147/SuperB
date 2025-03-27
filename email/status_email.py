@@ -7,11 +7,11 @@ Description: This Flask application sends reminder emails to users about their r
              Each endpoint is responsible for sending a specific type of email based on the booking status.
              The response to each request is a JSON object containing the status of the email operation and the booking_id.
 """
-
+import urllib.parse
 from flask import Flask, render_template, request, jsonify, session
 from flask_mail import Mail, Message
 import mysql.connector
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,timezone
 from flask import Flask, request, jsonify
 from multiprocessing import Process
 
@@ -819,6 +819,98 @@ def broadcast_break_faith_email():
         return jsonify({'status': 'success', 'message': 'Emails have been sent!'})
     else:
         return jsonify({'status': 'failed', 'message': 'No user found with the provided ID.'}), 404
+
+@app.route('/send_email/calendar_invite', methods=['POST'])
+def send_calendar_invite():
+    """
+    Create an Outlook calendar event link and send via email.
+
+    Request JSON Format:
+    {
+        "room_id": 1,
+        "booking_date": "2025-3-26",
+        "start_time": "08:45:00",
+        "end_time": "09:30:00"
+    }
+
+    Response JSON Format:
+    {
+        "status": "success" or "failed",
+        "message": "...",
+    }
+    """
+    data = request.get_json()
+    required_fields = ['room_id', 'booking_date', 'start_time', 'end_time']
+    if not data or not all(field in data for field in required_fields):
+        return jsonify({'status': 'failed', 'message': 'Missing required fields'}), 400
+
+    # Example email address
+    user_email = session.get('user_email')
+
+    if not user_email:
+        return jsonify({'status': 'failed', 'message': 'User email not found in session.'}), 403
+
+    room_id = data['room_id']
+    booking_date = data['booking_date'].strip()
+    start_time = data['start_time'].strip()    # e.g. "08:45:00"
+    end_time = data['end_time'].strip()        # e.g. "09:30:00"
+
+    room_name = get_room_name_by_id(room_id)
+    print(f"[DEBUG] Room name: {room_name}")
+
+    try:
+        beijing_tz = timezone(timedelta(hours=8))
+        start_dt = datetime.strptime(f"{booking_date}T{start_time}", "%Y-%m-%dT%H:%M:%S").replace(tzinfo=beijing_tz)
+        end_dt = datetime.strptime(f"{booking_date}T{end_time}", "%Y-%m-%dT%H:%M:%S").replace(tzinfo=beijing_tz)
+
+        start_iso = start_dt.isoformat()
+        end_iso = end_dt.isoformat()
+    except ValueError as e:
+        return jsonify({'status': 'failed', 'message': f'Invalid date/time format: {str(e)}'}), 400
+
+    subject_line = f"Add booking to event – Room {room_name}"
+    description = f"I have booked room {room_name} from {start_iso} to {end_iso}."
+    location = f"{room_name}"
+
+    outlook_base_url = "https://outlook.office.com/calendar/0/deeplink/compose?"
+    outlook_params = {
+        "subject": subject_line,
+        "startdt": start_iso,
+        "enddt": end_iso,
+        "body": description,
+        "location": location
+    }
+    calendar_link = outlook_base_url + urllib.parse.urlencode(outlook_params)
+
+    # HTML body with a clickable button for the event link
+    body = f"""
+    <!DOCTYPE html>
+    <html>
+      <body style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
+        <p>Hi,</p>
+        <p>Please click the button below to add the event to your Outlook Web Calendar:</p>
+
+        <p>
+          <a href="{calendar_link}" 
+             style="display: inline-block; padding: 10px 20px; background-color: #0078D4; color: white; text-decoration: none; border-radius: 4px;"
+             target="_blank">
+             Add Event
+          </a>
+        </p>
+
+        <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+        <p><a href="{calendar_link}" target="_blank">{calendar_link}</a></p>
+
+        <br>
+        <p>Best regards,<br>Booking System</p>
+      </body>
+    </html>
+    """
+
+    process = Process(target=async_send, args=(user_email, subject_line, body))
+    process.start()
+
+    return jsonify({'status': 'success', 'message': 'Calendar invite sent via email!'})
 
 
 if __name__ == '__main__':

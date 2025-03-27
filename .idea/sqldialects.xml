@@ -2,9 +2,12 @@
 <project version="4">
   <component name="SqlDialectMappings">
     <file url="file://$PROJECT_DIR$/Database/booking_system_db.sql" dialect="MySQL" />
+<<<<<<< HEAD
+=======
     <file url="file://$PROJECT_DIR$/backendTest/DBTest/advanced.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/backendTest/DBTest/create.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/backendTest/DBTest/insert.sql" dialect="MySQL" />
+>>>>>>> feature/email
     <file url="file://$PROJECT_DIR$/backendTest/Insert test data to our database/insert_test_data_to_users.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/backendTest/Insert test data to our database/test_insert_infor.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/backendTest/delete/delete.sql" dialect="MySQL" />
