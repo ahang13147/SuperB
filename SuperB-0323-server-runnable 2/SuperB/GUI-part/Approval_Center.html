@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="Approval_Center.css">
+  <link rel="stylesheet" href="sidebarAndNotice.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <title>Room Approval Management</title>
+</head>
+
+<body>
+  <div class="main-container">
+    <div class="sidebar">
+      <a class="nav-item" href="booking_centre.html">
+        <i class="fas fa-calendar-alt nav-icon"></i>
+        Booking Center
+      </a>
+      <a class="nav-item" href="my_reservation.html">
+        <i class="fas fa-list-ul nav-icon"></i>
+        My Bookings
+      </a>
+      <a class="nav-item active" href="Approval_Center.html">
+
+        <i class="fas fa-check-circle nav-icon"></i>
+        Approval Management
+      </a>
+      <a class="nav-item" href="sidebarAndNotice.html">
+        <i class="fas fa-bell nav-icon"></i>
+        Notifications
+      </a>
+      <a class="nav-item" href="#">
+        <i class="fas fa-user-circle nav-icon"></i>
+        Profile (Coming Soon)
+      </a>
+    </div>
+
+    <div class="content-area">
+      <header>
+        <h1>Room Approval Management</h1>
+      </header>
+
+      <div class="approval-tabs">
+        <button class="tab active" data-tab="pending">Pending</button>
+
+        <button class="tab" data-tab="finished">Finished</button>
+
+      </div>
+
+      <div class="approvals-container">
+
+      </div>
+    </div>
+  </div>
+    <script src="Approval_Center.js"></script>
+</body>
+
+</html>

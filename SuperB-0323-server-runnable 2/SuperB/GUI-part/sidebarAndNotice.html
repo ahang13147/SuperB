@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DIICSU Intelligent Meeting Room Booking System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Original CSS styles remain unchanged */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'PingFang SC', system-ui;
+        }
+
+        /* Main container */
+        .main-container {
+            width: 100%;
+            min-height: 1080px;
+            background: #f8f9fa;
+            position: relative;
+
+            overflow-x: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            width: 200px;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            background: linear-gradient(180deg, #2b5876 0%, #4e4376 100%);
+            padding: 30px 0;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        /* Content area */
+        .content-area {
+            margin-left: 200px;
+            width: calc(100% - 200px);
+            min-height: 1080px;
+            padding: 40px;
+            box-sizing: border-box;
+            background: #f8f9fa;
+        }
+
+        /* Navigation items */
+        .nav-item {
+            display: flex;
+            align-items: center;
+            color: rgba(255,255,255,0.9);
+            padding: 18px 25px;
+            margin: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateX(5px);
+        }
+
+        .nav-item.active {
+            background: rgba(255,255,255,0.15);
+            border-left: 3px solid #00f2c3;
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+            width: 30px;
+            margin-right: 15px;
+        }
+
+        /* Notification panel */
+        .notification-panel {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+        }
+
+        .notification-item {
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid transparent;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .notification-item.unread {
+            border-left-color: #00f2c3;
+            background: rgba(0,242,195,0.03);
+        }
+
+        .notification-time {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .notification-content {
+            color: #2c3e50;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <a class="nav-item" href="booking_centre.html">
+                <i class="fas fa-calendar-alt nav-icon"></i>
+                Booking Center
+            </a>
+            <a class="nav-item" href="my_reservation.html">
+                <i class="fas fa-list-ul nav-icon"></i>
+                My Bookings
+            </a>
+            <a class="nav-item active" href="sidebarAndNotice.html">
+                <i class="fas fa-bell nav-icon"></i>
+                Notifications
+            </a>
+            <a class="nav-item disabled" href="#">
+                <i class="fas fa-user-circle nav-icon"></i>
+                Profile (Coming Soon)
+            </a>
+            <a class="nav-item" href="manage room detail.html">
+                <i class="fas fa-user-circle nav-icon"></i>
+                Room Management
+            </a>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Notification Center Example -->
+            <div class="notification-panel" >
+                <div class="notification-item unread">
+                    <div class="notification-time">2023-10-01 09:00</div>
+                    <div class="notification-content">
+                        Your booking for "Innovation Room 101" has been confirmed (09:00-10:00)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Page switching functionality
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // Remove all active states
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+
+                // Switch content display
+                const panels = document.querySelectorAll('.search-container, .notification-panel');
+                panels.forEach(p => p.style.display = 'none');
+
+                if(this.querySelector('.fa-bell')) {
+                    document.querySelector('.notification-panel').style.display = 'block';
+                } else {
+                    document.querySelector('.search-container').style.display = 'block';
+                }
+            });
+        });
+    </script>
+    <script src="common.js"></script>
+</body>
+</html>

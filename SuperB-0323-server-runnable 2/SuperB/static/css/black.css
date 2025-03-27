@@ -1,0 +1,106 @@
+/* Base Styles */
+body {
+  font-family: "Comic Sans MS", cursive, sans-serif;
+  background: linear-gradient(135deg, #f9f9f9, #e0e0e0);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.jail-notice {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 400px;
+  position: relative;
+}
+
+/* Animated Lock */
+.animated-lock {
+  font-size: 3rem;
+  animation: swing 2s infinite;
+}
+
+@keyframes swing {
+  0%, 100% { transform: rotate(-10deg); }
+  50% { transform: rotate(10deg); }
+}
+
+/* Title */
+h1 {
+  font-size: 2rem;
+  color: #ff4757;
+  margin-bottom: 1.5rem;
+}
+
+/* Reason for Ban */
+.reason-bubble {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  position: relative;
+  animation: shake 0.5s ease-in-out;
+}
+
+.reason-bubble p {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.highlight {
+  color: #ff6b81;
+  font-weight: bold;
+}
+
+.speech-bubble {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* Ban Duration */
+.sentence-clock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.hourglass {
+  font-size: 1.5rem;
+  animation: flip 2s infinite;
+}
+
+@keyframes flip {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(180deg); }
+}
+
+/* Fun Button */
+.apology-button {
+  background: #ff4757;
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 25px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.apology-button:hover {
+  background: #ff6b81;
+}
+
+/* Shake Animation */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>测试生成房间可用时间 API</title>
+</head>
+<body>
+    <h1>测试生成房间可用时间 API</h1>
+    <div>
+        <label for="start_date">起始日期 (yyyy-mm-dd):</label>
+        <input type="text" id="start_date" value="2025-03-09">
+    </div>
+    <div>
+        <label for="end_date">结束日期 (yyyy-mm-dd):</label>
+        <input type="text" id="end_date" value="2025-03-10">
+    </div>
+    <button id="createBtn">生成房间可用时间</button>
+    <pre id="result" style="margin-top:20px;"></pre>
+
+    <script>
+        document.getElementById('createBtn').addEventListener('click', function(){
+            var startDate = document.getElementById('start_date').value;
+            var endDate = document.getElementById('end_date').value;
+
+            fetch('http://127.0.0.1:5000/create_room_availability', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    start_date: startDate,
+                    end_date: endDate
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('result').innerText = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                document.getElementById('result').innerText = '请求错误: ' + error;
+            });
+        });
+    </script>
+</body>
+</html>

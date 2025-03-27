@@ -372,6 +372,8 @@ DELIMITER ;
 
 
 
+<<<<<<< HEAD
+=======
 
 
 
@@ -379,6 +381,7 @@ DELIMITER ;
 
 
 
+>>>>>>> feature/email
 DELIMITER //
 
 CREATE TRIGGER trg_after_booking_insert
@@ -386,6 +389,18 @@ AFTER INSERT ON Bookings
 FOR EACH ROW
 BEGIN
     DECLARE notif_msg VARCHAR(512);
+<<<<<<< HEAD
+    DECLARE notif_action ENUM('confirmation', 'reminder', 'cancellation', 'changed', 'failed', 'rejected', 'alert', 'info');
+
+    IF NEW.status = 'pending' THEN
+        SET notif_msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') is pending approval.Need to wait for administrator confirmation');
+        SET notif_action = 'reminder';
+    ELSEIF NEW.status = 'approved' THEN
+        SET notif_msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has been approved. Please arrive at your booked room on time for use.');
+        SET notif_action = 'confirmation';
+    ELSE
+        SET notif_msg = CONCAT('Your booking (ID: ', NEW.booking_id, ') has been added with status ', NEW.status, '.');
+=======
     DECLARE v_username VARCHAR(255);
     DECLARE v_roomname VARCHAR(255);
     DECLARE notif_action ENUM('confirmation', 'reminder', 'cancellation', 'changed', 'failed', 'rejected', 'alert', 'info');
@@ -416,6 +431,7 @@ BEGIN
             'scheduled on ', NEW.booking_date, ' from ', NEW.start_time, ' to ', NEW.end_time,
             ' has been added with status "', NEW.status, '".'
         );
+>>>>>>> feature/email
         SET notif_action = 'info';
     END IF;
 
@@ -425,6 +441,8 @@ END //
 
 DELIMITER ;
 
+<<<<<<< HEAD
+=======
 
 
 
@@ -445,3 +463,4 @@ END;
 //
 
 DELIMITER ;
+>>>>>>> feature/email

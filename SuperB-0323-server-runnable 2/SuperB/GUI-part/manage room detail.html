@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <title>Room Management</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+
+        .room-list {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .room-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.3s ease;
+        }
+
+        .room-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .room-item:last-child {
+            border-bottom: none;
+        }
+
+        .room-info {
+            flex-grow: 1;
+        }
+
+        .room-info label {
+            font-weight: bold;
+            margin-right: 10px;
+            color: #34495e;
+        }
+
+        .room-actions button {
+            margin-left: 10px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .room-actions .edit-btn {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .room-actions .edit-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .room-actions .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .room-actions .delete-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .add-room-form {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .add-room-form h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .add-room-form input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .add-room-form input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        .add-room-form button {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+
+        .add-room-form button:hover {
+            background-color: #27ae60;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            width: 350px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-content h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .modal-content input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .modal-content input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        .modal-content button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+
+        .modal-content button.cancel-btn {
+            background-color: #e74c3c;
+            margin-left: 10px;
+        }
+
+        .modal-content button:hover {
+            background-color: #2980b9;
+        }
+
+        .modal-content button.cancel-btn:hover {
+            background-color: #c0392b;
+        }
+
+        @media (max-width: 600px) {
+            .room-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .room-actions {
+                margin-top: 10px;
+            }
+        }
+        * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', 'PingFang SC', system-ui;
+}
+
+    /* Main container */
+    .main-container {
+        width: 100%;
+        min-height: 1080px;
+        background: #f8f9fa;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+        position: fixed;
+        width: 200px;
+        height: 100vh;
+        left: 0;
+        top: 0;
+        background: linear-gradient(180deg, #2b5876 0%, #4e4376 100%);
+        padding: 30px 0;
+        box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+        z-index: 1000;
+    }
+
+    /* Content area */
+    .content-area {
+        margin-left: 200px;
+        width: calc(100% - 200px);
+        min-height: 1080px;
+        padding: 40px;
+        box-sizing: border-box;
+        background: #f8f9fa;
+    }
+
+    /* Navigation items */
+    .nav-item {
+        display: flex;
+        align-items: center;
+        color: rgba(255,255,255,0.9);
+        padding: 18px 25px;
+        margin: 8px 15px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .nav-item:hover {
+        background: rgba(255,255,255,0.1);
+        transform: translateX(5px);
+    }
+
+    .nav-item.active {
+        background: rgba(255,255,255,0.15);
+        border-left: 3px solid #00f2c3;
+    }
+
+    .nav-icon {
+        font-size: 1.2rem;
+        width: 30px;
+        margin-right: 15px;
+    }
+
+    /* Notification panel */
+    .notification-panel {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+    }
+
+    .notification-item {
+        padding: 20px;
+        margin-bottom: 15px;
+        border-left: 4px solid transparent;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+
+    .notification-item.unread {
+        border-left-color: #00f2c3;
+        background: rgba(0,242,195,0.03);
+    }
+
+    .notification-time {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+    }
+
+    .notification-content {
+        color: #2c3e50;
+        line-height: 1.5;
+    }
+    </style>
+</head>
+
+<body>
+
+    <!DOCTYPE html>
+    <html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Room Management</title>
+        <style>
+            /* 样式部分保持不变 */
+        </style>
+    </head>
+
+    <body>
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <a class="nav-item active" href="booking_centre.html">
+                <i class="fas fa-calendar-alt nav-icon"></i>
+                Booking Center
+            </a>
+            <a class="nav-item" href="my_reservation.html">
+                <i class="fas fa-list-ul nav-icon"></i>
+                My Bookings
+            </a>
+            <a class="nav-item" href="sidebarAndNotice.html">
+                <i class="fas fa-bell nav-icon"></i>
+                Notifications
+            </a>
+            <a class="nav-item" href="#">
+                <i class="fas fa-user-circle nav-icon"></i>
+                Profile (Coming Soon)
+            </a>
+            <a class="nav-item" href="manage room detail.html">
+                <i class="fas fa-user-circle nav-icon"></i>
+                Room Management
+            </a>
+        </div>
+        <h1>Room Management</h1>
+
+        <div class="room-list">
+            <!-- 房间列表将由JavaScript动态填充 -->
+        </div>
+
+        <!-- 添加房间的表单 -->
+        <!-- 修改后的添加房间表单 -->
+        <div class="add-room-form">
+            <h2>Add New Room</h2>
+            <input type="text" id="roomName" placeholder="Room Name" required>
+            <input type="number" id="capacity" placeholder="Capacity" required>
+            <input type="text" id="location" placeholder="Location" required>
+            <input type="text" id="equipment" placeholder="Equipment" required>
+            <button onclick="addRoom()">Add Room</button>
+        </div>
+
+        <!-- 编辑房间的模态框 -->
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <h2>Edit Room</h2>
+                <input type="text" id="editRoomId" placeholder="Room ID" disabled>
+                <input type="text" id="editRoomName" placeholder="Room Name">
+                <input type="number" id="editCapacity" placeholder="Capacity">
+                <input type="text" id="editLocation" placeholder="Location">
+                <input type="text" id="editEquipment" placeholder="Equipment">
+                <button onclick="saveRoom()">Save</button>
+                <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+            </div>
+        </div>
+
+        <script>
+            let currentEditingRoomNo = null;
+            // 页面加载时获取房间数据
+            document.addEventListener('DOMContentLoaded', () => {
+                loadRooms();
+            });
+
+            // 加载房间列表
+            function loadRooms() {
+                fetch('https://101.200.197.132:5000/rooms')
+                    .then(response => response.json())
+                    .then(data => {
+                        const roomList = document.querySelector('.room-list');
+                        roomList.innerHTML = '';
+                        data.rooms.forEach(room => {
+                            const roomItem = document.createElement('div');
+                            roomItem.className = 'room-item';
+                            roomItem.setAttribute('data-room-id', room.room_id);
+                            roomItem.innerHTML = `
+                            <div class="room-info">
+                                <div><label>Room ID:</label> ${room.room_id}</div>
+                                <div><label>Name:</label> ${room.room_name}</div>
+                                <div><label>Capacity:</label> ${room.capacity}</div>
+                                <div><label>Location:</label> ${room.location}</div>
+                                <div><label>Equipment:</label> ${room.equipment}</div>
+                            </div>
+                            <div class="room-actions">
+                                <button class="edit-btn" onclick="openEditModal(${room.room_id})">Edit</button>
+                                <button class="delete-btn" onclick="deleteRoom(${room.room_id})">Delete</button>
+                            </div>
+                        `;
+                            roomList.appendChild(roomItem);
+                        });
+                    })
+                    .catch(error => console.error('Error loading rooms:', error));
+            }
+
+            // 打开编辑模态框
+            function openEditModal(roomId) {
+                const roomItem = document.querySelector(`[data-room-id="${roomId}"]`);
+                const roomInfo = roomItem.querySelector('.room-info');
+
+                document.getElementById('editRoomId').value = roomId;
+                document.getElementById('editRoomName').value =
+                    roomInfo.children[1].innerText.replace('Name:', '').trim();
+                document.getElementById('editCapacity').value =
+                    roomInfo.children[2].innerText.replace('Capacity:', '').trim();
+                document.getElementById('editLocation').value =
+                    roomInfo.children[3].innerText.replace('Location:', '').trim();
+                document.getElementById('editEquipment').value =
+                    roomInfo.children[4].innerText.replace('Equipment:', '').trim();
+
+                currentEditingRoomId = roomId;
+                document.getElementById('editModal').style.display = 'flex';
+            }
+
+            // 保存修改
+            function saveRoom() {
+                const updatedData = {
+                    room_name: document.getElementById('editRoomName').value,
+                    capacity: document.getElementById('editCapacity').value,
+                    location: document.getElementById('editLocation').value,
+                    equipment: document.getElementById('editEquipment').value
+                };
+
+                fetch(`https://101.200.197.132:5000/update_room/${currentEditingRoomId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedData)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            loadRooms(); // 刷新列表
+                            closeEditModal();
+                            alert('Room updated successfully!');
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+
+            // 关闭编辑模态框
+            function closeEditModal() {
+                document.getElementById('editModal').style.display = 'none';
+            }
+
+            // 删除房间
+            function deleteRoom(roomId) {
+                if (confirm(`Delete room ${roomId}?`)) {
+                    fetch(`https://101.200.197.132:5000/delete_room/${roomId}`, {
+                        method: 'DELETE'
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                loadRooms(); // 刷新列表
+                                alert(`Room ${roomId} deleted`);
+                            }
+                        })
+                        .catch(error => console.error('Error:', error));
+                }
+            }
+
+            // 添加房间
+            function addRoom() {
+                const newRoom = {
+                    room_name: document.getElementById('roomName').value,
+                    capacity: parseInt(document.getElementById('capacity').value),
+                    location: document.getElementById('location').value,
+                    equipment: document.getElementById('equipment').value
+                };
+
+                fetch('https://101.200.197.132:5000/insert_room', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newRoom)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.querySelector('.add-room-form input').value = ''; // 清空表单
+                            loadRooms(); // 刷新列表
+                            alert('Room added successfully!');
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+
+            // 关闭模态框
+            function closeEditModal() {
+                document.getElementById('editModal').style.display = 'none';
+            }
+
+
+        </script>
+    </div>
+    </body>
+
+
+    </html>
