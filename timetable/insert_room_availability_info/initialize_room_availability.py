@@ -1,17 +1,22 @@
 import pymysql
 from datetime import datetime, timedelta
+from flask import Flask, jsonify
 
-# 配置 MySQL 连接
-host = 'localhost'  # 数据库主机地址
-user = 'root'  # MySQL 用户名
-password = '1234'  # MySQL 密码
-database = 'booking_system_db'  # 目标数据库名，确保数据库已经存在
+# Create Flask app
+app = Flask(__name__)
 
-# 创建数据库连接
-connection = pymysql.connect(host=host, user=user, password=password, database=database)
-cursor = connection.cursor()
+# ============================ MySQL Connection Configuration ============================
+# Configure MySQL connection
+host = 'localhost'  # Database host address
+user = 'root'  # MySQL username
+password = '1234'  # MySQL password
+database = 'booking_system_db'  # Target database name, ensure the database exists
 
-# 定义房间时段（每个房间的可用时段）
+# Create database connection
+def get_db_connection():
+    return pymysql.connect(host=host, user=user, password=password, database=database)
+
+# Define room time slots (available time slots for each room)
 availability_times = [
     ("08:00", "08:45"),
     ("08:55", "09:40"),
@@ -25,37 +30,49 @@ availability_times = [
     ("19:55", "20:40")
 ]
 
-# 获取所有的 room_id
-cursor.execute("SELECT room_id FROM Rooms")
-rooms = cursor.fetchall()
+# Function to insert room availability data
+@app.route('/insert_room_availability', methods=['GET'])
+def insert_room_availability():
+    connection = get_db_connection()
+    cursor = connection.cursor()
 
-# 获取当前日期，并计算本周的所有日期（从周一到周日）
-today = datetime.today()
-start_of_week = today - timedelta(days=today.weekday())  # 本周一的日期
-dates_this_week = [start_of_week + timedelta(days=i) for i in range(7)]  # 本周的7天
+    # Get all room_ids
+    cursor.execute("SELECT room_id FROM Rooms")
+    rooms = cursor.fetchall()
 
-# 为每个房间插入对应的 room_availability 记录
-try:
-    for room in rooms:
-        room_id = room[0]
+    # Get today's date and calculate all dates for this week (from Monday to Sunday)
+    today = datetime.today()
+    start_of_week = today - timedelta(days=today.weekday())  # Monday's date this week
+    dates_this_week = [start_of_week + timedelta(days=i) for i in range(7)]  # All 7 days of the week
 
-        # 为当前房间的每个时段和每个日期插入记录
-        for start_time, end_time in availability_times:
-            for date in dates_this_week:
-                cursor.execute("""
-                    INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, availability)
-                    VALUES (%s, %s, %s, %s, 0)  -- 设置每个时段的可用性为 0
-                """, (room_id, start_time, end_time, date.strftime('%Y-%m-%d')))
+    # Insert room availability records for each room and time slot
+    try:
+        for room in rooms:
+            room_id = room[0]
 
-    # 提交事务
-    connection.commit()
-    print("房间可用性记录已成功插入！")
+            # Insert records for each time slot and date for the current room
+            for start_time, end_time in availability_times:
+                for date in dates_this_week:
+                    cursor.execute("""
+                        INSERT INTO Room_availability (room_id, available_begin, available_end, available_date, availability)
+                        VALUES (%s, %s, %s, %s, 0)  -- Set availability to 0 (not available)
+                    """, (room_id, start_time, end_time, date.strftime('%Y-%m-%d')))
 
-except pymysql.MySQLError as e:
-    print(f"数据库错误: {e}")
-    connection.rollback()
+        # Commit transaction
+        connection.commit()
+        return jsonify({"message": "Room availability records have been successfully inserted!"}), 200
 
-finally:
-    # 关闭数据库连接
-    cursor.close()
-    connection.close()
+    except pymysql.MySQLError as e:
+        print(f"Database error: {e}")
+        connection.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        # Close database connection
+        cursor.close()
+        connection.close()
+
+
+# Run Flask application
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)

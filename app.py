@@ -2,7 +2,6 @@
 #  @author: Xin Yu, Siyan Guo, Zibang Nie
 # add: finished-workflow-booking get api
 from contextlib import closing
-
 from flask import Flask, redirect, request, session, url_for, render_template, jsonify
 from flask_mail import Mail, Message
 from functools import wraps
@@ -19,7 +18,9 @@ import yaml
 import msal
 import csv
 import pymysql
+
 import urllib.parse
+
 
 from flask_session import Session
 from multiprocessing import Process
@@ -31,6 +32,7 @@ app.config['SESSION_PERMANENT'] = True  # 启用持久会话
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=3)  # Set session duration to 3 hours
 CORS(app, supports_credentials=True, origins=["https://www.diicsu.top:8000"])  # 允许所有来源访问
 app.secret_key = 'your-secret-key-here'
+
 
 
 # --------------------------log out-------------------------------
@@ -56,6 +58,7 @@ def log_out():
             "status": "error",
             "message": "An error occurred while exiting"
         }), 500
+
 
 
 # ---------------------------- import config----------------------------
@@ -128,8 +131,56 @@ def upload_avatar():
     return jsonify({'url': avatar_url})
 
 
-# 允许的文件类型白名单
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+# -------------------------profile-photo-----------------------
+#
+# @app.route('/upload-avatar', methods=['POST'])
+# def upload_avatar():
+#     user_id = get_user_id_by_email()  # 调用你的现有方法
+#     if not user_id:
+#         return jsonify({'error': 'User not found'}), 404
+#
+#     if 'file' not in request.files:
+#         return jsonify({'error': 'No file part'}), 400
+#
+#     file = request.files['file']
+#     if file.filename == '':
+#         return jsonify({'error': 'Empty filename'}), 400
+#
+#     if not allowed_file(file.filename):
+#         return jsonify({'error': 'File type not allowed'}), 400
+#
+#     # 生成唯一文件名
+#     filename = secure_filename(file.filename)
+#     unique_name = f"{uuid.uuid4().hex}_{filename}"
+#     save_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_name)
+#
+#     # 保存文件
+#     file.save(save_path)
+#
+#     # --- 修改用户记录关联逻辑 ---
+#     user = User.query.filter_by(user_id=user_id).first()  # 根据你的字段名 user_id 查询
+#     if not user:
+#         return jsonify({'error': 'User database record not found'}), 404
+#
+#     # 更新头像路径（注意字段名是否叫 avatar_path）
+#     user.avatar_path = os.path.join('avatars', unique_name)
+#     db.session.commit()
+#
+#     # 生成访问 URL
+#     avatar_url = url_for('static', filename=f"uploads/{user.avatar_path}", _external=True)
+#
+#     return jsonify({'url': avatar_url})
+#
+#
+# # 允许的文件类型白名单
+# ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+#
+#
+# def allowed_file(filename):
+#     return '.' in filename and \
+#         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
 
 
 def allowed_file(filename):
@@ -276,6 +327,7 @@ def verify():
 
 
 # ----------------------------status_email----------------------
+
 @app.route('/send_email/calendar_invite', methods=['POST'])
 def send_calendar_invite():
     """
@@ -401,6 +453,7 @@ def send_communication_email():
     return jsonify({'status': 'success', 'message': 'Email is being sent in the background'})
 
 
+
 def fetch_booking_info(booking_id):
     """
     Fetch booking details from the database using booking_id.
@@ -522,6 +575,7 @@ def send_email(to_email, subject, body):
         print(f'Failed to send email: {e}')
 
 
+
 # Move async_send function outside the route handler
 def async_send(email, subject, body):
     with app.app_context():
@@ -530,6 +584,7 @@ def async_send(email, subject, body):
             print(f"[Process] Email sent to {email}")
         except Exception as e:
             print(f"Failed to send email: {e}")
+
 
 
 # -------------------------------
@@ -684,6 +739,7 @@ def send_cancelled_email():
             {'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
 
 
+
 @app.route('/send_email/cancelled_user', methods=['POST'])
 def send_cancelled_email_user():
     """
@@ -731,6 +787,7 @@ def send_cancelled_email_user():
     else:
         return jsonify(
             {'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+
 
 
 @app.route('/send_email/failed', methods=['POST'])
@@ -832,6 +889,7 @@ def send_remind_email():
             {'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
 
 
+
 def broadcast_email(subject, body):
     """
     Broadcast an email to all users in the database.
@@ -869,7 +927,6 @@ def broadcast_email(subject, body):
         print(f"Database error: {err}")
 
 
-# todo : add send issue email and broadcast email (3.25)
 
 
 def async_broadcast_email(subject, body):
@@ -923,6 +980,7 @@ def broadcast_email_to_all_administrators(subject, body):
         )
         cursor = conn.cursor()
 
+
         # 查询所有管理员用户的邮箱
         query = "SELECT email FROM Users WHERE role = 'admin'"
         cursor.execute(query)
@@ -936,10 +994,12 @@ def broadcast_email_to_all_administrators(subject, body):
         conn.close()
         print(f"[Admin Broadcast] Email sent to {len(admins)} administrators.")
 
+
     except mysql.connector.Error as err:
         print(f"[Admin Broadcast] Database error: {err}")
     except Exception as e:
         print(f"[Admin Broadcast] General error: {e}")
+
 
 
 def async_broadcast_email_to_all_administrators(subject, body):
@@ -978,6 +1038,7 @@ def async_broadcast_email_to_all_administrators(subject, body):
             print(f"[Admin Broadcast] General error: {e}")
 
 
+
 @app.route('/send_email/broadcast_issue', methods=['POST'])
 def broadcast_issue_email():
     """
@@ -987,6 +1048,18 @@ def broadcast_issue_email():
     {
         "issue_id": 3
     }
+
+
+@app.route('/send_email/broadcast_issue', methods=['POST'])
+def broadcast_issue_email():
+    """
+    Broadcast an issue to all users asynchronously.
+
+    Request Format (JSON):
+    {
+        "issue_id": 3
+    }
+
 
     Response Format (JSON):
     {
@@ -1028,6 +1101,7 @@ def broadcast_issue_email():
 
         return jsonify(
             {'status': 'success', 'message': 'Issue broadcast is being sent in the background.', 'issue_id': issue_id})
+
     else:
         return jsonify({'status': 'failed', 'message': 'Failed to fetch issue information.', 'issue_id': issue_id}), 404
 
@@ -1062,8 +1136,9 @@ def broadcast_pending_email():
         booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
 
         subject = f"Reminder: Your Booking for Room {room_name} is Approaching"
-        body = f"""
+
         Dear Admin,<br><br>
+
 
         This is a pending booking request waiting to be disposed. Below are booking details:<br><br>
         <strong>Booking ID:</strong> {booking_id}<br>
@@ -1077,6 +1152,7 @@ def broadcast_pending_email():
         broadcast_email_to_all_administrators(subject, body)
         return jsonify({'status': 'success', 'message': 'Reminder email sent!', 'booking_id': booking_id})
     else:
+
         return jsonify(
             {'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
 
@@ -1127,6 +1203,7 @@ def broadcast_break_faith_email():
         return jsonify({'status': 'success', 'message': 'Emails have been sent!'})
     else:
         return jsonify({'status': 'failed', 'message': 'No user found with the provided ID.'}), 404
+
 
 
 # ------------------------------------------------------------
@@ -1545,6 +1622,7 @@ def login_via_code():
     return render_template('login_via_code.html')
 
 
+
 @app.route('/sign_off')
 def sign_off():
     return render_template('sign_off.html')
@@ -1739,7 +1817,6 @@ def delete_users():
         conn.close()
 
     return jsonify({"message": result}), status_code
-
 
 @app.route('/update_room_status', methods=['POST'])
 @login_required
@@ -2665,7 +2742,6 @@ def get_top_booked_rooms():
 
 
 # ---------------------------- update ----------------------------
-
 @app.route('/update_user_admin', methods=['PUT'])
 def update_user_admin():
     data = request.get_json() or {}
@@ -3353,18 +3429,20 @@ def insert_booking():
         cursor.execute(query, (user_id, room_id, start_time, end_time, booking_date, status, reason))
         conn.commit()
 
+
         booking_id = cursor.lastrowid
 
         return jsonify({
             "status": "success",
             "message": "Booking successful" if status == 'approved' else "Booking request submitted, awaiting approval.",
+
             "booking_id": booking_id,
             "start_time": start_time,
             "end_time": end_time,
             "booking_date": booking_date,
             "room_id": room_id
-        })
 
+        })
     except mysql.connector.Error as err:
         conn.rollback()
         return jsonify({"status": "error", "error": str(err)}), 400

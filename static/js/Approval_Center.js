@@ -95,10 +95,31 @@ function handleApproval(action, card) {
 
         // Send appropriate emails based on status
         if (updatedBooking.status === 'approved') {
+
             sendEmail('success', updatedBooking.booking_id);
         } else if (updatedBooking.status === 'rejected') {
             sendEmail('rejected', updatedBooking.booking_id);
+
         }
+        if (updatedBooking.failed_bookings && updatedBooking.failed_bookings.length > 0) {
+            updatedBooking.failed_bookings.forEach(failedId => {
+                console.log(`Calling send_email/failed for booking id: ${failedId}`);
+                fetch('https://www.diicsu.top:8000/send_email/failed', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ booking_id: failedId })
+                })
+                .then(resp => resp.json())
+                .then(emailData => {
+                    console.log(`Failed email sent for booking id: ${failedId}`, emailData);
+                })
+                .catch(err => {
+                    console.error(`Error sending failed email for booking id: ${failedId}`, err);
+                });
+            });
+        }
+
+
 
         // Handle failed bookings notifications
         if (updatedBooking.failed_bookings?.length > 0) {
