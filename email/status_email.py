@@ -1,12 +1,37 @@
 # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Author: Zibang Nie
-Description: This Flask application sends reminder emails to users about their room bookings.
-             It retrieves booking details from the database and sends an email to the user.
-             The email includes booking details such as room name, location, start time, and end time.
-             Each endpoint is responsible for sending a specific type of email based on the booking status.
-             The response to each request is a JSON object containing the status of the email operation and the booking_id.
+Description: This Flask application provides functionality for sending various email notifications related to room bookings.
+             It interacts with a MySQL database to fetch booking and issue information and sends emails to users regarding
+             the status of their bookings or related issues.
+
+             The application includes the following features:
+             1. Send success, rejection, cancellation, failure, and reminder emails to users based on booking status.
+             2. Broadcast issue and pending booking notifications to all users or administrators.
+             3. Allow administrators to send private messages or broadcast messages to the user base.
+             4. Provide the ability to send calendar invites for room bookings to users.
+
+             Email notifications are sent using multiple email accounts (from QQ Mail) that are cycled through to avoid rate limits.
+
+             Each endpoint receives a JSON request containing relevant information (e.g., booking_id, issue_id, etc.), performs
+             database queries to fetch details, and then sends the appropriate email. The response is a JSON object containing the
+             status of the email operation and any relevant IDs.
+
+             The application also supports asynchronous email sending using separate processes to avoid blocking the main thread.
+
+             The email messages include booking details such as room name, location, start time, and end time, and are tailored
+             to specific actions (e.g., booking successful, booking rejected, etc.).
+
+             Dependencies:
+             - Flask
+             - Flask-Mail
+             - MySQL Connector
+             - datetime
+             - multiprocessing
+
 """
+
 import random
 import itertools
 import urllib.parse
