@@ -18,9 +18,10 @@ import yaml
 import msal
 import csv
 import pymysql
-
 import urllib.parse
 
+
+import itertools
 
 from flask_session import Session
 from multiprocessing import Process
@@ -74,15 +75,85 @@ def log_out():
 
 # --------------------------email-config--------------------------
 
-app.config.update({
-    'MAIL_SERVER': 'smtp.qq.com',
-    'MAIL_PORT': 587,
-    'MAIL_USE_TLS': True,  # 使用 TLS 加密
-    'MAIL_USE_SSL': False,  # 不使用 SSL
-    'MAIL_USERNAME': '2530681892@qq.com',
-    'MAIL_PASSWORD': 'gnpunomuoqwhechd',
-    'MAIL_DEFAULT_SENDER': ('Classroom System', '2530681892@qq.com')
-})
+# app.config.update({
+#     'MAIL_SERVER': 'smtp.qq.com',
+#     'MAIL_PORT': 587,
+#     'MAIL_USE_TLS': True,       # 使用 TLS 加密
+#     'MAIL_USE_SSL': False,      # 不使用 SSL
+#     'MAIL_USERNAME': '2530681892@qq.com',
+#     'MAIL_PASSWORD': 'gnpunomuoqwhechd',
+#     'MAIL_DEFAULT_SENDER': ('Classroom System', '2530681892@qq.com')
+# })
+
+
+email_accounts = [
+    {
+        'MAIL_USERNAME': '2530681892@qq.com',
+        'MAIL_PASSWORD': 'gnpunomuoqwhechd',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '2530681892@qq.com')
+    },
+    {
+        'MAIL_USERNAME': '3076129093@qq.com',
+        'MAIL_PASSWORD': 'lbkbdfhwjskpdfcg',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '3076129093@qq.com')
+    },
+    {
+        'MAIL_USERNAME': '3030954581@qq.com',
+        'MAIL_PASSWORD': 'kpxnfzxcjjkgdhdh',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '3030954581@qq.com')
+    },
+    {
+        'MAIL_USERNAME': '2769853497@qq.com',
+        'MAIL_PASSWORD': 'rzymctqoaukldebd',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '2769853497@qq.com')
+    },
+    {
+        'MAIL_USERNAME': '3414761872@qq.com',
+        'MAIL_PASSWORD': 'ixrrunvbmcljcjie',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '3414761872@qq.com')
+    },
+    {
+        'MAIL_USERNAME': '3063462656@qq.com',
+        'MAIL_PASSWORD': 'rzmichcrkblydfhd',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '3063462656@qq.com')
+    },
+    {
+        'MAIL_USERNAME': '2036223686@qq.com',
+        'MAIL_PASSWORD': 'sxlrhyfxytugddhh',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '2036223686@qq.com')
+    },
+    {
+        'MAIL_USERNAME': '2816274139@qq.com',
+        'MAIL_PASSWORD': 'rpfhyzgydjpldggi',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '2816274139@qq.com')
+    },
+    # Add more email accounts as needed
+]
+
+# Shuffle the email accounts list when the app starts
+random.shuffle(email_accounts)
+
+email_cycle = itertools.cycle(email_accounts)
+
+
+def get_next_email_config():
+    return next(email_cycle)
+
+
+def update_email_config(email_config):
+    app.config.update({
+        'MAIL_SERVER': 'smtp.qq.com',  # Email server
+        'MAIL_PORT': 587,  # Port (587 for TLS)
+        'MAIL_USE_TLS': True,
+        'MAIL_USERNAME': email_config['MAIL_USERNAME'],  # Sender's email
+        'MAIL_PASSWORD': email_config['MAIL_PASSWORD'],  # Sender's email password
+        'MAIL_DEFAULT_SENDER': email_config['MAIL_DEFAULT_SENDER']  # Default sender
+    })
+
+    # Re-initialize the mail object after config update
+    global mail
+    mail = Mail(app)
+
 
 # -------------------------profile-photo-config----------------
 
@@ -179,6 +250,7 @@ def upload_avatar():
 # def allowed_file(filename):
 #     return '.' in filename and \
 #         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 
 
@@ -327,7 +399,6 @@ def verify():
 
 
 # ----------------------------status_email----------------------
-
 @app.route('/send_email/calendar_invite', methods=['POST'])
 def send_calendar_invite():
     """
@@ -453,7 +524,6 @@ def send_communication_email():
     return jsonify({'status': 'success', 'message': 'Email is being sent in the background'})
 
 
-
 def fetch_booking_info(booking_id):
     """
     Fetch booking details from the database using booking_id.
@@ -564,6 +634,12 @@ def send_email(to_email, subject, body):
         subject (str): The subject of the email.
         body (str): The body of the email.
     """
+    # Get the next email configuration (cycling through accounts)
+    email_config = get_next_email_config()
+    #
+    # # Update app config with the new email account
+    update_email_config(email_config)
+
     try:
         msg = Message(subject, recipients=[to_email])
         msg.body = body
@@ -688,6 +764,7 @@ def send_rejected_email():
     else:
         return jsonify(
             {'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+
 
 
 @app.route('/send_email/cancelled', methods=['POST'])
@@ -1103,7 +1180,59 @@ def broadcast_issue_email():
             {'status': 'success', 'message': 'Issue broadcast is being sent in the background.', 'issue_id': issue_id})
 
     else:
-        return jsonify({'status': 'failed', 'message': 'Failed to fetch issue information.', 'issue_id': issue_id}), 404
+
+        return jsonify(
+            {'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+
+
+@app.route('/send_email/cancelled_user', methods=['POST'])
+def send_cancelled_email_user():
+    """
+    Send an email notifying the user that their booking has been cancelled.
+
+    Request Format (JSON):
+    {
+        "booking_id": 123
+    }
+
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+        "booking_id": 123
+    }
+    """
+    data = request.get_json()
+    if not data or 'booking_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.', 'booking_id': None}), 400
+
+    try:
+        booking_id = int(data.get('booking_id'))
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'booking_id must be an integer.', 'booking_id': None}), 400
+
+    booking_info = fetch_booking_info(booking_id)
+    if booking_info:
+        booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
+
+        subject = f"Booking Cancelled: Room {room_name}"
+        body = f"""
+        Dear {user_email},<br><br>
+
+        You have successfully canceled your booking .Below are your booking details:<br><br>
+        <strong>Booking ID:</strong> {booking_id}<br>
+        <strong>Room Name:</strong> {room_name}<br>
+        <strong>Room Location:</strong> {room_location}<br>
+        <strong>Booking Time:</strong> {start_time} - {end_time}<br><br>
+        Thank you for using our system, and we hope you enjoy your booking!
+
+        """
+        send_email(user_email, subject, body)
+        return jsonify({'status': 'success', 'message': 'Booking cancelled email sent!', 'booking_id': booking_id})
+    else:
+        return jsonify(
+            {'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+
 
 
 @app.route('/send_email/broadcast_pending', methods=['POST'])
@@ -1156,6 +1285,313 @@ def broadcast_pending_email():
         return jsonify(
             {'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
 
+
+
+        return jsonify(
+            {'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+
+
+@app.route('/send_email/broadcast_break_faith', methods=['POST'])
+def broadcast_break_faith_email():
+    """
+    Broadcast an email to notify all administrators and related user that this user breaks faith.
+
+    Request Format (JSON):
+    {
+        "user_id": 123
+    }
+
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+    }
+    """
+    data = request.get_json()
+    if not data or 'user_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Missing user_id in JSON body'}), 400
+
+    try:
+        user_id = int(data['user_id'])
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'user_id must be an integer'}), 400
+
+    user_info = get_user_info_by_id(user_id)
+    if user_info:
+        user_name, user_email = user_info
+
+        subject = "Reminder: A user who cancels booking too many times has been added to blacklist"
+        body = f"""
+        A user who cancels booking too many times has been added to blacklist. Below are details:<br><br>
+        <strong>User name:</strong> {user_name}<br>
+        <strong>User id:</strong> {user_id}<br>
+        <strong>Reason:</strong> This user has canceled bookings too many times (over 3 times) in one day.<br>
+        """
+
+        process = Process(target=async_broadcast_email_to_all_administrators, args=(subject, body))
+        process.start()
+
+        Please head to the room in time. Thank you.
+        """
+        send_email(user_email, subject, body)
+        return jsonify({'status': 'success', 'message': 'Reminder email sent!', 'booking_id': booking_id})
+    else:
+        return jsonify(
+            {'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+
+
+def broadcast_email(subject, body):
+    """
+    Broadcast an email to all users in the database.
+
+    Args:
+        subject (str): The subject of the email.
+        body (str): The body of the email.
+    """
+    try:
+        # Establish database connection
+        conn = mysql.connector.connect(
+            host=db_config['host'],
+            user=db_config['user'],
+            password=db_config['password'],
+            database=db_config['database'],
+            ssl_disabled=True  # Disable SSL
+        )
+        cursor = conn.cursor()
+
+        # Query to fetch all user emails
+        query = "SELECT email FROM Users"
+        cursor.execute(query)
+        users = cursor.fetchall()
+
+        # Send email to each user
+        for user in users:
+            to_email = user[0]
+            send_email(to_email, subject, body)  # Send email to the user
+
+        cursor.close()
+        conn.close()
+        print(f"Broadcast email sent to {len(users)} users.")
+
+    except mysql.connector.Error as err:
+        print(f"Database error: {err}")
+
+
+# todo : add send issue email and broadcast email (3.25)
+
+
+def async_broadcast_email(subject, body):
+    """
+    Async version of broadcast_email, runs in a separate process.
+    """
+    with app.app_context():  # 保证子进程中有 Flask 上下文（用于 send_email 等）
+        try:
+            conn = mysql.connector.connect(
+                host=db_config['host'],
+                user=db_config['user'],
+                password=db_config['password'],
+                database=db_config['database'],
+                ssl_disabled=True
+            )
+            cursor = conn.cursor()
+
+            query = "SELECT email FROM Users"
+            cursor.execute(query)
+            users = cursor.fetchall()
+
+            for user in users:
+                to_email = user[0]
+                send_email(to_email, subject, body)
+
+            cursor.close()
+            conn.close()
+            print(f"[Broadcast] Email sent to {len(users)} users.")
+
+        except mysql.connector.Error as err:
+            print(f"[Broadcast] Database error: {err}")
+        except Exception as e:
+            print(f"[Broadcast] General error: {e}")
+
+
+def broadcast_email_to_all_administrators(subject, body):
+    """
+    Send an email to all users with the 'admin' role.
+
+    Args:
+        subject (str): The subject of the email.
+        body (str): The body of the email.
+    """
+    try:
+        conn = mysql.connector.connect(
+            host=db_config['host'],
+            user=db_config['user'],
+            password=db_config['password'],
+            database=db_config['database'],
+            ssl_disabled=True
+        )
+        cursor = conn.cursor()
+
+        # 查询所有管理员用户的邮箱
+        query = "SELECT email FROM Users WHERE role = 'admin'"
+        cursor.execute(query)
+        admins = cursor.fetchall()
+
+        for admin in admins:
+            admin_email = admin[0]
+            send_email(admin_email, subject, body)
+
+        cursor.close()
+        conn.close()
+        print(f"[Admin Broadcast] Email sent to {len(admins)} administrators.")
+
+    except mysql.connector.Error as err:
+        print(f"[Admin Broadcast] Database error: {err}")
+    except Exception as e:
+        print(f"[Admin Broadcast] General error: {e}")
+
+
+def async_broadcast_email_to_all_administrators(subject, body):
+    """
+    Async version of broadcast_email_to_all_administrators, runs in a separate process.
+
+    This function will fetch all administrators from the database and send them an email.
+    """
+    with app.app_context():  # Ensure Flask app context is used in the subprocess
+        try:
+            conn = mysql.connector.connect(
+                host=db_config['host'],
+                user=db_config['user'],
+                password=db_config['password'],
+                database=db_config['database'],
+                ssl_disabled=True
+            )
+            cursor = conn.cursor()
+
+            # Query to fetch all admin emails
+            query = "SELECT email FROM Users WHERE role = 'admin'"
+            cursor.execute(query)
+            admins = cursor.fetchall()
+
+            for admin in admins:
+                admin_email = admin[0]
+                send_email(admin_email, subject, body)
+
+            cursor.close()
+            conn.close()
+            print(f"[Admin Broadcast] Email sent to {len(admins)} administrators.")
+
+        except mysql.connector.Error as err:
+            print(f"[Admin Broadcast] Database error: {err}")
+        except Exception as e:
+            print(f"[Admin Broadcast] General error: {e}")
+
+
+@app.route('/send_email/broadcast_issue', methods=['POST'])
+def broadcast_issue_email():
+    """
+    Broadcast an issue to all users asynchronously.
+
+    Request Format (JSON):
+    {
+        "issue_id": 3
+    }
+
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+        "issue_id": 3
+    }
+    """
+    data = request.get_json()
+    if not data or 'issue_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Please provide a valid issue ID.', 'issue_id': None}), 400
+
+    try:
+        issue_id = int(data.get('issue_id'))
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'issue_id must be an integer.', 'issue_id': None}), 400
+
+    issue_info = fetch_issue_info(issue_id)
+    if issue_info:
+        issue_id, room_id, issue, status, start_date, start_time, end_date, end_time, added_by = issue_info
+
+        subject = f"Remind: Room {room_id} has an issue"
+        body = f"""
+        Dear DIICSU students and staff,<br><br>
+
+        This is a reminder that an issue is occurring in room {room_id}. Below are the issue details:<br><br>
+        <strong>Room:</strong> {room_id}<br>
+        <strong>Start Time:</strong> {start_date} {start_time}<br>
+        <strong>End Time:</strong> {end_date if end_date else 'Not yet resolved'} {end_time if end_time else ''}<br><br>
+        <strong>Issue Content:</strong> {issue}<br>
+        <strong>Issue Status:</strong> {status}<br><br>
+
+        Please avoid using the room during the affected period. Thank you.
+        """
+
+        # async process
+        process = Process(target=async_broadcast_email, args=(subject, body))
+        process.start()
+
+        return jsonify(
+            {'status': 'success', 'message': 'Issue broadcast is being sent in the background.', 'issue_id': issue_id})
+    else:
+        return jsonify({'status': 'failed', 'message': 'Failed to fetch issue information.', 'issue_id': issue_id}), 404
+
+
+@app.route('/send_email/broadcast_pending', methods=['POST'])
+def broadcast_pending_email():
+    """
+    broadcast a email to notify all administrators that there is a pending booking.
+
+    Request Format (JSON):
+    {
+        "booking_id": 123
+    }
+
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+    }
+    """
+    data = request.get_json()
+    if not data or 'booking_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.', 'booking_id': None}), 400
+
+    try:
+        booking_id = int(data.get('booking_id'))
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'booking_id must be an integer.', 'booking_id': None}), 400
+
+    booking_info = fetch_booking_info(booking_id)
+    if booking_info:
+        booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
+
+        subject = f"Reminder: Your Booking for Room {room_name} is Approaching"
+        body = f"""
+        Dear Admin,<br><br>
+
+        This is a pending booking request waiting to be disposed. Below are booking details:<br><br>
+        <strong>Booking ID:</strong> {booking_id}<br>
+        <strong>Room Name:</strong> {room_name}<br>
+        <strong>Room Location:</strong> {room_location}<br>
+        <strong>Start Time:</strong> {start_time}<br>
+        <strong>End Time:</strong> {end_time}<br><br>
+
+        Please head to the room in time. Thank you.
+        """
+        broadcast_email_to_all_administrators(subject, body)
+        return jsonify({'status': 'success', 'message': 'Reminder email sent!', 'booking_id': booking_id})
+    else:
+        return jsonify(
+            {'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+
+
+        return jsonify({'status': 'success', 'message': 'Emails have been sent!'})
+    else:
+        return jsonify({'status': 'failed', 'message': 'No user found with the provided ID.'}), 404
 
 @app.route('/send_email/broadcast_break_faith', methods=['POST'])
 def broadcast_break_faith_email():
@@ -1354,30 +1790,31 @@ def get_user_info_by_id(user_id):
         tuple: (username, email) if found, or None if not found.
     """
     try:
-        conn = mysql.connector.connect(
-            host=db_config['host'],
-            user=db_config['user'],
-            password=db_config['password'],
-            database=db_config['database'],
-            ssl_disabled=True
-        )
-        cursor = conn.cursor()
 
-        query = "SELECT username, email FROM users WHERE user_id = %s"
-        cursor.execute(query, (user_id,))
-        result = cursor.fetchone()
+        # 获取数据库连接
+        conn = get_db_connection()
+        # 手动创建 cursor（字典格式）
+        cursor = conn.cursor(dictionary=True)
 
-        cursor.close()
+        try:
+            # 根据 user_id 查询 username 和 email
+            cursor.execute("SELECT username, email FROM Users WHERE user_id = %s", (user_id,))
+            user_info = cursor.fetchone()
+            print("debugggg blacklist:", user_info)
+
+        finally:
+            cursor.close()  # 手动关闭 cursor
         conn.close()
 
-        if result:
-            return result[0], result[1]  # username, email
+        if user_info:
+            return user_info['username'], user_info['email']  # 使用字典方式返回 username 和 email
         else:
             print(f"User ID {user_id} not found.")
-            return None
+            return None  # 如果没有找到用户，返回 None
     except Exception as e:
         print(f"Error fetching user info: {e}")
-        return None
+        return None  # 如果数据库查询出错，返回 None
+
 
 
 # 查询用户ID
@@ -1815,7 +2252,6 @@ def delete_users():
     finally:
         cursor.close()
         conn.close()
-
     return jsonify({"message": result}), status_code
 
 @app.route('/update_room_status', methods=['POST'])
@@ -2958,7 +3394,11 @@ def update_booking_status(booking_id):
                 (room_id, booking_date, start_time, end_time, booking_id)
             )
             failed_rows = cursor.fetchall()
-            failed_booking_ids = [row['booking_id'] for row in failed_rows]
+
+
+            # 确保 failed_booking_ids 被正确初始化
+            failed_booking_ids = [row['booking_id'] for row in failed_rows] if failed_rows else []
+
 
             # 4. 更新 Room_availability 表，将对应记录的 availability 设为 2（已预订）
             cursor.execute(
@@ -2978,6 +3418,8 @@ def update_booking_status(booking_id):
                 "UPDATE Bookings SET status = 'rejected' WHERE booking_id = %s",
                 (booking_id,)
             )
+            # 不需要与 failed_bookings 相关的逻辑
+            failed_booking_ids = []  # 初始化为空列表，因为 rejected 状态下不涉及失败
 
         # 提交事务
         conn.commit()
@@ -3017,6 +3459,7 @@ def cancel_booking(booking_id):
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
+
         # 获取当前登录用户 ID
         current_user_id = get_user_id_by_email()
 
@@ -3025,6 +3468,7 @@ def cancel_booking(booking_id):
         role_row = cursor.fetchone()
         current_user_role = role_row['role'] if role_row else None
         print(f"Current user_id = {current_user_id}, role = {current_user_role}")
+
 
         # 查找待取消的预定记录（且尚未被取消）
         cursor.execute("""
@@ -3435,6 +3879,13 @@ def insert_booking():
         return jsonify({
             "status": "success",
             "message": "Booking successful" if status == 'approved' else "Booking request submitted, awaiting approval.",
+            "booking_id": booking_id,
+            "start_time": start_time,
+            "end_time": end_time,
+            "booking_date": booking_date,
+            "room_id": room_id
+        })
+
 
             "booking_id": booking_id,
             "start_time": start_time,
@@ -3479,7 +3930,9 @@ def insert_booking_with_reason():
         check_query = """
             SELECT * FROM Bookings 
             WHERE room_id = %s AND user_id = %s AND booking_date = %s 
-            AND start_time = %s AND end_time = %s AND status = 'approved'
+
+            AND start_time = %s AND end_time = %s AND status IN ('approved', 'pending')
+
         """
         cursor.execute(check_query, (room_id, user_id, booking_date, start_time, end_time))
         existing_booking = cursor.fetchone()  # 如果有相同的记录，返回结果
