@@ -82,7 +82,7 @@ async function addTrustedUser() {
     const roomId = document.getElementById('roomId').value.trim();
     const userId = document.getElementById('userId').value.trim();
     const notes = document.getElementById('notes').value.trim();
-    const addedBy = 1; // 假设当前用户ID为1
+    const addedBy = 1; // Assume the current user ID is 1
 
     if (!validateInput(roomId, userId, notes, addedBy)) return;
 
@@ -106,10 +106,10 @@ async function addTrustedUser() {
         clearForm();
         await loadData();
     } catch (error) {
-          // 打印到控制台
+          // Print to the console
         console.error('Error:', error);
 
-        // 弹出错误提示框
+        // An error box pops up
         alert(`Failed to add trusted user: ${error.message}`);
     }
 }
@@ -196,13 +196,13 @@ function showSuccessModal(message) {
 
 
 document.addEventListener('DOMContentLoaded', function() {
-    // 处理菜单分组点击
+    //Handle menu grouped clicks
     document.querySelectorAll('.group-header').forEach(header => {
         header.addEventListener('click', function() {
             const group = this.closest('.menu-group');
             group.classList.toggle('active');
 
-            // 关闭其他展开的菜单组
+            // Closes other expanded menu groups
             document.querySelectorAll('.menu-group').forEach(otherGroup => {
                 if (otherGroup !== group) {
                     otherGroup.classList.remove('active');
@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // 移动端汉堡菜单切换
+    // Mobile burger menu switching
     const hamburger = document.querySelector('.hamburger-menu');
     const sidebar = document.querySelector('.sidebar');
 
@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
         sidebar.classList.toggle('active');
     });
 
-    // 点击外部关闭侧边栏
+    // Click outside to close the sidebar
     document.addEventListener('click', function(e) {
         if (sidebar.classList.contains('active') &&
             !e.target.closest('.sidebar') &&
@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // 防止侧边栏内部点击触发关闭
+    // Prevent a click inside the sidebar from triggering a close
     sidebar.addEventListener('click', function(e) {
         e.stopPropagation();
     });
