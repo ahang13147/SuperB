@@ -86,7 +86,7 @@ async function addToBlacklist() {
         };
 
         try {
-            const response = await fetch('https://www.diicsu.top:8000/insert-blacklist', {
+            const response = await fetch('http://localhost:8000/insert-blacklist', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody),
@@ -121,7 +121,7 @@ async function addToBlacklist() {
 async function removeFromBlacklist(button, blacklistId) {
     if (confirm('Are you sure to unban the user？')) {
         try {
-            const response = await fetch('https://www.diicsu.top:8000/delete_blacklist', {
+            const response = await fetch('http://localhost:8000/delete_blacklist', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ blacklist_id: blacklistId })
@@ -172,7 +172,7 @@ function showNotification(message, type = 'info') {
 // load blacklist data
 async function loadBlacklist() {
     try {
-        const response = await fetch('https://www.diicsu.top:8000/get-blacklist');
+        const response = await fetch('http://localhost:8000/get-blacklist');
         if (response.ok) {
             const result = await response.json();
             renderBlacklist(result.blacklists);
@@ -180,6 +180,23 @@ async function loadBlacklist() {
     } catch (error) {
         console.error('Request failed：', error);
     }
+}
+
+// 搜索功能
+function searchBlacklist() {
+    const searchTerm = document.getElementById('searchBlacklistInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#blacklistTable tbody tr');
+
+    rows.forEach(row => {
+        const userId = row.cells[1].textContent.toLowerCase();
+        const userName = row.cells[0].textContent.toLowerCase();
+
+        if (userId.includes(searchTerm) || userName.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
 }
 
 // Render form
@@ -190,12 +207,12 @@ function renderBlacklist(data) {
     data.forEach(user => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${user.username}</td>
-            <td>${user.user_id}</td>
-            <td class="time-cell">${user.start_date} ${user.start_time}</td>
-            <td class="time-cell">${user.end_date} ${user.end_time}</td>
-            <td title="${user.reason}">${user.reason}</td>
-            <td>
+            <td data-label="Username">${user.username}</td>
+            <td data-label="User ID">${user.user_id}</td>
+            <td class="time-cell" data-label="Start Time">${user.start_date} ${user.start_time}</td>
+            <td class="time-cell" data-label="End Time">${user.end_date} ${user.end_time}</td>
+            <td data-label="Reason" title="${user.reason}">${user.reason}</td>
+            <td data-label="Actions">
                 <div class="action-buttons">
                     <button class="btn btn-danger" onclick="removeFromBlacklist(this, '${user.blacklist_id}')">
                         <i class="fas fa-user-check"></i>
@@ -213,13 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadBlacklist();
 });
 
-
-// The data is initialized when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    loadBlacklist();
-});
-
-
+// Sidebar toggle functionality
 document.addEventListener('DOMContentLoaded', function () {
     const hamburger = document.querySelector('.hamburger-menu');
     const sidebar = document.querySelector('.sidebar');
@@ -239,4 +250,3 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
-

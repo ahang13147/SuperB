@@ -38,10 +38,6 @@
             <i class="fas fa-tools nav-icon"></i>
             Room Issue Management
         </a>
-          <a class="nav-item" href="{{ url_for('user_management') }}">
-            <i class="fas fa-users nav-icon"></i>
-            User Management
-          </a>
         <a class="nav-item" href="{{ url_for('notice_admin') }}">
             <i class="fas fa-bell nav-icon"></i>
             Notifications
@@ -58,10 +54,6 @@
             <i class="fas fa-user-circle nav-icon"></i>
             My Profile
         </a>
-            <a class="nav-item" href="{{ url_for('usage_report_center') }}">
-                <i class="fas fa-chart-line nav-icon"></i>
-                Usage Report Center
-            </a>
         <div class="sidebar-logo">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
         </div>
@@ -73,7 +65,17 @@
             <button class="tab-btn active" onclick="showTab('active')">Active</button>
             <button class="tab-btn" onclick="showTab('deleted')">Deleted</button>
         </div>
-        <button class="add-room-btn" onclick="openAddRoomModal()">Add Room</button>
+
+        <!-- 新增按钮容器 -->
+        <div class="button-container">
+            <button class="add-room-btn" onclick="openAddRoomModal()">Add Room</button>
+            <button class="restore-room-btn" onclick="openRestoreRoomModal()">Restore Room</button>
+        </div>
+
+        <!-- 添加搜索框 -->
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search by Room ID or Name" oninput="searchRooms()">
+        </div>
 
         <!-- 桌面端表格容器 -->
         <div class="room-table-container">
@@ -189,6 +191,21 @@
         <div class="modal-actions">
             <button onclick="addRoom()" class="save-btn">Save</button>
             <button onclick="closeAddRoomModal()" class="cancel-btn">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- 恢复房间模态框 -->
+<div id="restoreRoomModal" class="modal">
+    <div class="modal-content">
+        <h2>Restore Room</h2>
+        <div class="input-group">
+            <label for="restoreRoomId">Room ID</label>
+            <input type="text" id="restoreRoomId" placeholder="Enter Room ID" required>
+        </div>
+        <div class="modal-actions">
+            <button onclick="confirmRestoreRoom()" class="save-btn">Confirm</button>
+            <button onclick="closeRestoreRoomModal()" class="cancel-btn">Cancel</button>
         </div>
     </div>
 </div>

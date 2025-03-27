@@ -1,9 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const floatingButton = document.getElementById('floatingButton');
-    const modalOverlay = document.getElementById('modalOverlay');
-    // const closeButton = document.getElementById('closeButton');
-    const submitButton = document.getElementById('submitButton');
-    const userInput = document.getElementById('userInput');
+    const floatingButton = document.getElementById('contact-floatingButton');
+    const modalOverlay = document.getElementById('contact-modalOverlay');
+    const submitButton = document.getElementById('contact-submitButton');
+    const userInput = document.getElementById('contact-userInput');
 
     if (floatingButton && modalOverlay && submitButton && userInput) {
         // 点击悬浮球
@@ -16,17 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // 显示弹窗
             modalOverlay.classList.add('active');
         });
-
-        // // 点击关闭按钮
-        // closeButton.addEventListener('click', () => {
-        //     // 隐藏弹窗
-        //     modalOverlay.classList.remove('active');
-
-        //     // 恢复悬浮球
-        //     floatingButton.style.transform = 'scale(1)';
-        //     floatingButton.style.opacity = '1';
-        //     floatingButton.style.pointerEvents = 'auto';
-        // });
 
         // 点击遮罩层关闭弹窗
         modalOverlay.addEventListener('click', (e) => {
@@ -47,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (message) {
                 // 使用 fetch 发送数据到 /email_admin
-                fetch('/email_admin', {
+                fetch('/send_email/communicate', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -59,6 +47,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         alert('Message sent successfully!');
                         userInput.value = ''; // 清空输入框
                         modalOverlay.classList.remove('active'); // 关闭弹窗
+                        
+                        // 新增：恢复悬浮球
+                        floatingButton.style.transform = 'scale(1)';
+                        floatingButton.style.opacity = '1';
+                        floatingButton.style.pointerEvents = 'auto';
                     })
                     .catch(error => {
                         console.error('Error:', error);
@@ -72,3 +65,4 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('悬浮球组件未找到！请检查 HTML 结构。');
     }
 });
+

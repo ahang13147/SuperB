@@ -1,4 +1,4 @@
-const API_BASE = 'https://www.diicsu.top:8000';
+const API_BASE = 'http://localhost:8000';
 const ENDPOINTS = {
     GET_ALL: '/get_room_trusted_users',
     ADD: '/insert_trusted_user',
@@ -194,7 +194,6 @@ function showSuccessModal(message) {
 }
 
 
-
 document.addEventListener('DOMContentLoaded', function() {
     //Handle menu grouped clicks
     document.querySelectorAll('.group-header').forEach(header => {
@@ -234,4 +233,3 @@ document.addEventListener('DOMContentLoaded', function() {
         e.stopPropagation();
     });
 });
-
