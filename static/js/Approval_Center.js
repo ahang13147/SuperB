@@ -1,11 +1,9 @@
-
 let bookings = [];
 
 // Dynamically generate approval cards
 function renderApprovalCards() {
     const container = document.querySelector('.approvals-container');
     container.innerHTML = ''; // Clear existing content
-
 
     if (!Array.isArray(bookings)) {
         console.error('bookings is not an array:', bookings);
@@ -41,21 +39,19 @@ function renderApprovalCards() {
         container.appendChild(card);
     });
 
-
-    // Rebind button event
+    // Rebind button events
     bindButtonEvents();
     handleReasonOverflow();
 }
 
-
-// Detects if the Reason text is exceeded and adds an ellipsis
+// Handle text overflow for reason field
 function handleReasonOverflow() {
     document.querySelectorAll('.reason-text').forEach(span => {
-        let reason = span.innerText.trim();
+        const reason = span.innerText.trim();
 
-        // Check whether the container is exceeded first
+        // Check if text overflows container
         if (span.scrollHeight > span.clientHeight || span.scrollWidth > span.clientWidth) {
-            let ellipsis = document.createElement("span");
+            const ellipsis = document.createElement("span");
             ellipsis.classList.add("ellipsis");
             ellipsis.innerHTML = "...";
             ellipsis.style.cursor = "pointer";
@@ -63,9 +59,9 @@ function handleReasonOverflow() {
             ellipsis.style.fontWeight = "bold";
             ellipsis.style.marginLeft = "5px";
 
-            // Click on '... 'Show the full content
-            ellipsis.addEventListener("click", function (event) {
-                event.stopPropagation(); // Prevent bubbling, prevent miscontact
+            // Show full text on ellipsis click
+            ellipsis.addEventListener("click", function(event) {
+                event.stopPropagation();
                 showFullText(reason);
             });
 
@@ -75,196 +71,159 @@ function handleReasonOverflow() {
     });
 }
 
-// Display full text (can be replaced with Modal)
+// Display full text in alert (replace with modal if needed)
 function showFullText(fullText) {
-    alert(fullText); //
+    alert(fullText);
 }
 
-// Process approval operation
+// Handle approval/rejection actions
 function handleApproval(action, card) {
     const bookingId = card.dataset.reservationId;
     const newStatus = action.toLowerCase();
 
-    console.log(`Attempting to ${action} booking ID: ${bookingId}`);
-
-
-    // 修正模板字符串用法
     fetch(`https://www.diicsu.top:8000/update-booking-status/${bookingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
     })
-        .then(response => {
-            if (!response.ok) throw new Error('Update failed');
-            return response.json();
-        })
-        .then(updatedBooking => {
-            console.log('Updated booking:', updatedBooking);
+    .then(response => {
+        if (!response.ok) throw new Error('Update failed');
+        return response.json();
+    })
+    .then(updatedBooking => {
+        console.log('Updated booking:', updatedBooking);
 
-           // 根据返回的状态调用对应的邮件接口
+        // Send appropriate emails based on status
         if (updatedBooking.status === 'approved') {
-            fetch('http://localhost:8000/send_email/success', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ booking_id: updatedBooking.booking_id })
-            })
-            .then(resp => resp.json())
-            .then(emailData => {
-                console.log('Success email sent:', emailData);
-            })
-            .catch(err => {
-                console.error('Error sending success email:', err);
-            });
+            sendEmail('success', updatedBooking.booking_id);
         } else if (updatedBooking.status === 'rejected') {
-            fetch('http://localhost:8000/send_email/rejected', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ booking_id: updatedBooking.booking_id })
-            })
-            .then(resp => resp.json())
-            .then(emailData => {
-                console.log('Rejection email sent:', emailData);
-            })
-            .catch(err => {
-                console.error('Error sending rejection email:', err);
+            sendEmail('rejected', updatedBooking.booking_id);
+        }
+
+        // Handle failed bookings notifications
+        if (updatedBooking.failed_bookings?.length > 0) {
+            updatedBooking.failed_bookings.forEach(failedId => {
+                sendEmail('failed', failedId);
             });
         }
 
+        // Refresh data based on current tab
+        const activeTab = document.querySelector('.approval-tabs .tab.active');
+        activeTab.dataset.tab === 'pending' ? fetchPendingBookings() : fetchFinishedBookings();
 
-            // Update local data
-            const index = bookings.findIndex(b => b.booking_id === bookingId);
-            if (index !== -1) {
-                bookings[index] = updatedBooking; // Replace entire object
-            }
-
-            // Reload the data based on the current TAB
-            const activeTab = document.querySelector('.approval-tabs .tab.active');
-            if (activeTab.dataset.tab === 'pending') {
-                fetchPendingBookings();
-            } else if (activeTab.dataset.tab === 'finished') {
-                fetchFinishedBookings();
-            }
-
-            alert(`${action} reservation ID: ${bookingId}`);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('The operation failed. Please try again later');
-        });
+        alert(`${action} reservation ID: ${bookingId}`);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Operation failed. Please try again later');
+    });
 }
 
-// Bind button event
+// Generic email sending function
+function sendEmail(type, bookingId) {
+    fetch(`https://www.diicsu.top:8000/send_email/${type}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking_id: bookingId })
+    })
+    .then(resp => resp.json())
+    .then(data => console.log(`${type} email sent:`, data))
+    .catch(err => console.error(`Error sending ${type} email:`, err));
+}
+
+// Bind button click handlers
 function bindButtonEvents() {
     document.querySelectorAll('.accept-btn, .reject-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const action = btn.classList.contains('accept-btn') ? 'Approved' : 'Rejected';
-
-            const card = btn.closest('.approval-card');
-            handleApproval(action, card);
+            handleApproval(action, btn.closest('.approval-card'));
         });
     });
 }
 
-//Get a completed workflow reservation
+// Fetch completed bookings
 function fetchFinishedBookings() {
     fetch('https://www.diicsu.top:8000/finished-workflow-bookings')
-        .then(response => {
-            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-            return response.json();
-        })
-        .then(data => {
-            if (data && Array.isArray(data.bookings)) {
-                bookings = data.bookings.filter(b => b.status !== 'pending'); // Ensure that only approved data is displayed
-            } else {
-                console.error('Invalid data format:', data);
-                bookings = [];
-            }
-            renderApprovalCards();
-        })
-        .catch(error => {
-            console.error('Error fetching finished bookings:', error);
-            bookings = [];
-            renderApprovalCards();
-        });
+    .then(response => {
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        return response.json();
+    })
+    .then(data => {
+        bookings = (Array.isArray(data?.bookings) ? data.bookings : []).filter(b => b.status !== 'pending');
+        renderApprovalCards();
+    })
+    .catch(error => {
+        console.error('Error fetching finished bookings:', error);
+        bookings = [];
+        renderApprovalCards();
+    });
 }
 
-
-// Get a pending reservation
+// Fetch pending bookings
 function fetchPendingBookings() {
     fetch('https://www.diicsu.top:8000/pending-bookings')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Make sure that data.bookings is an array
-            if (data && Array.isArray(data.bookings)) {
-                bookings = data.bookings;
-            } else {
-                console.error('Invalid data format:', data);
-                bookings = []; // Set to an empty array to avoid errors
-            }
-            renderApprovalCards();
-        })
-        .catch(error => {
-            console.error('Error fetching pending bookings:', error);
-            bookings = [];
-            renderApprovalCards(); // Even if something goes wrong, try to render empty data
-        });
+    .then(response => {
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        return response.json();
+    })
+    .then(data => {
+        bookings = Array.isArray(data?.bookings) ? data.bookings : [];
+        renderApprovalCards();
+    })
+    .catch(error => {
+        console.error('Error fetching pending bookings:', error);
+        bookings = [];
+        renderApprovalCards();
+    });
 }
 
-// Initializes the label switching function
+// Initialize tab functionality
 function initTabs() {
     const tabs = document.querySelectorAll('.approval-tabs .tab');
-
 
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
             tabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-
-
-            if (tab.dataset.tab === 'pending') {
-                fetchPendingBookings();
-            } else if (tab.dataset.tab === 'finished') {
-                fetchFinishedBookings();
-            } else {
-                console.error('Unknown tab:', tab.dataset.tab);
-            }
+            tab.dataset.tab === 'pending' ? fetchPendingBookings() : fetchFinishedBookings();
         });
     });
 
-    //load pending
+    // Initial load
     fetchPendingBookings();
 }
 
-
-//initialization GUI
+// Initialize UI when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-
     initTabs();
-});
 
-
-document.addEventListener('DOMContentLoaded', function () {
+    // Mobile menu handling
     const hamburger = document.querySelector('.hamburger-menu');
     const sidebar = document.querySelector('.sidebar');
 
-    hamburger.addEventListener('click', function () {
+    hamburger.addEventListener('click', (e) => {
+        e.stopPropagation();
         sidebar.classList.toggle('active');
     });
 
-    document.addEventListener('click', function (e) {
-        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+    document.addEventListener('click', (e) => {
+        if (sidebar.classList.contains('active') &&
+            !e.target.closest('.sidebar') &&
+            !e.target.closest('.hamburger-menu')) {
             sidebar.classList.remove('active');
         }
     });
 
-    window.addEventListener('resize', function () {
-        if (window.innerWidth > 768) {
-            sidebar.classList.remove('active');
-        }
+    sidebar.addEventListener('click', (e) => e.stopPropagation());
+
+    // Menu group handling
+    document.querySelectorAll('.group-header').forEach(header => {
+        header.addEventListener('click', function() {
+            const group = this.closest('.menu-group');
+            group.classList.toggle('active');
+            document.querySelectorAll('.menu-group').forEach(other => {
+                if (other !== group) other.classList.remove('active');
+            });
+        });
     });
 });

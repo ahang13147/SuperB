@@ -14,12 +14,16 @@ from bs4 import BeautifulSoup
 import json
 import re
 import time
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 import yaml
 import msal
 import csv
 import pymysql
+import urllib.parse
 
+import itertools
+from flask_session import Session
+from multiprocessing import Process
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -28,6 +32,31 @@ app.config['SESSION_PERMANENT'] = True  # 启用持久会话
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=3)  # Set session duration to 3 hours
 CORS(app, supports_credentials=True, origins=["https://www.diicsu.top:8000"])  # 允许所有来源访问
 app.secret_key = 'your-secret-key-here'
+
+
+# --------------------------log out-------------------------------
+
+@app.route('/log_out', methods=['POST'])
+def log_out():
+    try:
+        # Clear all session data
+        session.clear()
+
+        # Causes the cookie to expire immediately
+        response = jsonify({
+            "status": "success",
+            "message": "You have logged out of the system"
+        })
+        response.set_cookie('session', '', expires=0)
+
+        return response, 200
+
+    except Exception as e:
+        app.logger.error(f'Logout failure: {str(e)}')
+        return jsonify({
+            "status": "error",
+            "message": "An error occurred while exiting"
+        }), 500
 
 
 # ---------------------------- import config----------------------------
@@ -41,35 +70,105 @@ app.secret_key = 'your-secret-key-here'
 # def get_db_connection():
 #     return mysql.connector.connect(**db_config)
 
-#--------------------------email-config--------------------------
+# --------------------------email-config--------------------------
 
-app.config.update({
-    'MAIL_SERVER': 'smtp.qq.com',
-    'MAIL_PORT': 587,
-    'MAIL_USE_TLS': True,       # 使用 TLS 加密
-    'MAIL_USE_SSL': False,      # 不使用 SSL
-    'MAIL_USERNAME': '2530681892@qq.com',
-    'MAIL_PASSWORD': 'gnpunomuoqwhechd',
-    'MAIL_DEFAULT_SENDER': ('Classroom System', '2530681892@qq.com')
-})
+# app.config.update({
+#     'MAIL_SERVER': 'smtp.qq.com',
+#     'MAIL_PORT': 587,
+#     'MAIL_USE_TLS': True,       # 使用 TLS 加密
+#     'MAIL_USE_SSL': False,      # 不使用 SSL
+#     'MAIL_USERNAME': '2530681892@qq.com',
+#     'MAIL_PASSWORD': 'gnpunomuoqwhechd',
+#     'MAIL_DEFAULT_SENDER': ('Classroom System', '2530681892@qq.com')
+# })
 
-#-------------------------profile-photo-config----------------
+
+email_accounts = [
+    {
+        'MAIL_USERNAME': '2530681892@qq.com',
+        'MAIL_PASSWORD': 'gnpunomuoqwhechd',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '2530681892@qq.com')
+    },
+    {
+        'MAIL_USERNAME': '3076129093@qq.com',
+        'MAIL_PASSWORD': 'lbkbdfhwjskpdfcg',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '3076129093@qq.com')
+    },
+    {
+        'MAIL_USERNAME': '3030954581@qq.com',
+        'MAIL_PASSWORD': 'kpxnfzxcjjkgdhdh',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '3030954581@qq.com')
+    },
+    {
+        'MAIL_USERNAME': '2769853497@qq.com',
+        'MAIL_PASSWORD': 'rzymctqoaukldebd',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '2769853497@qq.com')
+    },
+    {
+        'MAIL_USERNAME': '3414761872@qq.com',
+        'MAIL_PASSWORD': 'ixrrunvbmcljcjie',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '3414761872@qq.com')
+    },
+    {
+        'MAIL_USERNAME': '3063462656@qq.com',
+        'MAIL_PASSWORD': 'rzmichcrkblydfhd',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '3063462656@qq.com')
+    },
+    {
+        'MAIL_USERNAME': '2036223686@qq.com',
+        'MAIL_PASSWORD': 'sxlrhyfxytugddhh',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '2036223686@qq.com')
+    },
+    {
+        'MAIL_USERNAME': '2816274139@qq.com',
+        'MAIL_PASSWORD': 'rpfhyzgydjpldggi',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '2816274139@qq.com')
+    },
+    # Add more email accounts as needed
+]
+
+# Shuffle the email accounts list when the app starts
+random.shuffle(email_accounts)
+
+email_cycle = itertools.cycle(email_accounts)
+
+
+def get_next_email_config():
+    return next(email_cycle)
+
+
+def update_email_config(email_config):
+    app.config.update({
+        'MAIL_SERVER': 'smtp.qq.com',  # Email server
+        'MAIL_PORT': 587,  # Port (587 for TLS)
+        'MAIL_USE_TLS': True,
+        'MAIL_USERNAME': email_config['MAIL_USERNAME'],  # Sender's email
+        'MAIL_PASSWORD': email_config['MAIL_PASSWORD'],  # Sender's email password
+        'MAIL_DEFAULT_SENDER': email_config['MAIL_DEFAULT_SENDER']  # Default sender
+    })
+
+    # Re-initialize the mail object after config update
+    global mail
+    mail = Mail(app)
+
+
+# -------------------------profile-photo-config----------------
 
 app.config['UPLOAD_FOLDER'] = 'static/uploads/avatars'  # 实际存储路径
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 限制为 2MB
 
-#-------------------------profile-photo-----------------------
+
+# -------------------------profile-photo-----------------------
 
 @app.route('/upload-avatar', methods=['POST'])
 def upload_avatar():
-
     user_id = get_user_id_by_email()  # 调用你的现有方法
     if not user_id:
         return jsonify({'error': 'User not found'}), 404
 
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
-    
+
     file = request.files['file']
     if file.filename == '':
         return jsonify({'error': 'Empty filename'}), 400
@@ -81,7 +180,7 @@ def upload_avatar():
     filename = secure_filename(file.filename)
     unique_name = f"{uuid.uuid4().hex}_{filename}"
     save_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_name)
-    
+
     # 保存文件
     file.save(save_path)
 
@@ -96,17 +195,20 @@ def upload_avatar():
 
     # 生成访问 URL
     avatar_url = url_for('static', filename=f"uploads/{user.avatar_path}", _external=True)
-    
+
     return jsonify({'url': avatar_url})
 
 
 # 允许的文件类型白名单
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
+
 def allowed_file(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-#--------------------------email---------------------------
+        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+# --------------------------email---------------------------
 
 mail = Mail(app)
 verification_codes = {}  # 用于存储各邮箱的验证码及发送时间
@@ -165,7 +267,6 @@ def send_verification():
         return jsonify({'status': 'failed', 'message': f'Failed to send email: {str(e)}'}), 500
 
 
-    
 @app.route('/verify', methods=['POST'])
 def verify():
     """
@@ -177,7 +278,7 @@ def verify():
     }
     """
     data = request.get_json()
-        
+
     # 基础参数校验
     if not data or 'email' not in data or 'code' not in data:
         return jsonify({'status': 'failed', 'message': 'Missing required parameters'}), 400
@@ -207,7 +308,7 @@ def verify():
         # 验证通过后清理验证码
     del verification_codes[email]
 
-        # 设置会话信息
+    # 设置会话信息
     session.permanent = True
     session['user_email'] = email
 
@@ -221,7 +322,7 @@ def verify():
     try:
         role_api_url = f"https://www.diicsu.top:8000/login_get_role?email={email}"
         role_response = requests.get(role_api_url, verify=False, timeout=5)
-            
+
         if role_response.status_code == 200:
             role_data = role_response.json()
             user_role = role_data.get('role', 'user')
@@ -244,8 +345,131 @@ def verify():
             'redirect': url_for('booking_centre')
         })
 
-#----------------------------status_email----------------------
 
+# ----------------------------status_email----------------------
+@app.route('/send_email/calendar_invite', methods=['POST'])
+def send_calendar_invite():
+    """
+    Create an Outlook calendar event link and send via email.
+
+    Request JSON Format:
+    {
+        "room_id": 1,
+        "booking_date": "2025-3-26",
+        "start_time": "08:45:00",
+        "end_time": "09:30:00"
+    }
+
+    Response JSON Format:
+    {
+        "status": "success" or "failed",
+        "message": "...",
+    }
+    """
+    data = request.get_json()
+    required_fields = ['room_id', 'booking_date', 'start_time', 'end_time']
+    if not data or not all(field in data for field in required_fields):
+        return jsonify({'status': 'failed', 'message': 'Missing required fields'}), 400
+
+    # Example email address
+    user_email = session.get('user_email')
+
+    if not user_email:
+        return jsonify({'status': 'failed', 'message': 'User email not found in session.'}), 403
+
+    room_id = data['room_id']
+    booking_date = data['booking_date'].strip()
+    start_time = data['start_time'].strip()  # e.g. "08:45:00"
+    end_time = data['end_time'].strip()  # e.g. "09:30:00"
+
+    room_name = get_room_name_by_id(room_id)
+    print(f"[DEBUG] Room name: {room_name}")
+
+    try:
+        beijing_tz = timezone(timedelta(hours=8))
+        start_dt = datetime.strptime(f"{booking_date}T{start_time}", "%Y-%m-%dT%H:%M:%S").replace(tzinfo=beijing_tz)
+        end_dt = datetime.strptime(f"{booking_date}T{end_time}", "%Y-%m-%dT%H:%M:%S").replace(tzinfo=beijing_tz)
+
+        start_iso = start_dt.isoformat()
+        end_iso = end_dt.isoformat()
+    except ValueError as e:
+        return jsonify({'status': 'failed', 'message': f'Invalid date/time format: {str(e)}'}), 400
+
+    subject_line = f"Add booking to event – Room {room_name}"
+    description = f"I have booked room {room_name} from {start_iso} to {end_iso}."
+    location = f"{room_name}"
+    outlook_base_url = "https://outlook.office.com/calendar/0/deeplink/compose?"
+    outlook_params = {
+        "subject": subject_line,
+        "startdt": start_iso,
+        "enddt": end_iso,
+        "body": description,
+        "location": location
+    }
+    calendar_link = outlook_base_url + urllib.parse.urlencode(outlook_params)
+
+    # HTML body with a clickable button for the event link
+    body = f"""
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
+        <p>Hi,</p >
+        <p>Please click the button below to add the event to your Outlook Web Calendar:</p >
+
+        <p>
+        <a href=" " 
+            style="display: inline-block; padding: 10px 20px; background-color: #0078D4; color: white; text-decoration: none; border-radius: 4px;"
+            target="_blank">
+            Add Event
+        </a >
+        </p >
+
+        <p>If the button doesn't work, you can copy and paste this link into your browser:</p >
+        <p>{calendar_link}</p >
+
+        <br>
+        <p>Best regards,<br>Booking System</p >
+    </body>
+    </html>
+    """
+
+    process = Process(target=async_send, args=(user_email, subject_line, body))
+    process.start()
+
+    return jsonify({'status': 'success', 'message': 'Calendar invite sent via email!'})
+
+
+@app.route('/send_email/communicate', methods=['POST'])
+def send_communication_email():
+    """
+    Send a communication email in a separate process to avoid blocking the frontend.
+
+    Request Format (JSON):
+    {
+        "content":"I want to report issues"
+    }
+
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+    }
+    """
+    user_email = session.get('user_email')
+    data = request.get_json()
+    if not data or 'message' not in data:
+        return jsonify({'status': 'failed', 'message': 'Failed to get content'}), 400
+
+    content = str(data.get('message'))
+
+    subject = f"Private_message from {user_email}"
+    body = f"""Message Content:<br><br>{content}<br><br>"""
+
+    # 创建子进程并运行邮件发送函数
+    process = Process(target=async_broadcast_email_to_all_administrators, args=(subject, body))
+    process.start()
+
+    return jsonify({'status': 'success', 'message': 'Email is being sent in the background'})
 
 
 def fetch_booking_info(booking_id):
@@ -293,6 +517,62 @@ def fetch_booking_info(booking_id):
         print(f"Database error: {err}")
         return None
 
+
+def fetch_issue_info(issue_id):
+    """
+    Fetch issue details from the database using issue_id.
+
+    Args:
+        issue_id (int): The ID of the issue to fetch.
+
+    Returns:
+        tuple: A tuple containing issue details
+               (issue_id, room_name, issue, status, start_date, start_time, end_date, end_time, added_by_email).
+               Returns None if no matching issue is found.
+    """
+    try:
+        conn = mysql.connector.connect(
+            host=db_config['host'],
+            user=db_config['user'],
+            password=db_config['password'],
+            database=db_config['database'],
+            ssl_disabled=True  # Disable SSL
+        )
+        cursor = conn.cursor()
+
+        query = """
+        SELECT 
+            i.issue_id,
+            r.room_name,
+            i.issue,
+            i.status,
+            i.start_date,
+            i.start_time,
+            i.end_date,
+            i.end_time,
+            u.email AS added_by_email
+        FROM Issues i
+        JOIN Rooms r ON i.room_id = r.room_id
+        JOIN Users u ON i.added_by = u.user_id
+        WHERE i.issue_id = %s
+        """
+        cursor.execute(query, (issue_id,))
+        issue_info = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if issue_info:
+            return issue_info
+        else:
+            print(f"Issue ID {issue_id} not found")
+            return None
+
+    except mysql.connector.Error as err:
+        print(f"Database error: {err}")
+        return None
+
+
 def send_email(to_email, subject, body):
     """
     Send an email to the specified recipient.
@@ -302,6 +582,12 @@ def send_email(to_email, subject, body):
         subject (str): The subject of the email.
         body (str): The body of the email.
     """
+    # Get the next email configuration (cycling through accounts)
+    email_config = get_next_email_config()
+    #
+    # # Update app config with the new email account
+    update_email_config(email_config)
+
     try:
         msg = Message(subject, recipients=[to_email])
         msg.body = body
@@ -311,6 +597,17 @@ def send_email(to_email, subject, body):
         print(f'Email sent to {to_email}')
     except Exception as e:
         print(f'Failed to send email: {e}')
+
+
+# Move async_send function outside the route handler
+def async_send(email, subject, body):
+    with app.app_context():
+        try:
+            send_email(email, subject, body)
+            print(f"[Process] Email sent to {email}")
+        except Exception as e:
+            print(f"Failed to send email: {e}")
+
 
 # -------------------------------
 # 以下各接口均从 JSON 请求中获取 booking_id，并在返回 JSON 中包含 booking_id
@@ -362,7 +659,9 @@ def send_success_email():
         send_email(user_email, subject, body)
         return jsonify({'status': 'success', 'message': 'Booking successful email sent!', 'booking_id': booking_id})
     else:
-        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+        return jsonify(
+            {'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+
 
 @app.route('/send_email/rejected', methods=['POST'])
 def send_rejected_email():
@@ -409,7 +708,9 @@ def send_rejected_email():
         send_email(user_email, subject, body)
         return jsonify({'status': 'success', 'message': 'Booking rejected email sent!', 'booking_id': booking_id})
     else:
-        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+        return jsonify(
+            {'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+
 
 @app.route('/send_email/cancelled', methods=['POST'])
 def send_cancelled_email():
@@ -456,7 +757,58 @@ def send_cancelled_email():
         send_email(user_email, subject, body)
         return jsonify({'status': 'success', 'message': 'Booking cancelled email sent!', 'booking_id': booking_id})
     else:
-        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+        return jsonify(
+            {'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+
+
+@app.route('/send_email/cancelled_user', methods=['POST'])
+def send_cancelled_email_user():
+    """
+    Send an email notifying the user that their booking has been cancelled.
+
+    Request Format (JSON):
+    {
+        "booking_id": 123
+    }
+
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+        "booking_id": 123
+    }
+    """
+    data = request.get_json()
+    if not data or 'booking_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.', 'booking_id': None}), 400
+
+    try:
+        booking_id = int(data.get('booking_id'))
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'booking_id must be an integer.', 'booking_id': None}), 400
+
+    booking_info = fetch_booking_info(booking_id)
+    if booking_info:
+        booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
+
+        subject = f"Booking Cancelled: Room {room_name}"
+        body = f"""
+        Dear {user_email},<br><br>
+
+        You have successfully canceled your booking .Below are your booking details:<br><br>
+        <strong>Booking ID:</strong> {booking_id}<br>
+        <strong>Room Name:</strong> {room_name}<br>
+        <strong>Room Location:</strong> {room_location}<br>
+        <strong>Booking Time:</strong> {start_time} - {end_time}<br><br>
+        Thank you for using our system, and we hope you enjoy your booking!
+
+        """
+        send_email(user_email, subject, body)
+        return jsonify({'status': 'success', 'message': 'Booking cancelled email sent!', 'booking_id': booking_id})
+    else:
+        return jsonify(
+            {'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+
 
 @app.route('/send_email/failed', methods=['POST'])
 def send_failed_email():
@@ -503,7 +855,9 @@ def send_failed_email():
         send_email(user_email, subject, body)
         return jsonify({'status': 'success', 'message': 'Booking failed email sent!', 'booking_id': booking_id})
     else:
-        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+        return jsonify(
+            {'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+
 
 @app.route('/send_email/remind', methods=['POST'])
 def send_remind_email():
@@ -551,12 +905,308 @@ def send_remind_email():
         send_email(user_email, subject, body)
         return jsonify({'status': 'success', 'message': 'Reminder email sent!', 'booking_id': booking_id})
     else:
-        return jsonify({'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+        return jsonify(
+            {'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
 
 
+def broadcast_email(subject, body):
+    """
+    Broadcast an email to all users in the database.
+
+    Args:
+        subject (str): The subject of the email.
+        body (str): The body of the email.
+    """
+    try:
+        # Establish database connection
+        conn = mysql.connector.connect(
+            host=db_config['host'],
+            user=db_config['user'],
+            password=db_config['password'],
+            database=db_config['database'],
+            ssl_disabled=True  # Disable SSL
+        )
+        cursor = conn.cursor()
+
+        # Query to fetch all user emails
+        query = "SELECT email FROM Users"
+        cursor.execute(query)
+        users = cursor.fetchall()
+
+        # Send email to each user
+        for user in users:
+            to_email = user[0]
+            send_email(to_email, subject, body)  # Send email to the user
+
+        cursor.close()
+        conn.close()
+        print(f"Broadcast email sent to {len(users)} users.")
+
+    except mysql.connector.Error as err:
+        print(f"Database error: {err}")
 
 
-#------------------------------------------------------------
+# todo : add send issue email and broadcast email (3.25)
+
+
+def async_broadcast_email(subject, body):
+    """
+    Async version of broadcast_email, runs in a separate process.
+    """
+    with app.app_context():  # 保证子进程中有 Flask 上下文（用于 send_email 等）
+        try:
+            conn = mysql.connector.connect(
+                host=db_config['host'],
+                user=db_config['user'],
+                password=db_config['password'],
+                database=db_config['database'],
+                ssl_disabled=True
+            )
+            cursor = conn.cursor()
+
+            query = "SELECT email FROM Users"
+            cursor.execute(query)
+            users = cursor.fetchall()
+
+            for user in users:
+                to_email = user[0]
+                send_email(to_email, subject, body)
+
+            cursor.close()
+            conn.close()
+            print(f"[Broadcast] Email sent to {len(users)} users.")
+
+        except mysql.connector.Error as err:
+            print(f"[Broadcast] Database error: {err}")
+        except Exception as e:
+            print(f"[Broadcast] General error: {e}")
+
+
+def broadcast_email_to_all_administrators(subject, body):
+    """
+    Send an email to all users with the 'admin' role.
+
+    Args:
+        subject (str): The subject of the email.
+        body (str): The body of the email.
+    """
+    try:
+        conn = mysql.connector.connect(
+            host=db_config['host'],
+            user=db_config['user'],
+            password=db_config['password'],
+            database=db_config['database'],
+            ssl_disabled=True
+        )
+        cursor = conn.cursor()
+
+        # 查询所有管理员用户的邮箱
+        query = "SELECT email FROM Users WHERE role = 'admin'"
+        cursor.execute(query)
+        admins = cursor.fetchall()
+
+        for admin in admins:
+            admin_email = admin[0]
+            send_email(admin_email, subject, body)
+
+        cursor.close()
+        conn.close()
+        print(f"[Admin Broadcast] Email sent to {len(admins)} administrators.")
+
+    except mysql.connector.Error as err:
+        print(f"[Admin Broadcast] Database error: {err}")
+    except Exception as e:
+        print(f"[Admin Broadcast] General error: {e}")
+
+
+def async_broadcast_email_to_all_administrators(subject, body):
+    """
+    Async version of broadcast_email_to_all_administrators, runs in a separate process.
+
+    This function will fetch all administrators from the database and send them an email.
+    """
+    with app.app_context():  # Ensure Flask app context is used in the subprocess
+        try:
+            conn = mysql.connector.connect(
+                host=db_config['host'],
+                user=db_config['user'],
+                password=db_config['password'],
+                database=db_config['database'],
+                ssl_disabled=True
+            )
+            cursor = conn.cursor()
+
+            # Query to fetch all admin emails
+            query = "SELECT email FROM Users WHERE role = 'admin'"
+            cursor.execute(query)
+            admins = cursor.fetchall()
+
+            for admin in admins:
+                admin_email = admin[0]
+                send_email(admin_email, subject, body)
+
+            cursor.close()
+            conn.close()
+            print(f"[Admin Broadcast] Email sent to {len(admins)} administrators.")
+
+        except mysql.connector.Error as err:
+            print(f"[Admin Broadcast] Database error: {err}")
+        except Exception as e:
+            print(f"[Admin Broadcast] General error: {e}")
+
+
+@app.route('/send_email/broadcast_issue', methods=['POST'])
+def broadcast_issue_email():
+    """
+    Broadcast an issue to all users asynchronously.
+
+    Request Format (JSON):
+    {
+        "issue_id": 3
+    }
+
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+        "issue_id": 3
+    }
+    """
+    data = request.get_json()
+    if not data or 'issue_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Please provide a valid issue ID.', 'issue_id': None}), 400
+
+    try:
+        issue_id = int(data.get('issue_id'))
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'issue_id must be an integer.', 'issue_id': None}), 400
+
+    issue_info = fetch_issue_info(issue_id)
+    if issue_info:
+        issue_id, room_id, issue, status, start_date, start_time, end_date, end_time, added_by = issue_info
+
+        subject = f"Remind: Room {room_id} has an issue"
+        body = f"""
+        Dear DIICSU students and staff,<br><br>
+
+        This is a reminder that an issue is occurring in room {room_id}. Below are the issue details:<br><br>
+        <strong>Room:</strong> {room_id}<br>
+        <strong>Start Time:</strong> {start_date} {start_time}<br>
+        <strong>End Time:</strong> {end_date if end_date else 'Not yet resolved'} {end_time if end_time else ''}<br><br>
+        <strong>Issue Content:</strong> {issue}<br>
+        <strong>Issue Status:</strong> {status}<br><br>
+
+        Please avoid using the room during the affected period. Thank you.
+        """
+
+        # async process
+        process = Process(target=async_broadcast_email, args=(subject, body))
+        process.start()
+
+        return jsonify(
+            {'status': 'success', 'message': 'Issue broadcast is being sent in the background.', 'issue_id': issue_id})
+    else:
+        return jsonify({'status': 'failed', 'message': 'Failed to fetch issue information.', 'issue_id': issue_id}), 404
+
+
+@app.route('/send_email/broadcast_pending', methods=['POST'])
+def broadcast_pending_email():
+    """
+    broadcast a email to notify all administrators that there is a pending booking.
+
+    Request Format (JSON):
+    {
+        "booking_id": 123
+    }
+
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+    }
+    """
+    data = request.get_json()
+    if not data or 'booking_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Please provide a valid booking ID.', 'booking_id': None}), 400
+
+    try:
+        booking_id = int(data.get('booking_id'))
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'booking_id must be an integer.', 'booking_id': None}), 400
+
+    booking_info = fetch_booking_info(booking_id)
+    if booking_info:
+        booking_id, user_email, room_name, room_location, start_time, end_time = booking_info
+
+        subject = f"Reminder: Your Booking for Room {room_name} is Approaching"
+        body = f"""
+        Dear Admin,<br><br>
+
+        This is a pending booking request waiting to be disposed. Below are booking details:<br><br>
+        <strong>Booking ID:</strong> {booking_id}<br>
+        <strong>Room Name:</strong> {room_name}<br>
+        <strong>Room Location:</strong> {room_location}<br>
+        <strong>Start Time:</strong> {start_time}<br>
+        <strong>End Time:</strong> {end_time}<br><br>
+
+        Please head to the room in time. Thank you.
+        """
+        broadcast_email_to_all_administrators(subject, body)
+        return jsonify({'status': 'success', 'message': 'Reminder email sent!', 'booking_id': booking_id})
+    else:
+        return jsonify(
+            {'status': 'failed', 'message': 'No booking found for the provided ID.', 'booking_id': booking_id}), 404
+
+
+@app.route('/send_email/broadcast_break_faith', methods=['POST'])
+def broadcast_break_faith_email():
+    """
+    Broadcast an email to notify all administrators and related user that this user breaks faith.
+
+    Request Format (JSON):
+    {
+        "user_id": 123
+    }
+
+    Response Format (JSON):
+    {
+        "status": "success" or "failed",
+        "message": "...",
+    }
+    """
+    data = request.get_json()
+    if not data or 'user_id' not in data:
+        return jsonify({'status': 'failed', 'message': 'Missing user_id in JSON body'}), 400
+
+    try:
+        user_id = int(data['user_id'])
+    except ValueError:
+        return jsonify({'status': 'failed', 'message': 'user_id must be an integer'}), 400
+
+    user_info = get_user_info_by_id(user_id)
+    if user_info:
+        user_name, user_email = user_info
+
+        subject = "Reminder: A user who cancels booking too many times has been added to blacklist"
+        body = f"""
+        A user who cancels booking too many times has been added to blacklist. Below are details:<br><br>
+        <strong>User name:</strong> {user_name}<br>
+        <strong>User id:</strong> {user_id}<br>
+        <strong>Reason:</strong> This user has canceled bookings too many times (over 3 times) in one day.<br>
+        """
+
+        process = Process(target=async_broadcast_email_to_all_administrators, args=(subject, body))
+        process.start()
+
+        process1 = Process(target=async_send, args=(user_email, subject, body))
+        process1.start()
+
+        return jsonify({'status': 'success', 'message': 'Emails have been sent!'})
+    else:
+        return jsonify({'status': 'failed', 'message': 'No user found with the provided ID.'}), 404
+
+
+# ------------------------------------------------------------
 
 def load_config(config_path="config.yaml"):
     """加载配置文件并返回配置字典"""
@@ -655,6 +1305,76 @@ def get_room_id(room_name):
             conn.close()
 
 
+def get_room_name_by_id(room_id):
+    """
+    Fetch room name by room_id from the Rooms table.
+
+    Args:
+        room_id (int): ID of the room to look up.
+
+    Returns:
+        str: The name of the room if found, or None if not found.
+    """
+    try:
+        # 获取数据库连接
+        conn = get_db_connection()
+        # 手动创建 cursor（字典格式）
+        cursor = conn.cursor(dictionary=True)
+
+        query = "SELECT room_name FROM Rooms WHERE room_id = %s"
+        cursor.execute(query, (room_id,))
+        result = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if result:
+            return result['room_name']  # room_name
+        else:
+            print(f"Room ID {room_id} not found.")
+            return None
+
+    except mysql.connector.Error as err:
+        print(f"Database error: {err}")
+        return None
+
+
+def get_user_info_by_id(user_id):
+    """
+    Fetch user's name and email by user_id from the users table.
+
+    Args:
+        user_id (int): ID of the user to look up.
+
+    Returns:
+        tuple: (username, email) if found, or None if not found.
+    """
+    try:
+        # 获取数据库连接
+        conn = get_db_connection()
+        # 手动创建 cursor（字典格式）
+        cursor = conn.cursor(dictionary=True)
+
+        try:
+            # 根据 user_id 查询 username 和 email
+            cursor.execute("SELECT username, email FROM Users WHERE user_id = %s", (user_id,))
+            user_info = cursor.fetchone()
+            print("debugggg blacklist:", user_info)
+
+        finally:
+            cursor.close()  # 手动关闭 cursor
+        conn.close()
+
+        if user_info:
+            return user_info['username'], user_info['email']  # 使用字典方式返回 username 和 email
+        else:
+            print(f"User ID {user_id} not found.")
+            return None  # 如果没有找到用户，返回 None
+    except Exception as e:
+        print(f"Error fetching user info: {e}")
+        return None  # 如果数据库查询出错，返回 None
+
+
 # 查询用户ID
 def get_user_id_by_email():
     user_email = session.get('user_email')
@@ -729,7 +1449,7 @@ def login_required(f):
         if 'user_email' not in session:
             return redirect(url_for('login'))  # 如果未登录，重定向到登录页面
         if is_user_blacklisted():
-            return redirect(url_for('black')) 
+            return redirect(url_for('black'))
         return f(*args, **kwargs)
 
     return decorated_function
@@ -752,6 +1472,7 @@ def role_required(role):
 @app.route("/logout")
 def logout():
     return redirect(auth.log_out(url_for("index", _external=True)))
+
 
 # 路由：渲染 booking_centre.html
 @app.route('/booking_centre')
@@ -781,6 +1502,7 @@ def my_notification():
 @app.route('/error')
 def error_page():
     return render_template('error.html')  # 确保 templates/error.html 文件存在
+
 
 @app.route('/contact')
 def contact():
@@ -849,17 +1571,20 @@ def notice_admin():
 def room_management():
     return render_template('room_management.html')
 
+
 @app.route('/user_management')
 @login_required  # 确保用户已登录
 @role_required('admin')
 def user_management():
     return render_template('user_management.html')
 
+
 @app.route('/usage_report_center.html')
 @login_required  # 确保用户已登录
 @role_required('admin')
 def usage_report_center():
     return render_template('usage_report_center.html')
+
 
 @app.route('/trust_list')
 @login_required  # 确保用户已登录
@@ -874,6 +1599,7 @@ def trust_list():
 def room_issue_management():
     return render_template('room_issue_management.html')
 
+
 @app.route('/black')
 # @login_required
 def black():
@@ -885,22 +1611,28 @@ def black():
 def login():
     return render_template('login.html')
 
+
 @app.route('/login_via_code')
 def login_via_code():
     return render_template('login_via_code.html')
 
 
-#todo : add for check if the user is in blacklist
-def is_user_blacklisted( ):
+@app.route('/sign_off')
+def sign_off():
+    return render_template('sign_off.html')
+
+
+# todo : add for check if the user is in blacklist
+def is_user_blacklisted():
     """检查用户邮箱是否在 blacklist 表中"""
     conn = get_db_connection()
-    user_id=get_user_id_by_email()
+    user_id = get_user_id_by_email()
     try:
         cursor = conn.cursor()
         query = "SELECT * FROM Blacklist WHERE user_id = %s"
         cursor.execute(query, (user_id,))
         result = cursor.fetchone()
-        print('blacklist debug',result)
+        print('blacklist debug', result)
         return result is not None
     except Exception as e:
         print(f"Error checking blacklist: {str(e)}")
@@ -908,6 +1640,7 @@ def is_user_blacklisted( ):
     finally:
         cursor.close()
         conn.close()
+
 
 # TODO: 原函数
 # profile route
@@ -937,12 +1670,11 @@ def profile():
         return redirect(url_for('error_page'))
 
     session['user_email'] = user_email
-    print('debugggg',get_user_id_by_email())
-    if is_user_blacklisted( ):
+    print('debugggg', get_user_id_by_email())
+    if is_user_blacklisted():
         return redirect(url_for('black'))
 
     # 新增：检查是否在黑名单中
-
 
     try:
         print(f"Calling role API with email: {user_email}")
@@ -1003,43 +1735,70 @@ def login_get_role():
 
 
 # ---------------------------- delete ----------------------------
+# @app.route('/delete/users', methods=['POST'])
+# def delete_users():
+#     data = request.json
+#     user_id = data.get('user_id')
+#     username = data.get('username')
+#     email = data.get('email')
+#     role = data.get('role')
+#     # 使用同一数据库连接和事务，先删除依赖于该用户的记录，再删除用户记录
+#     conn = get_db_connection()
+#     cursor = conn.cursor()
+#     try:
+#         if user_id:
+#             # 1. 删除该用户的通知记录
+#             cursor.execute("DELETE FROM Notifications WHERE user_id = %s", (user_id,))
+#             # 2. 删除该用户预订的记录，其审批记录依赖于预订（先删除审批记录）
+#             cursor.execute("""
+#                 DELETE FROM Approvals
+#                 WHERE booking_id IN (
+#                     SELECT booking_id FROM Bookings WHERE user_id = %s
+#                 )
+#             """, (user_id,))
+#             # 删除该用户的预订记录
+#             cursor.execute("DELETE FROM Bookings WHERE user_id = %s", (user_id,))
+#             # 3. 删除审批记录中，该用户作为管理员审批的记录
+#             cursor.execute("DELETE FROM Approvals WHERE admin_id = %s", (user_id,))
+#             # 4. 删除该用户生成的报告
+#             cursor.execute("DELETE FROM Reports WHERE admin_id = %s", (user_id,))
+#         # 删除用户记录
+#         query = """
+#         DELETE FROM Users
+#         WHERE (user_id = %s OR %s IS NULL)
+#           AND (username = %s OR %s IS NULL)
+#           AND (email = %s OR %s IS NULL)
+#           AND (role = %s OR %s IS NULL)
+#         """
+#         params = (user_id, user_id, username, username, email, email, role, role)
+#         cursor.execute(query, params)
+#         conn.commit()
+#         result = "Deletion successful."
+#         status_code = 200
+#     except Exception as e:
+#         conn.rollback()
+#         result = f"Error occurred: {str(e)}"
+#         status_code = 500
+#     finally:
+#         cursor.close()
+#         conn.close()
+#     return jsonify({"message": result}), status_code
+
+
 @app.route('/delete/users', methods=['POST'])
 def delete_users():
     data = request.json
     user_id = data.get('user_id')
-    username = data.get('username')
-    email = data.get('email')
-    role = data.get('role')
-    # 使用同一数据库连接和事务，先删除依赖于该用户的记录，再删除用户记录
+
+    # 使用同一数据库连接和事务，直接删除用户记录，级联删除相关数据
     conn = get_db_connection()
     cursor = conn.cursor()
+
     try:
         if user_id:
-            # 1. 删除该用户的通知记录
-            cursor.execute("DELETE FROM Notifications WHERE user_id = %s", (user_id,))
-            # 2. 删除该用户预订的记录，其审批记录依赖于预订（先删除审批记录）
-            cursor.execute("""
-                DELETE FROM Approvals 
-                WHERE booking_id IN (
-                    SELECT booking_id FROM Bookings WHERE user_id = %s
-                )
-            """, (user_id,))
-            # 删除该用户的预订记录
-            cursor.execute("DELETE FROM Bookings WHERE user_id = %s", (user_id,))
-            # 3. 删除审批记录中，该用户作为管理员审批的记录
-            cursor.execute("DELETE FROM Approvals WHERE admin_id = %s", (user_id,))
-            # 4. 删除该用户生成的报告
-            cursor.execute("DELETE FROM Reports WHERE admin_id = %s", (user_id,))
-        # 删除用户记录
-        query = """
-        DELETE FROM Users
-        WHERE (user_id = %s OR %s IS NULL)
-          AND (username = %s OR %s IS NULL)
-          AND (email = %s OR %s IS NULL)
-          AND (role = %s OR %s IS NULL)
-        """
-        params = (user_id, user_id, username, username, email, email, role, role)
-        cursor.execute(query, params)
+            # 直接删除用户记录，所有相关数据将被自动删除（通过 ON DELETE CASCADE）
+            cursor.execute("DELETE FROM Users WHERE user_id = %s", (user_id,))
+
         conn.commit()
         result = "Deletion successful."
         status_code = 200
@@ -1050,8 +1809,8 @@ def delete_users():
     finally:
         cursor.close()
         conn.close()
-    return jsonify({"message": result}), status_code
 
+    return jsonify({"message": result}), status_code
 
 
 @app.route('/update_room_status', methods=['POST'])
@@ -1155,7 +1914,8 @@ def delete_blacklist():
         if conn:
             conn.close()
 
-#todo : added new funtion0319
+
+# todo : added new funtion0319
 @app.route('/delete_notification', methods=['POST'])
 def delete_notification():
     data = request.get_json()
@@ -1188,6 +1948,7 @@ def delete_notification():
             cursor.close()
         if 'conn' in locals():
             conn.close()
+
 
 # ---------------------------- search/display ----------------------------
 
@@ -1396,7 +2157,7 @@ def get_rooms():
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         query = """
-            SELECT room_id, room_name, capacity, equipment, location,room_type
+            SELECT room_id, room_name, capacity, equipment, location,room_type, room_status
             FROM Rooms
         """
         cursor.execute(query)
@@ -1515,6 +2276,7 @@ def get_Finished_Workflow_bookings():
         if 'conn' in locals():
             conn.close()
 
+
 @app.route('/get-issues/<int:room_id>', methods=['GET'])
 def get_issues_by_room(room_id):
     """
@@ -1523,7 +2285,7 @@ def get_issues_by_room(room_id):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        
+
         # 查询指定字段
         query = """
             SELECT 
@@ -1553,6 +2315,7 @@ def get_issues_by_room(room_id):
         if 'conn' in locals():
             conn.close()
 
+
 @app.route('/get-blacklist-reason', methods=['GET'])
 def get_blacklist_reason():
     try:
@@ -1576,7 +2339,7 @@ def get_blacklist_reason():
         """
 
         # 执行查询
-        cursor.execute(query,(user_id,))
+        cursor.execute(query, (user_id,))
         blacklists = cursor.fetchall()
 
         # 格式化日期和时间字段
@@ -1663,8 +2426,6 @@ def get_blacklist():
             cursor.close()
         if 'conn' in locals():
             conn.close()
-
-
 
 
 @app.route('/get_room_trusted_users', methods=['GET'])
@@ -1867,7 +2628,6 @@ def get_notifications():
             conn.close()
 
 
-
 @app.route('/get_all_users_admin', methods=['GET'])
 def get_users():
     try:
@@ -1891,6 +2651,7 @@ def get_users():
         if 'conn' in locals():
             conn.close()
 
+
 @app.route('/top-booked-rooms', methods=['POST'])
 def get_top_booked_rooms():
     """
@@ -1908,7 +2669,7 @@ def get_top_booked_rooms():
     # 参数验证
     if not start_date or not end_date:
         return jsonify({"error": "Missing start_date or end_date parameter"}), 400
-    
+
     try:
         # 验证日期格式
         datetime.strptime(start_date, "%Y-%m-%d")
@@ -1919,7 +2680,7 @@ def get_top_booked_rooms():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        
+
         # 修正后的SQL（注意括号闭合）
         query = """
             SELECT 
@@ -1941,7 +2702,7 @@ def get_top_booked_rooms():
             ORDER BY total_seconds DESC
             LIMIT 5
         """
-        
+
         cursor.execute(query, (start_date, end_date))
         results = cursor.fetchall()
 
@@ -1973,6 +2734,7 @@ def get_top_booked_rooms():
             cursor.close()
         if 'conn' in locals():
             conn.close()
+
 
 # ---------------------------- update ----------------------------
 
@@ -2032,6 +2794,7 @@ def update_user_admin():
             cursor.close()
         if 'conn' in locals():
             conn.close()
+
 
 @app.route('/update-room/<int:room_id>', methods=['PUT'])
 def update_room(room_id):
@@ -2113,7 +2876,6 @@ def update_room(room_id):
             conn.close()
 
 
-
 @app.route('/update-booking-status/<int:booking_id>', methods=['PUT'])
 def update_booking_status(booking_id):
     print(f"Received PUT request to update booking with ID: {booking_id}")
@@ -2177,6 +2939,25 @@ def update_booking_status(booking_id):
                 (room_id, booking_date, start_time, end_time)
             )
 
+            # todo
+            # 查询那些被更新为 failed 的预订的 booking_id（排除掉当前审批的那个 booking）
+            cursor.execute(
+                """
+                SELECT booking_id FROM Bookings
+                WHERE room_id = %s
+                  AND booking_date = %s
+                  AND start_time = %s
+                  AND end_time = %s
+                  AND status = 'failed'
+                  AND booking_id <> %s
+                """,
+                (room_id, booking_date, start_time, end_time, booking_id)
+            )
+            failed_rows = cursor.fetchall()
+
+            # 确保 failed_booking_ids 被正确初始化
+            failed_booking_ids = [row['booking_id'] for row in failed_rows] if failed_rows else []
+
             # 4. 更新 Room_availability 表，将对应记录的 availability 设为 2（已预订）
             cursor.execute(
                 """
@@ -2195,6 +2976,8 @@ def update_booking_status(booking_id):
                 "UPDATE Bookings SET status = 'rejected' WHERE booking_id = %s",
                 (booking_id,)
             )
+            # 不需要与 failed_bookings 相关的逻辑
+            failed_booking_ids = []  # 初始化为空列表，因为 rejected 状态下不涉及失败
 
         # 提交事务
         conn.commit()
@@ -2207,7 +2990,8 @@ def update_booking_status(booking_id):
         return jsonify({
             "message": f"Booking status updated to {updated_booking['status']}",
             "booking_id": updated_booking['booking_id'],
-            "status": updated_booking['status']
+            "status": updated_booking['status'],
+            "failed_bookings": failed_booking_ids
         })
 
     except mysql.connector.Error as e:
@@ -2231,15 +3015,34 @@ def cancel_booking(booking_id):
 
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
 
-        # 查找待取消的预定记录
-        cursor.execute("SELECT * FROM Bookings WHERE booking_id = %s AND status != 'canceled'", (booking_id,))
+        # 获取当前登录用户 ID
+        current_user_id = get_user_id_by_email()
+
+        # 获取当前登录用户的角色
+        cursor.execute("SELECT role FROM Users WHERE user_id = %s", (current_user_id,))
+        role_row = cursor.fetchone()
+        current_user_role = role_row['role'] if role_row else None
+        print(f"Current user_id = {current_user_id}, role = {current_user_role}")
+
+        # 查找待取消的预定记录（且尚未被取消）
+        cursor.execute("""
+            SELECT booking_id, user_id, booking_date, status
+            FROM Bookings
+            WHERE booking_id = %s
+              AND status != 'canceled'
+        """, (booking_id,))
         booking = cursor.fetchone()
 
         if not booking:
-            print(f"No booking found with ID {booking_id} or the booking is already canceled.")
+            print(f"No booking found with ID {booking_id} or it is already canceled.")
             return jsonify({"error": "Booking not found or already canceled"}), 404
+
+        # 如果当前用户不是管理员，则只能取消自己的 Booking
+        if current_user_role != 'admin':
+            if booking['user_id'] != current_user_id:
+                return jsonify({"error": "You are not allowed to cancel someone else's booking"}), 403
 
         # 更新该预定的 status 为 'canceled'
         update_query = """
@@ -2247,31 +3050,128 @@ def cancel_booking(booking_id):
             SET status = 'canceled'
             WHERE booking_id = %s
         """
-        update_params = (booking_id,)
-        print(f"Executing update query: {update_query} with parameters: {update_params}")
-        cursor.execute(update_query, update_params)
+        print(f"Executing update query: {update_query} with parameters: {(booking_id,)}")
+        cursor.execute(update_query, (booking_id,))
         conn.commit()
 
         if cursor.rowcount == 0:
             print(f"Failed to cancel booking with ID {booking_id}.")
             return jsonify({"error": "Failed to cancel booking"}), 500
 
-        # 获取更新后的预定信息
-        cursor.execute("SELECT * FROM Bookings WHERE booking_id = %s", (booking_id,))
+        # 重新获取更新后的预定信息
+        cursor.execute("""
+            SELECT booking_id, user_id, booking_date, status
+            FROM Bookings
+            WHERE booking_id = %s
+        """, (booking_id,))
         updated_booking = cursor.fetchone()
         print(f"Updated booking: {updated_booking}")
 
+        # 如果当前用户是管理员，则不触发“取消 3 次”的逻辑，直接返回成功
+        if current_user_role == 'admin':
+            return jsonify({
+                "message": "Booking canceled by admin",
+                "booking_id": updated_booking['booking_id'],
+                "status": updated_booking['status']
+            })
+
+        # 走到这里说明是普通用户自己在取消预定
+        user_id = updated_booking['user_id']
+        booking_date = updated_booking['booking_date']
+
+        # 统计该用户在同一天的取消次数
+        cursor.execute("""
+            SELECT COUNT(*) AS cancel_count
+            FROM Bookings
+            WHERE user_id = %s
+              AND booking_date = %s
+              AND status = 'canceled'
+        """, (user_id, booking_date))
+        cancel_count_row = cursor.fetchone()
+        cancel_count = cancel_count_row['cancel_count'] if cancel_count_row else 0
+        print(f"User {user_id} has canceled {cancel_count} bookings on {booking_date}.")
+
+        # 如果用户当天取消次数 >= 3，执行额外逻辑
+        if cancel_count >= 3:
+            # 给该用户发送一条通知
+            cursor.execute("""
+                INSERT INTO Notifications (user_id, message, notification_action, status)
+                VALUES (%s, %s, 'alert', 'unread')
+            """, (
+                user_id,
+                "You have canceled 3 bookings in one day. Please respect classroom resources."
+            ))
+
+            # 直接调用你的发送邮件函数（示例）
+            """
+            subject = "Blacklisted due to multiple cancellations"
+            body = "You have canceled 3 bookings in one day and have been blacklisted for 1 month."
+            send_email_to_user(user_id, subject, body)
+            """
+
+            # 检查该用户是否已经在黑名单中
+            cursor.execute("""
+                SELECT blacklist_id
+                FROM Blacklist
+                WHERE user_id = %s
+                  AND end_date >= CURDATE()
+            """, (user_id,))
+            blacklisted = cursor.fetchone()
+
+            if not blacklisted:
+                # 不在黑名单 => 将其加入黑名单（封禁 1 个月）
+                admin_id = 1  # 这里示例写死管理员 ID，你可以自行查找或定义
+                reason = "Canceled 3 times in one day"
+
+                now = datetime.now()
+                end_date = now + timedelta(days=30)  # 封禁 1 个月
+
+                cursor.execute("""
+                    INSERT INTO Blacklist (
+                        user_id, added_by, added_date, added_time,
+                        start_date, start_time, end_date, end_time, reason
+                    )
+                    VALUES (
+                        %s, %s, CURDATE(), CURTIME(),
+                        CURDATE(), CURTIME(), %s, %s, %s
+                    )
+                """, (
+                    user_id,
+                    admin_id,
+                    end_date.strftime('%Y-%m-%d'),
+                    end_date.strftime('%H:%M:%S'),
+                    reason
+                ))
+
+                # 给所有管理员发送通知
+                cursor.execute("SELECT user_id FROM Users WHERE role = 'admin'")
+                admins = cursor.fetchall()
+                for admin in admins:
+                    cursor.execute("""
+                        INSERT INTO Notifications (user_id, message, notification_action, status)
+                        VALUES (%s, %s, 'alert', 'unread')
+                    """, (
+                        admin['user_id'],
+                        f"User {user_id} canceled 3 bookings in one day and has been blacklisted for 1 month."
+                    ))
+
+            conn.commit()
+
         return jsonify({
             "message": "Booking status updated to 'canceled'",
-            "booking_id": updated_booking[0],
-            "status": updated_booking[6]  # Assuming status is the 6th column in Bookings table
+            "booking_id": updated_booking['booking_id'],
+            "status": updated_booking['status'],
+            "cancel_count": cancel_count,
+            "user_id": user_id
         })
 
     except mysql.connector.Error as e:
         print(f"Database error: {str(e)}")
+        conn.rollback()
         return jsonify({"error": "Database error", "details": str(e)}), 500
     except Exception as e:
         print(f"Unexpected error: {str(e)}")
+        conn.rollback()
         return jsonify({"error": "Internal server error", "details": str(e)}), 500
     finally:
         if 'cursor' in locals():
@@ -2415,7 +3315,7 @@ def update_issue(issue_id):
         return jsonify({'error': str(e)}), 500
 
 
-#todo: new function for change unread to read for notification page
+# todo: new function for change unread to read for notification page
 @app.route('/update_notification_status', methods=['POST'])
 def update_notification_status():
     data = request.get_json()
@@ -2423,7 +3323,8 @@ def update_notification_status():
     new_status = data.get('status')
 
     if not notification_id or new_status not in ('read', 'unread'):
-        return jsonify({"error": "Missing or invalid parameters — require notification_id and status ('read' or 'unread')"}), 400
+        return jsonify(
+            {"error": "Missing or invalid parameters — require notification_id and status ('read' or 'unread')"}), 400
 
     try:
         conn = get_db_connection()
@@ -2451,6 +3352,7 @@ def update_notification_status():
 
 
 # ---------------------------- insert ----------------------------
+
 
 @app.route('/insert_booking', methods=['POST'])
 def insert_booking():
@@ -2527,9 +3429,16 @@ def insert_booking():
         cursor.execute(query, (user_id, room_id, start_time, end_time, booking_date, status, reason))
         conn.commit()
 
+        booking_id = cursor.lastrowid
+
         return jsonify({
             "status": "success",
-            "message": "Booking successful" if status == 'approved' else "Booking request submitted, awaiting approval."
+            "message": "Booking successful" if status == 'approved' else "Booking request submitted, awaiting approval.",
+            "booking_id": booking_id,
+            "start_time": start_time,
+            "end_time": end_time,
+            "booking_date": booking_date,
+            "room_id": room_id
         })
 
     except mysql.connector.Error as err:
@@ -2568,7 +3477,7 @@ def insert_booking_with_reason():
         check_query = """
             SELECT * FROM Bookings 
             WHERE room_id = %s AND user_id = %s AND booking_date = %s 
-            AND start_time = %s AND end_time = %s
+            AND start_time = %s AND end_time = %s AND status IN ('approved', 'pending')
         """
         cursor.execute(check_query, (room_id, user_id, booking_date, start_time, end_time))
         existing_booking = cursor.fetchone()  # 如果有相同的记录，返回结果
@@ -2583,9 +3492,15 @@ def insert_booking_with_reason():
         """
         cursor.execute(query, (user_id, room_id, start_time, end_time, booking_date, reason))
         conn.commit()
+        #
+        # return jsonify({"status": "success", "message": "Booking request submitted, awaiting approval."})
 
-        return jsonify({"status": "success", "message": "Booking request submitted, awaiting approval."})
-
+        booking_id = cursor.lastrowid
+        return jsonify({
+            "status": "success",
+            "message": "Booking request submitted, awaiting approval.",
+            "booking_id": booking_id
+        })
     except mysql.connector.Error as err:
         conn.rollback()
         return jsonify({"status": "error", "error": str(err)}), 400
@@ -2611,7 +3526,7 @@ def insert_room():
         INSERT INTO Rooms (room_name, capacity, equipment, location,room_type)
         VALUES (%s, %s, %s, %s, %s)
         """
-        cursor.execute(query, (room_name, capacity, equipment, location,room_type))
+        cursor.execute(query, (room_name, capacity, equipment, location, room_type))
         conn.commit()
         return jsonify({"status": "success", "message": "Room inserted successfully!"})
     except mysql.connector.Error as err:
@@ -2754,32 +3669,90 @@ def insert_trusted_user():
     conn = get_db_connection()
     if not conn:
         return jsonify({"status": "error", "error": "Database connection failed"}), 500
+
     try:
-        # 使用字典格式返回结果
         cursor = conn.cursor(dictionary=True)
 
-        # 先检查该用户是否已在该房间的受信任名单中
+        # 1. 检查 user_id 是否存在
+        cursor.execute("SELECT COUNT(*) AS cnt FROM Users WHERE user_id = %s", (user_id,))
+        user_count = cursor.fetchone()['cnt']
+        if user_count == 0:
+            return jsonify({"status": "error", "error": f"User with user_id={user_id} does not exist."}), 400
+
+        # 2. 检查 room_id 是否存在
+        cursor.execute("SELECT COUNT(*) AS cnt FROM Rooms WHERE room_id = %s", (room_id,))
+        room_count = cursor.fetchone()['cnt']
+        if room_count == 0:
+            return jsonify({"status": "error", "error": f"Room with room_id={room_id} does not exist."}), 400
+
+        # 3. 检查该用户是否已在该房间的受信任名单中
         check_query = "SELECT * FROM RoomTrustedUsers WHERE room_id = %s AND user_id = %s"
         cursor.execute(check_query, (room_id, user_id))
         existing = cursor.fetchone()
         if existing:
-            return jsonify(
-                {"status": "error", "error": "The user is already in the trusted user list for this room."}), 400
+            return jsonify({
+                "status": "error",
+                "error": "The user is already in the trusted user list for this room."
+            }), 400
 
-        # 如果不存在则执行插入操作
+        # 4. 如果不存在则执行插入操作
         query = """
-        INSERT INTO RoomTrustedUsers (room_id, user_id, added_by, added_date, added_time, notes)
-        VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT INTO RoomTrustedUsers (room_id, user_id, added_by, added_date, added_time, notes)
+            VALUES (%s, %s, %s, %s, %s, %s)
         """
         cursor.execute(query, (room_id, user_id, added_by, added_date, added_time, notes))
         conn.commit()
+
         return jsonify({"status": "success", "message": "Trusted user added successfully!"})
+
     except mysql.connector.Error as err:
         conn.rollback()
         return jsonify({"status": "error", "error": str(err)}), 400
     finally:
         if conn:
             conn.close()
+
+
+# @app.route('/insert_trusted_user', methods=['POST'])
+# def insert_trusted_user():
+#     data = request.get_json()
+#     room_id = data['room_id']
+#     user_id = data['user_id']
+#     added_by = get_user_id_by_email()
+#     # 如果前端没有传入日期和时间，可以考虑自动生成当前日期和时间
+#     added_date = data.get('added_date')  # 格式应为 'YYYY-MM-DD'
+#     added_time = data.get('added_time')  # 格式应为 'HH:MM:SS'
+#     notes = data.get('notes', '')
+
+#     conn = get_db_connection()
+#     if not conn:
+#         return jsonify({"status": "error", "error": "Database connection failed"}), 500
+#     try:
+#         # 使用字典格式返回结果
+#         cursor = conn.cursor(dictionary=True)
+
+#         # 先检查该用户是否已在该房间的受信任名单中
+#         check_query = "SELECT * FROM RoomTrustedUsers WHERE room_id = %s AND user_id = %s"
+#         cursor.execute(check_query, (room_id, user_id))
+#         existing = cursor.fetchone()
+#         if existing:
+#             return jsonify(
+#                 {"status": "error", "error": "The user is already in the trusted user list for this room."}), 400
+
+#         # 如果不存在则执行插入操作
+#         query = """
+#         INSERT INTO RoomTrustedUsers (room_id, user_id, added_by, added_date, added_time, notes)
+#         VALUES (%s, %s, %s, %s, %s, %s)
+#         """
+#         cursor.execute(query, (room_id, user_id, added_by, added_date, added_time, notes))
+#         conn.commit()
+#         return jsonify({"status": "success", "message": "Trusted user added successfully!"})
+#     except mysql.connector.Error as err:
+#         conn.rollback()
+#         return jsonify({"status": "error", "error": str(err)}), 400
+#     finally:
+#         if conn:
+#             conn.close()
 
 
 # 1. Insert new issue (Admin only)
@@ -2894,6 +3867,7 @@ def insert_use_adminr():
         cursor.close()
         conn.close()
 
+
 # -------------------------initialize room avalibility--------------------
 # Define room time slots (available time slots for each room)
 availability_times = [
@@ -2908,6 +3882,7 @@ availability_times = [
     ("19:00", "19:45"),
     ("19:55", "20:40")
 ]
+
 
 # Function to insert room availability data
 @app.route('/insert_room_availability', methods=['GET'])
@@ -2950,6 +3925,8 @@ def insert_room_availability():
         # Close database connection
         cursor.close()
         connection.close()
+
+
 # -----------------------------------update room availibility-------------------------
 
 # ============================ Utility Functions ============================
@@ -2990,6 +3967,7 @@ def extract_classrooms(course_text):
     """Extract classroom names from course text"""
     return classroom_pattern.findall(course_text)
 
+
 # Read CSV file and store week-to-date mapping
 def load_weeks(file_path):
     weeks = []
@@ -3004,6 +3982,7 @@ def load_weeks(file_path):
             weeks.append(week)
     return weeks
 
+
 # Calculate which week the current date belongs to
 def get_current_week(weeks):
     current_date = datetime.today()
@@ -3011,6 +3990,7 @@ def get_current_week(weeks):
         if week["start_date"] <= current_date <= week["end_date"]:
             return week["week_number"]
     return None  # If the date is not within any week
+
 
 # ============================ Data Scraping Functionality (Keep unchanged) ============================
 def crawl_data():
