@@ -301,7 +301,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.modal.style.display = 'none';
 
             // todo: add new function for send email
-            await fetch('http://localhost:8000/send_email/success', {
+            await fetch('https://www.diicsu.top:8000/send_email/success', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -337,6 +337,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!response.ok) throw new Error(data.error || 'Booking failed');
 
             alert('Booking request submitted, awaiting approval.');
+
+             //todo ：0326 Call backend email notification after successful insertion
+            const emailResponse = await fetch('http://localhost:8000/send_email/broadcast_pending', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ booking_id: data.booking_id })
+            });
+
+            const emailData = await emailResponse.json();
+            if (!emailResponse.ok) throw new Error(emailData.message || 'Email notification failed');
+
+            console.log('Email notification:', emailData.message);
+
+
             document.getElementById('reasonModal').style.display = 'none';
             pendingBookingData = null;
             await fetchClassrooms();

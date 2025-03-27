@@ -103,7 +103,7 @@ function handleApproval(action, card) {
 
            // 根据返回的状态调用对应的邮件接口
         if (updatedBooking.status === 'approved') {
-            fetch('http://localhost:8000/send_email/success', {
+            fetch('https://www.diicsu.top:8000/send_email/success', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ booking_id: updatedBooking.booking_id })
@@ -116,7 +116,7 @@ function handleApproval(action, card) {
                 console.error('Error sending success email:', err);
             });
         } else if (updatedBooking.status === 'rejected') {
-            fetch('http://localhost:8000/send_email/rejected', {
+            fetch('https://www.diicsu.top:8000/send_email/rejected', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ booking_id: updatedBooking.booking_id })
@@ -129,6 +129,25 @@ function handleApproval(action, card) {
                 console.error('Error sending rejection email:', err);
             });
         }
+        if (updatedBooking.failed_bookings && updatedBooking.failed_bookings.length > 0) {
+            updatedBooking.failed_bookings.forEach(failedId => {
+                console.log(`Calling send_email/failed for booking id: ${failedId}`);
+                fetch('https://www.diicsu.top:8000/send_email/failed', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ booking_id: failedId })
+                })
+                .then(resp => resp.json())
+                .then(emailData => {
+                    console.log(`Failed email sent for booking id: ${failedId}`, emailData);
+                })
+                .catch(err => {
+                    console.error(`Error sending failed email for booking id: ${failedId}`, err);
+                });
+            });
+        }
+
+
 
 
             // Update local data

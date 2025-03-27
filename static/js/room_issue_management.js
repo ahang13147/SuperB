@@ -94,6 +94,22 @@ document.getElementById('issueForm').addEventListener('submit', function (event)
         .then(data => {
             if (data.message === 'Issue created successfully') {
                 showAlert('Issue added successfully!', 'success');
+
+
+                //todo: add send email to all users
+            fetch('https://www.diicsu.top:8000/send_email/broadcast_issue', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ issue_id: data.issue_id })
+            })
+            .then(resp => resp.json())
+            .then(broadcastData => {
+                console.log('Broadcast email sent:', broadcastData);
+            })
+            .catch(error => {
+                console.error('Error broadcasting email:', error);
+            });
+
                 fetchAndDisplayIssues(); // 刷新列表
                 document.getElementById('issueForm').reset(); // 清空表单
             } else {
