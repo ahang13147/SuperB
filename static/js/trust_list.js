@@ -58,6 +58,18 @@ function renderData(data) {
     });
 }
 
+function searchTrustedList() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('.room-box').forEach(box => {
+        const roomInfo = box.querySelector('h3').textContent.toLowerCase();
+        const roomId = roomInfo.match(/id: (\d+)/)?.[1] || '';
+        const roomName = roomInfo.replace(/\(id: \d+\)/g, '').trim();
+
+        const match = roomId.includes(query) || roomName.includes(query);
+        box.style.display = match ? 'block' : 'none';
+    });
+}
+
 function openAddTrustedModal() {
     document.getElementById('addTrustedModal').style.display = 'flex';
 }
@@ -87,14 +99,18 @@ async function addTrustedUser() {
         });
 
         const result = await response.json();
-        if (!response.ok) throw new Error(result.message);
+        if (!response.ok) throw new Error(result.error);
 
         showSuccessModal('User added successfully!');
         closeAddTrustedModal();
         clearForm();
         await loadData();
     } catch (error) {
-        showNotification(error.message, 'error');
+          // 打印到控制台
+        console.error('Error:', error);
+
+        // 弹出错误提示框
+        alert(`Failed to add trusted user: ${error.message}`);
     }
 }
 
@@ -177,32 +193,45 @@ function showSuccessModal(message) {
     }, 3000);
 }
 
-function searchTrustedList() {
-    const query = document.getElementById('searchInput').value.toLowerCase();
-    document.querySelectorAll('.room-box').forEach(box => {
-        const roomId = box.querySelector('h3').textContent.match(/ID: (\d+)/)[1];
-        box.style.display = roomId.includes(query) ? 'block' : 'none';
-    });
-}
+
 
 document.addEventListener('DOMContentLoaded', function() {
+    // 处理菜单分组点击
+    document.querySelectorAll('.group-header').forEach(header => {
+        header.addEventListener('click', function() {
+            const group = this.closest('.menu-group');
+            group.classList.toggle('active');
+
+            // 关闭其他展开的菜单组
+            document.querySelectorAll('.menu-group').forEach(otherGroup => {
+                if (otherGroup !== group) {
+                    otherGroup.classList.remove('active');
+                }
+            });
+        });
+    });
+
+    // 移动端汉堡菜单切换
     const hamburger = document.querySelector('.hamburger-menu');
     const sidebar = document.querySelector('.sidebar');
 
-    hamburger.addEventListener('click', function() {
+    hamburger.addEventListener('click', function(e) {
+        e.stopPropagation();
         sidebar.classList.toggle('active');
     });
 
+    // 点击外部关闭侧边栏
     document.addEventListener('click', function(e) {
-        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+        if (sidebar.classList.contains('active') &&
+            !e.target.closest('.sidebar') &&
+            !e.target.closest('.hamburger-menu')) {
             sidebar.classList.remove('active');
         }
     });
 
-    window.addEventListener('resize', function() {
-        if (window.innerWidth > 768) {
-            sidebar.classList.remove('active');
-        }
+    // 防止侧边栏内部点击触发关闭
+    sidebar.addEventListener('click', function(e) {
+        e.stopPropagation();
     });
 });
 
