@@ -214,6 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+
     sidebar.addEventListener('click', (e) => e.stopPropagation());
 
     // Menu group handling
