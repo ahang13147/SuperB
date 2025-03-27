@@ -208,6 +208,43 @@ def fetch_issue_info(issue_id):
         print(f"Database error: {err}")
         return None
 
+# def get_room_name_by_id(room_id):
+#     """
+#     Fetch room name by room_id from the Rooms table.
+#
+#     Args:
+#         room_id (int): ID of the room to look up.
+#
+#     Returns:
+#         str: The name of the room if found, or None if not found.
+#     """
+#     try:
+#         conn = mysql.connector.connect(
+#             host=db_config['host'],
+#             user=db_config['user'],
+#             password=db_config['password'],
+#             database=db_config['database'],
+#             ssl_disabled=True
+#         )
+#         cursor = conn.cursor()
+#
+#         query = "SELECT room_name FROM Rooms WHERE room_id = %s"
+#         cursor.execute(query, (room_id,))
+#         result = cursor.fetchone()
+#
+#         cursor.close()
+#         conn.close()
+#
+#         if result:
+#             return result['room_name']  # room_name
+#         else:
+#             print(f"Room ID {room_id} not found.")
+#             return None
+#
+#     except mysql.connector.Error as err:
+#         print(f"Database error: {err}")
+#         return None
+
 def get_room_name_by_id(room_id):
     """
     Fetch room name by room_id from the Rooms table.
@@ -226,7 +263,7 @@ def get_room_name_by_id(room_id):
             database=db_config['database'],
             ssl_disabled=True
         )
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)  # Enable dictionary result
 
         query = "SELECT room_name FROM Rooms WHERE room_id = %s"
         cursor.execute(query, (room_id,))
@@ -236,7 +273,7 @@ def get_room_name_by_id(room_id):
         conn.close()
 
         if result:
-            return result[0]  # room_name
+            return result['room_name']  # Access the room_name via key
         else:
             print(f"Room ID {room_id} not found.")
             return None
@@ -245,6 +282,43 @@ def get_room_name_by_id(room_id):
         print(f"Database error: {err}")
         return None
 
+
+
+# def get_user_info_by_id(user_id):
+#     """
+#     Fetch user's name and email by user_id from the users table.
+#
+#     Args:
+#         user_id (int): ID of the user to look up.
+#
+#     Returns:
+#         tuple: (username, email) if found, or None if not found.
+#     """
+#     try:
+#         conn = mysql.connector.connect(
+#             host=db_config['host'],
+#             user=db_config['user'],
+#             password=db_config['password'],
+#             database=db_config['database'],
+#             ssl_disabled=True
+#         )
+#         cursor = conn.cursor()
+#
+#         query = "SELECT username, email FROM users WHERE user_id = %s"
+#         cursor.execute(query, (user_id,))
+#         result = cursor.fetchone()
+#
+#         cursor.close()
+#         conn.close()
+#
+#         if result:
+#             return result[0], result[1]  # username, email
+#         else:
+#             print(f"User ID {user_id} not found.")
+#             return None
+#     except Exception as e:
+#         print(f"Error fetching user info: {e}")
+#         return None
 
 def get_user_info_by_id(user_id):
     """
@@ -257,6 +331,7 @@ def get_user_info_by_id(user_id):
         tuple: (username, email) if found, or None if not found.
     """
     try:
+
         conn = mysql.connector.connect(
             host=db_config['host'],
             user=db_config['user'],
@@ -264,23 +339,28 @@ def get_user_info_by_id(user_id):
             database=db_config['database'],
             ssl_disabled=True
         )
-        cursor = conn.cursor()
 
-        query = "SELECT username, email FROM users WHERE user_id = %s"
-        cursor.execute(query, (user_id,))
-        result = cursor.fetchone()
+        cursor = conn.cursor(dictionary=True)
 
-        cursor.close()
+        try:
+
+            cursor.execute("SELECT username, email FROM Users WHERE user_id = %s", (user_id,))
+            user_info = cursor.fetchone()
+            print("debugggg blacklist:", user_info)
+
+        finally:
+            cursor.close()
         conn.close()
 
-        if result:
-            return result[0], result[1]  # username, email
+        if user_info:
+            return user_info['username'], user_info['email']
         else:
             print(f"User ID {user_id} not found.")
             return None
     except Exception as e:
         print(f"Error fetching user info: {e}")
         return None
+
 
 
 def send_email(to_email, subject, body):
@@ -923,7 +1003,8 @@ def send_calendar_invite():
         return jsonify({'status': 'failed', 'message': 'Missing required fields'}), 400
 
     # Example email address
-    user_email = session.get('user_email')
+    #user_email = session.get('user_email')
+    user_email="2542881@dundee.ac.uk"
 
     if not user_email:
         return jsonify({'status': 'failed', 'message': 'User email not found in session.'}), 403
