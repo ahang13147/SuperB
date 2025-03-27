@@ -7,6 +7,8 @@ Description: This Flask application sends reminder emails to users about their r
              Each endpoint is responsible for sending a specific type of email based on the booking status.
              The response to each request is a JSON object containing the status of the email operation and the booking_id.
 """
+import random
+import itertools
 import urllib.parse
 from flask import Flask, render_template, request, jsonify, session
 from flask_mail import Mail, Message
@@ -19,16 +21,84 @@ app = Flask(__name__)
 
 # Configuration for Flask application
 app.secret_key = 'your_secret_key'
-app.config.update({
-    'MAIL_SERVER': 'smtp.qq.com',  # Email server
-    'MAIL_PORT': 587,              # Port (587 for TLS)
-    'MAIL_USE_TLS': True,
-    'MAIL_USERNAME': '2530681892@qq.com',  # Sender's email
-    'MAIL_PASSWORD': 'gnpunomuoqwhechd',    # Sender's email password
-    'MAIL_DEFAULT_SENDER': ('Classroom System', '2530681892@qq.com')  # Default sender
-})
 
-mail = Mail(app)
+# Define multiple email accounts and their respective authorization codes
+email_accounts = [
+    {
+        'MAIL_USERNAME': '2530681892@qq.com',
+        'MAIL_PASSWORD': 'gnpunomuoqwhechd',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '2530681892@qq.com')
+    },
+    {
+        'MAIL_USERNAME': '3076129093@qq.com',
+        'MAIL_PASSWORD': 'lbkbdfhwjskpdfcg',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '3076129093@qq.com')
+    },
+{
+        'MAIL_USERNAME': '3030954581@qq.com',
+        'MAIL_PASSWORD': 'kpxnfzxcjjkgdhdh',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '3030954581@qq.com')
+    },
+{
+        'MAIL_USERNAME': '2769853497@qq.com',
+        'MAIL_PASSWORD': 'rzymctqoaukldebd',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '2769853497@qq.com')
+    },
+{
+        'MAIL_USERNAME': '3414761872@qq.com',
+        'MAIL_PASSWORD': 'ixrrunvbmcljcjie',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '3414761872@qq.com')
+    },
+{
+        'MAIL_USERNAME': '3063462656@qq.com',
+        'MAIL_PASSWORD': 'rzmichcrkblydfhd',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '3063462656@qq.com')
+    },
+{
+        'MAIL_USERNAME': '2036223686@qq.com',
+        'MAIL_PASSWORD': 'sxlrhyfxytugddhh',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '2036223686@qq.com')
+    },
+{
+        'MAIL_USERNAME': '2816274139@qq.com',
+        'MAIL_PASSWORD': 'rpfhyzgydjpldggi',
+        'MAIL_DEFAULT_SENDER': ('Classroom System', '2816274139@qq.com')
+    },
+    # Add more email accounts as needed
+]
+
+# Shuffle the email accounts list when the app starts
+random.shuffle(email_accounts)
+
+email_cycle = itertools.cycle(email_accounts)
+
+def get_next_email_config():
+    return next(email_cycle)
+
+def update_email_config(email_config):
+    app.config.update({
+        'MAIL_SERVER': 'smtp.qq.com',  # Email server
+        'MAIL_PORT': 587,              # Port (587 for TLS)
+        'MAIL_USE_TLS': True,
+        'MAIL_USERNAME': email_config['MAIL_USERNAME'],  # Sender's email
+        'MAIL_PASSWORD': email_config['MAIL_PASSWORD'],  # Sender's email password
+        'MAIL_DEFAULT_SENDER': email_config['MAIL_DEFAULT_SENDER']  # Default sender
+    })
+
+    # Re-initialize the mail object after config update
+    global mail
+    mail = Mail(app)
+
+# app.config.update({
+#     'MAIL_SERVER': 'smtp.qq.com',  # Email server
+#     'MAIL_PORT': 587,              # Port (587 for TLS)
+#     'MAIL_USE_TLS': True,
+#     'MAIL_USERNAME': '2530681892@qq.com',  # Sender's email
+#     'MAIL_PASSWORD': 'gnpunomuoqwhechd',    # Sender's email password
+#     'MAIL_DEFAULT_SENDER': ('Classroom System', '2530681892@qq.com')  # Default sender
+# })
+
+# mail = Mail(app)
 
 # Database connection settings
 db_config = {
@@ -222,6 +292,13 @@ def send_email(to_email, subject, body):
         subject (str): The subject of the email.
         body (str): The body of the email.
     """
+
+    # Get the next email configuration (cycling through accounts)
+    email_config = get_next_email_config()
+    #
+    # # Update app config with the new email account
+    update_email_config(email_config)
+
     try:
         msg = Message(subject, recipients=[to_email])
         msg.body = body
@@ -268,6 +345,7 @@ def broadcast_email(subject, body):
 
         # Send email to each user
         for user in users:
+
             to_email = user[0]
             send_email(to_email, subject, body)  # Send email to the user
 
