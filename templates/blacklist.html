@@ -17,7 +17,6 @@
     <div class="main-container">
 
          <div class="sidebar">
-
           <a class="nav-item" href="{{ url_for('booking_centre_admin') }}">
             <i class="fas fa-calendar-alt nav-icon"></i>
             Booking Center
@@ -42,10 +41,6 @@
             <i class="fas fa-tools nav-icon"></i>
             Room Issue Management
         </a>
-          <a class="nav-item" href="{{ url_for('user_management') }}">
-            <i class="fas fa-users nav-icon"></i>
-            User Management
-          </a>
           <a class="nav-item" href="{{ url_for('notice_admin') }}">
             <i class="fas fa-bell nav-icon"></i>
             Notifications
@@ -62,22 +57,16 @@
             <i class="fas fa-user-circle nav-icon"></i>
             My Profile
           </a>
-            <a class="nav-item" href="{{ url_for('usage_report_center') }}">
-                <i class="fas fa-chart-line nav-icon"></i>
-                Usage Report Center
-            </a>
-             <!-- <div class="sidebar-logo">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
-            </div> -->
-            <div class="sidebar-logo">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
-            </div>
-
         </div>
 
         <h1>Blacklist Management System</h1>
 
-        <!-- Wrap the table in a mobile card container -->
+        <!-- 搜索框 -->
+        <div class="search-container">
+            <input type="text" id="searchBlacklistInput" placeholder="Search by User ID or Name" oninput="searchBlacklist()">
+        </div>
+
+        <!-- 表格容器 -->
         <div class="mobile-card-container">
             <div class="table-wrapper">
                 <table id="blacklistTable">
@@ -92,12 +81,13 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- The data is loaded dynamically via JavaScript -->
+                        <!-- 数据通过JavaScript动态加载 -->
                     </tbody>
                 </table>
             </div>
         </div>
 
+        <!-- 添加黑名单区域 -->
         <div class="add-section">
             <div class="input-group">
                 <div>
@@ -129,6 +119,5 @@
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="{{ url_for('static', filename='js/blacklist.js') }}"></script>
-
 </body>
 </html>
