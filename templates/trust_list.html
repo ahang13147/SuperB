@@ -38,10 +38,6 @@
             <i class="fas fa-tools nav-icon"></i>
             Room Issue Management
         </a>
-          <a class="nav-item" href="{{ url_for('user_management') }}">
-            <i class="fas fa-users nav-icon"></i>
-            User Management
-          </a>
         <a class="nav-item" href="{{ url_for('notice_admin') }}">
             <i class="fas fa-bell nav-icon"></i>
             Notifications
@@ -58,10 +54,6 @@
             <i class="fas fa-user-circle nav-icon"></i>
             My Profile
         </a>
-            <a class="nav-item" href="{{ url_for('usage_report_center') }}">
-                <i class="fas fa-chart-line nav-icon"></i>
-                Usage Report Center
-            </a>
         <div class="sidebar-logo">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
         </div>
@@ -71,8 +63,8 @@
 
         <!-- Search Bar and Add Button -->
         <div class="search-add-container">
-            <div class="search-bar">
-                <input type="text" id="searchInput" placeholder="Search by Room ID" oninput="searchTrustedList()">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search by Room ID or Name" oninput="searchTrustedList()">
             </div>
             <button class="add-trusted-btn" onclick="openAddTrustedModal()">Add Trusted User</button>
         </div>
