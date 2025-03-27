@@ -228,6 +228,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
-
-
-
