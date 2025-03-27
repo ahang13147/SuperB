@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Author: Zibang Nie
 Description: This Flask application provides functionality for sending various email notifications related to room bookings.
