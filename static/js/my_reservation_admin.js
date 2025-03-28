@@ -3,26 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('cancelModal');
     const closeModalBtn = document.getElementById('closeModal');
     const confirmCancelBtn = document.getElementById('confirmCancel');
-    const dateSearchInput = document.getElementById('dateSearchInput');
-    const clearDateSearch = document.getElementById('clearDateSearch');
 
-    // Initialize date picker
-    const datePicker = flatpickr("#dateSearchInput", {
-        dateFormat: "Y-m-d",
-        onChange: function(selectedDates, dateStr) {
-            if (dateStr) {
-                searchReservationsByDate(dateStr);
-            } else {
-                loadReservations();
-            }
-        }
-    });
-
-    // Clear date search
-    clearDateSearch.addEventListener('click', () => {
-        datePicker.clear();
-        loadReservations();
-    });
 
     // Show loading status
     function showLoading() {
@@ -44,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Render the reservation card function
     function renderReservation(reservation) {
         return `
-        <div class="reservation-card" data-reservation-id="${reservation.booking_id}" data-booking-date="${reservation.booking_date}">
+        <div class="reservation-card" data-reservation-id="${reservation.booking_id}">
             <div class="card-header">
                 <span class="room-tag" data-room-id="${reservation.room_id}">${reservation.room_name}</span>
                 <span class="status-indicator" data-status="${reservation.status}">
@@ -60,48 +41,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 `<button class="cancel-btn">Cancel Reservation</button>` :
                 `<button class="cancel-btn" disabled>Canceled</button>`}
         </div>
-        `;
+    `;
     }
 
-    // Search reservations by date
-    function searchReservationsByDate(date) {
-    // 清除旧提示
-    const oldMessages = document.querySelectorAll('.no-results');
-    oldMessages.forEach(msg => msg.remove());
-
-    const cards = document.querySelectorAll('.reservation-card');
-    let found = false;
-
-    cards.forEach(card => {
-        const bookingDate = card.dataset.bookingDate;
-        if (bookingDate === date) {
-            card.style.display = '';
-            found = true;
-        } else {
-            card.style.display = 'none';
-        }
-    });
-
-    // 只在没有结果时添加新提示
-    if (!found) {
-        const message = document.createElement('p');
-        message.className = 'no-results';
-        message.textContent = `No reservations found for ${date}`;
-        reservationsContainer.appendChild(message);
-    }
-}
-
-    // Get and display reservation information
+    // Get and display reservation information (field name alignment)
     async function loadReservations() {
         showLoading();
 
         try {
-            const response = await fetch(`http://localhost:8000/user-bookings`);
+            const response = await fetch(`https://www.diicsu.top:8000/user-bookings`);
             const { bookings } = await response.json();
 
             reservationsContainer.innerHTML = bookings
                 .map(reservation => renderReservation(reservation))
                 .join('');
+            document.querySelectorAll('.reservation-card').forEach(card => {
+                card.style.display = 'block'; 
+            });
 
             document.querySelectorAll('.cancel-btn').forEach(btn => {
                 btn.addEventListener('click', showCancelModal);
@@ -134,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const reservation = JSON.parse(modal.dataset.reservation);
 
         try {
-            const response = await fetch(`http://localhost:8000/cancel-booking/${reservation.booking_id}`, {
+            const response = await fetch(`https://www.diicsu.top:8000/cancel-booking/${reservation.booking_id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
             });
@@ -145,6 +101,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 card.querySelector('.status-indicator').style.backgroundColor = 'var(--danger-color)';
                 card.querySelector('.cancel-btn').disabled = true;
                 modal.style.display = 'none';
+                 // todo :add send email to user
+                const emailResponse = await fetch('https://www.diicsu.top:8000/send_email/cancelled_user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        booking_id: reservation.booking_id
+                    })
+                });
+                if (emailResponse.ok) {
+                    console.log('Cancellation email sent successfully.');
+                } else {
+                    console.error('Failed to send cancellation email.');
+                }
+
                 loadReservations();
             } else {
                 alert('Failed to cancel reservation');
@@ -155,30 +125,68 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Initial load
+    const dateSearchInput = flatpickr("#dateSearchInput", {
+        dateFormat: "Y-m-d",
+        onChange: function(selectedDates) {
+            filterReservationsByDate(selectedDates[0] || null);
+        }
+    });
+
+    function filterReservationsByDate(date) {
+        if (!date) { 
+            document.querySelectorAll('.reservation-card').forEach(card => {
+                card.style.display = 'block';
+            });
+            return;
+        }
+        
+        const targetDate = formatDate(date);
+        document.querySelectorAll('.reservation-card').forEach(card => {
+            const cardDate = card.querySelector('[data-booking-date]').dataset.bookingDate;
+            card.style.display = cardDate === targetDate ? 'block' : 'none';
+        });
+    }
+    // New date formatting tool function
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    document.getElementById('clearDateSearch').addEventListener('click', () => {
+        dateSearchInput.clear();
+        loadReservations();
+        document.querySelectorAll('.reservation-card').forEach(card => {
+            card.style.display = 'block';
+        });
+    });
+
     loadReservations();
+
 
     closeModalBtn.addEventListener('click', () => modal.style.display = 'none');
     window.addEventListener('click', (e) => e.target === modal && (modal.style.display = 'none'));
 });
 
-document.addEventListener('DOMContentLoaded', function () {
-    const hamburger = document.querySelector('.hamburger-menu');
-    const sidebar = document.querySelector('.sidebar');
+document.addEventListener('DOMContentLoaded', function() {
+  // Process menu group click
+  document.querySelectorAll('.group-header').forEach(header => {
+    header.addEventListener('click', function() {
+      const group = this.closest('.menu-group');
+      group.classList.toggle('active');
 
-    hamburger.addEventListener('click', function () {
-        sidebar.classList.toggle('active');
-    });
-
-    document.addEventListener('click', function (e) {
-        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
-            sidebar.classList.remove('active');
+      // Close other expanded menu groups
+      document.querySelectorAll('.menu-group').forEach(otherGroup => {
+        if (otherGroup !== group) {
+          otherGroup.classList.remove('active');
         }
+      });
     });
+  });
 
-    window.addEventListener('resize', function () {
-        if (window.innerWidth > 768) {
-            sidebar.classList.remove('active');
-        }
-    });
+  // Mobile burger menu switch
+  document.querySelector('.hamburger-menu').addEventListener('click', function() {
+    document.querySelector('.sidebar').classList.toggle('active');
+  });
 });

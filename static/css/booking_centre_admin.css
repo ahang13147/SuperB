@@ -138,7 +138,8 @@ h1 {
 }
 
 button {
-background-image: linear-gradient(to left, #48c5efc2 10%, #6f86d6 130%);
+    background:  #335797;
+/* background-image: linear-gradient(to left, #48c5efc2 10%, #6f86d6 130%); */
     color: white;
     border: none;
     padding: 10px 20px;
@@ -510,7 +511,6 @@ button:disabled {
     font-size: 0.9em;
 }
 
-/* 不可用状态样式 */
 .classroom-card[style*="opacity:0.6"] {
     position: relative;
 }
@@ -525,4 +525,13 @@ button:disabled {
     font-weight: bold;
     font-size: 1.5em;
     opacity: 1;
+}
+
+.time-slot-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.time-slot-disabled label {
+    color: #999;
 }

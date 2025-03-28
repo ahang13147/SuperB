@@ -5,7 +5,7 @@
     <title>DIICSU Intelligent Meeting Room Booking System</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/my_notification.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/userSidebar.css') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -30,6 +30,10 @@
                 <i class="fas fa-user-circle nav-icon"></i>
                 My Profile
             </a>
+            <a class="nav-item" href="javascript:void(0);" id="logout-btn">
+                <i class="fas fa-sign-out-alt nav-icon"></i>
+                Sign Out
+            </a> 
             <div class="sidebar-logo">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
             </div>
@@ -38,24 +42,24 @@
     <div class="container">
     <h1>Notification Center</h1>
 
-    <!-- 选项卡 -->
+    <!-- tabs -->
     <div class="notification-tabs">
         <button class="tab active" data-tab="system">System Notifications</button>
         <button class="tab" data-tab="personal">Personal Notifications</button>
     </div>
 
-    <!-- 系统通知面板 -->
+    <!-- System Notification Panel -->
     <div class="notification-panel system-panel active">
-        <!-- 动态加载系统通知 -->
+        
     </div>
 
-    <!-- 个人通知面板 -->
+    <!-- Personal Notification Panel -->
     <div class="notification-panel personal-panel">
-        <!-- 动态加载个人通知 -->
+        
     </div>
 </div>
 </div>
-
+    <script src="{{ url_for('static', filename='js/sign_off.js') }}"></script>
     <script src="{{ url_for('static', filename='js/my_notification.js') }}"></script>
 </body>
 </html>

@@ -1,16 +1,13 @@
-/* usage_report_center.css */
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 20px 20px 20px;
-    /* 左侧留出侧边栏空间 */
     background: #f5f9fc;
 }
 
 .container {
-    margin-left: 220px;
+    margin-left: 200px;
     padding: 20px;
-    min-width: calc(100% - 220px);
     box-sizing: border-box;
 }
 
@@ -56,13 +53,13 @@ body {
 
 .filter-input:focus {
     outline: none;
-    border-color: #a1c4fd;
+    border-color: #335797;
     box-shadow: 0 0 0 3px rgba(161, 196, 253, 0.2);
 }
 
 .filter-button {
     padding: 8px 20px;
-    background: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
+    background: #335797;
     color: white;
     border: none;
     border-radius: 6px;
@@ -102,7 +99,6 @@ body {
     gap: 20px;
 }
 
-/* 新版Top Rooms组件样式 */
 .component.top-rooms {
     padding: 20px;
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -164,13 +160,10 @@ body {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(161, 196, 253, 0.2);
     height: 100%;
-    /* 继承父容器高度 */
     max-height: 100%;
-    /* 防止超出容器 */
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    /* 隐藏溢出部分 */
 
 }
 
@@ -234,7 +227,6 @@ tr:hover {
     background-color: #f5f9ff;
 }
 
-/* 响应式调整 */
 @media (max-width: 1200px) {
     .container {
         margin-left: 200px;
@@ -247,11 +239,6 @@ tr:hover {
         margin-left: 0;
         padding: 15px;
         width: 100%;
-    }
-
-    .sidebar {
-        display: none;
-        /* 移动端隐藏侧边栏或改为响应式菜单 */
     }
 
     .grid-container {
@@ -270,24 +257,198 @@ h1 {
     font-size: 2.5em;
 }
 
-/* 添加可滚动容器 */
 .scrollable-container {
     height: 100%;
     overflow-y: auto;
     padding-right: 8px;
-    /* 防止滚动条覆盖内容 */
 }
 
-/* 表格容器特殊处理 */
 .table-container {
     height: calc(100% - 50px);
-    /* 减去表头高度 */
     margin-top: 10px;
 }
 
-/* 房间列表滚动 */
 .room-list {
     height: calc(100% - 40px);
-    /* 减去标题高度 */
     overflow-y: auto;
+}
+
+.select2-container--default .select2-selection--multiple {
+    min-height: 38px;
+    border: 1px solid #ced4da;
+}
+
+#exportModal .modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    background: #f8f9fa;
+}
+
+#exportModal .modal-header {
+    background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+    color: white;
+    border-radius: 12px 12px 0 0;
+    border-bottom: none;
+    padding: 1rem;
+}
+
+#exportModal .modal-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+    letter-spacing: 0.5px;
+}
+
+#exportModal .modal-body {
+    padding: 1.5rem;
+}
+
+#exportModal .form-check {
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+  margin: 4px 0;
+}
+
+#exportModal .form-check:hover {
+  background-color: rgba(161, 196, 253, 0.1);
+}
+
+#exportModal .form-check-label {
+  font-weight: 500;
+  color: #2c3e50;
+  margin-left: 8px;
+}
+
+#exportModal .form-check-input {
+  width: 1.2em;
+  height: 1.2em;
+  margin-top: 0.2em;
+}
+
+#exportModal .form-check-input:checked {
+  background-color: #335797;
+  border-color: #335797;
+}
+
+#exportModal .btn-primary {
+    background: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 25px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+#exportModal .btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(161, 196, 253, 0.4);
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 15px 10px;
+  }
+
+  .container {
+    margin-left: 0;
+    padding: 10px;
+    width: 100%;
+  }
+
+  .grid-top,
+  .grid-mid,
+  .grid-bottom {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto;
+    gap: 15px;
+  }
+
+  .filter-panel {
+    padding: 15px;
+    gap: 12px;
+  }
+
+  .filter-group {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .filter-input {
+    min-width: 100%;
+    flex: 1;
+  }
+
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 600px; 
+  }
+
+  .component {
+    padding: 15px;
+    height: auto;
+    min-height: 300px; 
+  }
+
+  .room-item {
+    padding: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .room-hours {
+    font-size: 1.1em;
+  }
+
+  .stat-item {
+    padding: 15px;
+    margin-top: 15px;
+  }
+
+  .stat-item p {
+    font-size: 1.3em;
+  }
+
+  h1 {
+    font-size: 1.8em;
+    margin-bottom: 20px;
+  }
+
+  #exportModal .modal-dialog {
+    margin: 10px;
+  }
+
+  #exportModal .modal-content {
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-button {
+    width: 100%;
+    padding: 12px 20px;
+  }
+
+  .room-name {
+    font-size: 0.95em;
+  }
+
+  .room-type {
+    font-size: 0.8em;
+  }
+
+  .component-header {
+    font-size: 0.9em;
+  }
+
+  th, td {
+    padding: 8px;
+    font-size: 0.9em;
+  }
 }

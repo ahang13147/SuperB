@@ -3,7 +3,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('cancelModal');
     const closeModalBtn = document.getElementById('closeModal');
     const confirmCancelBtn = document.getElementById('confirmCancel');
+    const infoModal = document.getElementById('infoModal');
+    const closeInfoModal = document.getElementById('closeInfoModal');
+    const infoModalMessage = document.getElementById('infoModalMessage');
 
+
+    
     // Show loading status
     function showLoading() {
         reservationsContainer.innerHTML = `
@@ -22,56 +27,59 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Render the reservation card function
-    function renderReservation(reservation) {
-        return `
-        <div class="reservation-card" data-reservation-id="${reservation.booking_id}">
-            <div class="reservation-info">
-                <label>User ID:</label>
-                <span data-user-id="${reservation.user_id}">${reservation.user_id}</span>
-            </div>
-            <div class="reservation-info">
-                <label>User Name:</label>
-                <span data-username="${reservation.username}">${reservation.username}</span>
-            </div>
-            <div class="reservation-info">
-                <label>Date:</label>
-                <span data-date="${reservation.booking_date}">${reservation.booking_date}</span>
-            </div>
-            <div class="reservation-info">
-                <label>Time:</label>
-                <span data-time="${reservation.start_time} - ${reservation.end_time}">${reservation.start_time} - ${reservation.end_time}</span>
-            </div>
-            <div class="reservation-info">
-                <label>Room:</label>
-                <span data-room="${reservation.room_name}">${reservation.room_name}</span>
-            </div>
-            <span class="status-indicator" data-status="${reservation.status}">${reservation.status}</span>
-            <div class="reservation-info">
-                <label>Reason:</label>
-                <span data-reason="${reservation.reason || 'No reason provided'}">${reservation.reason || 'No reason provided'}</span>
-            </div>
-            <button class="cancel-btn">Cancel Reservation</button>
+function renderReservation(reservation) {
+    return `
+    <div class="reservation-card" data-reservation-id="${reservation.booking_id}">
+        <div class="reservation-info">
+            <label>User ID:</label>
+            <span data-user-id="${reservation.user_id}">${reservation.user_id}</span>
         </div>
-        `;
-    }
+        <div class="reservation-info">
+            <label>User Name:</label>
+            <span data-username="${reservation.username}">${reservation.username}</span>
+        </div>
+        <div class="reservation-info">
+            <label>Date:</label>
+            <span data-date="${reservation.booking_date}">${reservation.booking_date}</span>
+        </div>
+        <div class="reservation-info">
+            <label>Time:</label>
+            <span data-time="${reservation.start_time} - ${reservation.end_time}">${reservation.start_time} - ${reservation.end_time}</span>
+        </div>
+        <div class="reservation-info">
+            <label>Room:</label>
+            <span data-room="${reservation.room_name}">${reservation.room_name}</span>
+        </div>
+        <span class="status-indicator" data-status="${reservation.status.toLowerCase()}">${reservation.status}</span>
+        <div class="reservation-info">
+            <label>Reason:</label>
+            <span data-reason="${reservation.reason || 'No reason provided'}">${reservation.reason || 'No reason provided'}</span>
+        </div>
+        <button class="cancel-btn">Cancel Reservation</button>
+    </div>
+    `;
+}
 
-    // Search function
-    function searchReservations() {
-        const searchTerm = document.getElementById('searchReservationInput').value.toLowerCase();
-        const cards = document.querySelectorAll('.reservation-card');
+     // Search function with status filter
+function searchReservations() {
+    const searchTerm = document.getElementById('searchReservationInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+    const cards = document.querySelectorAll('.reservation-card');
 
-        cards.forEach(card => {
-            const userId = card.querySelector('[data-user-id]').textContent.toLowerCase();
-            const userName = card.querySelector('[data-username]').textContent.toLowerCase();
-            const roomName = card.querySelector('[data-room]').textContent.toLowerCase();
+    cards.forEach(card => {
+        const userId = card.querySelector('[data-user-id]')?.textContent?.toLowerCase() || '';
+        const userName = card.querySelector('[data-username]')?.textContent?.toLowerCase() || '';
+        const roomName = card.querySelector('[data-room]')?.textContent?.toLowerCase() || '';
+        const cardStatus = card.querySelector('.status-indicator')?.dataset?.status?.toLowerCase() || '';
 
-            if (userId.includes(searchTerm) || userName.includes(searchTerm) || roomName.includes(searchTerm)) {
-                card.style.display = '';
-            } else {
-                card.style.display = 'none';
-            }
-        });
-    }
+        const matchesSearch = userId.includes(searchTerm) ||
+                            userName.includes(searchTerm) ||
+                            roomName.includes(searchTerm);
+        const matchesStatus = !statusFilter || cardStatus === statusFilter;
+
+        card.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+    });
+}
 
     // Check if a booking is in the future
     function isBookingInFuture(booking) {
@@ -85,9 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoading();
 
         try {
-            const response = await fetch(`http://localhost:8000/bookings`);
+            const response = await fetch(`https://www.diicsu.top:8000/bookings`);
             const { bookings } = await response.json();
-
             reservationsContainer.innerHTML = bookings
                 .map(reservation => renderReservation(reservation))
                 .join('');
@@ -95,6 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.cancel-btn').forEach(btn => {
                 btn.addEventListener('click', showCancelModal);
             });
+
+            searchReservations();
 
         } catch (error) {
             console.error('Error:', error);
@@ -106,6 +115,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showCancelModal(e) {
         const card = e.target.closest('.reservation-card');
+        const status = card.querySelector('.status-indicator').dataset.status.toLowerCase();
+        
+        // Only allow cancellation for approved and changed statuses
+        if (status !== 'approved' && status !== 'changed') {
+            infoModalMessage.textContent = `This booking is ${status} and cannot be canceled. Only approved or changed bookings can be canceled.`;
+            infoModal.style.display = 'flex';
+            return;
+        }
+
         const reservationData = {
             booking_id: card.dataset.reservationId,
             booking_date: card.querySelector('[data-date]').dataset.date,
@@ -119,61 +137,104 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.dataset.reservation = JSON.stringify(reservationData);
         modal.style.display = 'flex';
     }
-
-    confirmCancelBtn.addEventListener('click', async () => {
-        const reservation = JSON.parse(modal.dataset.reservation);
-
-        try {
-            const response = await fetch(
-                `http://localhost:8000/cancel-booking/${reservation.booking_id}`,
-                {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                }
-            );
-
-            if (response.ok) {
-                const card = document.querySelector(`[data-reservation-id="${reservation.booking_id}"]`);
-                card.querySelector('.status-indicator').textContent = 'canceled';
-                card.querySelector('.status-indicator').style.backgroundColor = 'var(--danger-color)';
-                card.querySelector('.cancel-btn').disabled = true;
-                modal.style.display = 'none';
-                loadReservations();
-            } else {
-                alert('Failed to cancel reservation');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('An error occurred');
+    // Added the ability to click external to close the mode box
+    window.addEventListener('click', (e) => {
+        if (e.target === infoModal) {
+            infoModal.style.display = 'none';
         }
     });
 
-    // 将搜索函数暴露到全局作用域
+    confirmCancelBtn.addEventListener('click', async () => {
+      const reservation = JSON.parse(modal.dataset.reservation);
+
+      try {
+        // Construct the URL correctly: Insert booking_id using a template string
+        const response = await fetch(
+          `https://www.diicsu.top:8000/cancel-booking/${reservation.booking_id}`, // Remove redundant symbols and insert variables
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+
+        // The subsequent logic remains unchanged
+        if (response.ok) {
+          const card = document.querySelector(`[data-reservation-id="${reservation.booking_id}"]`);
+          card.querySelector('.status-indicator').textContent = 'canceled';
+          card.querySelector('.status-indicator').style.backgroundColor = 'var(--danger-color)';
+          card.querySelector('.cancel-btn').disabled = true;
+          modal.style.display = 'none';
+          loadReservations();
+        } else {
+          alert('Failed to cancel reservation');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred');
+      }
+    });
+
+     // Expose search function to global scope
     window.searchReservations = searchReservations;
 
     loadReservations();
 
     closeModalBtn.addEventListener('click', () => modal.style.display = 'none');
     window.addEventListener('click', (e) => e.target === modal && (modal.style.display = 'none'));
+    closeInfoModal.addEventListener('click', () => {
+        infoModal.style.display = 'none';
+    });
+
+    const searchInput = document.getElementById('searchReservationInput');
+    const statusFilter = document.getElementById('statusFilter');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', searchReservations);
+    }
+    
+    if (statusFilter) {
+        statusFilter.addEventListener('change', searchReservations);
+    }
 });
 
+
+
 document.addEventListener('DOMContentLoaded', function() {
-    const hamburger = document.querySelector('.hamburger-menu');
-    const sidebar = document.querySelector('.sidebar');
+  // Process menu group click
+  document.querySelectorAll('.group-header').forEach(header => {
+    header.addEventListener('click', function() {
+      const group = this.closest('.menu-group');
+      group.classList.toggle('active');
 
-    hamburger.addEventListener('click', function() {
-        sidebar.classList.toggle('active');
-    });
-
-    document.addEventListener('click', function(e) {
-        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
-            sidebar.classList.remove('active');
+      // Close other expanded menu groups
+      document.querySelectorAll('.menu-group').forEach(otherGroup => {
+        if (otherGroup !== group) {
+          otherGroup.classList.remove('active');
         }
+      });
     });
+  });
 
-    window.addEventListener('resize', function() {
-        if (window.innerWidth > 768) {
-            sidebar.classList.remove('active');
-        }
-    });
+  // Mobile burger menu switch
+  const hamburger = document.querySelector('.hamburger-menu');
+  const sidebar = document.querySelector('.sidebar');
+
+  hamburger.addEventListener('click', function(e) {
+    e.stopPropagation(); 
+    sidebar.classList.toggle('active');
+  });
+
+  // Click outside to close the sidebar
+  document.addEventListener('click', function(e) {
+    if (sidebar.classList.contains('active') &&
+        !e.target.closest('.sidebar') &&
+        !e.target.closest('.hamburger-menu')) {
+      sidebar.classList.remove('active');
+    }
+  });
+
+  // Prevents clicking inside the sidebar from triggering closure
+  sidebar.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
 });

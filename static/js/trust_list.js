@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'https://www.diicsu.top:8000';
 const ENDPOINTS = {
     GET_ALL: '/get_room_trusted_users',
     ADD: '/insert_trusted_user',
@@ -99,14 +99,18 @@ async function addTrustedUser() {
         });
 
         const result = await response.json();
-        if (!response.ok) throw new Error(result.message);
+        if (!response.ok) throw new Error(result.error);
 
         showSuccessModal('User added successfully!');
         closeAddTrustedModal();
         clearForm();
         await loadData();
     } catch (error) {
-        showNotification(error.message, 'error');
+          // 打印到控制台
+        console.error('Error:', error);
+
+        // 弹出错误提示框
+        alert(`Failed to add trusted user: ${error.message}`);
     }
 }
 
@@ -189,23 +193,45 @@ function showSuccessModal(message) {
     }, 3000);
 }
 
+
+
 document.addEventListener('DOMContentLoaded', function() {
+    // 处理菜单分组点击
+    document.querySelectorAll('.group-header').forEach(header => {
+        header.addEventListener('click', function() {
+            const group = this.closest('.menu-group');
+            group.classList.toggle('active');
+
+            // 关闭其他展开的菜单组
+            document.querySelectorAll('.menu-group').forEach(otherGroup => {
+                if (otherGroup !== group) {
+                    otherGroup.classList.remove('active');
+                }
+            });
+        });
+    });
+
+    // 移动端汉堡菜单切换
     const hamburger = document.querySelector('.hamburger-menu');
     const sidebar = document.querySelector('.sidebar');
 
-    hamburger.addEventListener('click', function() {
+    hamburger.addEventListener('click', function(e) {
+        e.stopPropagation();
         sidebar.classList.toggle('active');
     });
 
+    // 点击外部关闭侧边栏
     document.addEventListener('click', function(e) {
-        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+        if (sidebar.classList.contains('active') &&
+            !e.target.closest('.sidebar') &&
+            !e.target.closest('.hamburger-menu')) {
             sidebar.classList.remove('active');
         }
     });
 
-    window.addEventListener('resize', function() {
-        if (window.innerWidth > 768) {
-            sidebar.classList.remove('active');
-        }
+    // 防止侧边栏内部点击触发关闭
+    sidebar.addEventListener('click', function(e) {
+        e.stopPropagation();
     });
 });
+

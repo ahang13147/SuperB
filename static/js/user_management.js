@@ -144,14 +144,44 @@ function saveEdit() {
         });
 }
 
-// 删除用户（预留接口）
-function deleteUser(userId) {
-    if (confirm('Are you sure you want to delete this user?')) {
-        // 预留删除接口调用
-        console.log('Delete user ID:', userId);
-        alert('Delete functionality not implemented yet');
+// // 删除用户（预留接口）
+// function deleteUser(userId) {
+//     if (confirm('Are you sure you want to delete this user?')) {
+//         // 预留删除接口调用
+//         console.log('Delete user ID:', userId);
+//         alert('Delete functionality not implemented yet');
+//     }
+// }
+
+    // 删除用户
+    function deleteUser(userId) {
+        if (confirm('Are you sure you want to delete this user?')) {
+            // 发送请求到后端删除用户
+            fetch('https://www.diicsu.top:8000/delete/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId })  // 传递用户ID
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message === "Deletion successful.") {
+                    // 删除成功后，移除页面中的用户行
+                    const row = document.querySelector(`[data-user-id="${userId}"]`);
+                    if (row) {
+                        row.remove(); // 移除该行
+                    }
+                    alert('User deleted successfully.');
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the user.');
+            });
+        }
     }
-}
+
 
 // 实时过滤用户
 function filterUsers(searchTerm) {
@@ -161,3 +191,43 @@ function filterUsers(searchTerm) {
         row.style.display = text.includes(searchTerm) ? '' : 'none';
     });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+  // 处理菜单分组点击
+  document.querySelectorAll('.group-header').forEach(header => {
+    header.addEventListener('click', function() {
+      const group = this.closest('.menu-group');
+      group.classList.toggle('active');
+
+      // 关闭其他展开的菜单组
+      document.querySelectorAll('.menu-group').forEach(otherGroup => {
+        if (otherGroup !== group) {
+          otherGroup.classList.remove('active');
+        }
+      });
+    });
+  });
+
+  // 移动端汉堡菜单切换
+  const hamburger = document.querySelector('.hamburger-menu');
+  const sidebar = document.querySelector('.sidebar');
+
+  hamburger.addEventListener('click', function(e) {
+    e.stopPropagation(); // 防止点击汉堡菜单触发下面的 document 点击事件
+    sidebar.classList.toggle('active');
+  });
+
+  // 点击外部关闭侧边栏
+  document.addEventListener('click', function(e) {
+    if (sidebar.classList.contains('active') &&
+        !e.target.closest('.sidebar') &&
+        !e.target.closest('.hamburger-menu')) {
+      sidebar.classList.remove('active');
+    }
+  });
+
+  // 防止侧边栏内部点击触发关闭
+  sidebar.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
+});

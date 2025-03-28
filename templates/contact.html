@@ -3,24 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>联系客服悬浮窗</title>
+    <title>Contact customer service floating window</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/contact.css') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="{{ url_for('static', filename='js/contact.js') }}"></script>
 </head>
 <body>
-    <!-- 悬浮球 -->
-    <div class="floating-button" id="floatingButton">
-        <i class="fas fa-headset"></i> <!-- 客服图标 -->
+    <!-- floating-button -->
+    <div class="contact-floating-button" id="contact-floatingButton">
+        <i class="fas fa-headset"></i> 
     </div>
-
-    <!-- 弹窗和遮罩 -->
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="modal-content">
+    <!-- Pop-ups and Masks -->
+    <div class="contact-modal-overlay" id="contact-modalOverlay">
+        <div class="contact-modal-content">
             <h2>Contact with admin</h2>
-            <textarea id="userInput" rows="4" placeholder="Enter your message here..."></textarea>
+            <textarea id="contact-userInput" rows="4" placeholder="Enter your message here..."></textarea>
             <div class="button-container">
-                <button class="submit-button" id="submitButton">Submit</button>
+                <button class="contact-submit-button" id="contact-submitButton">Submit</button>
             </div>
         </div>
     </div>

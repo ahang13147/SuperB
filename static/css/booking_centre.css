@@ -8,9 +8,6 @@ body {
     background-color: #f5f5f5;
 }
 
-.container {
-    /* max-width: 1200px; */
-}
 
 .content-area {
     flex: 1;
@@ -138,7 +135,7 @@ h1 {
 }
 
 button {
-background-image: linear-gradient(to left, #48c5efc2 10%, #6f86d6 130%);
+    background: #335797;
     color: white;
     border: none;
     padding: 10px 20px;
@@ -184,7 +181,7 @@ button:disabled {
 .modal {
     display: none;
     position: fixed;
-    z-index: 1400;
+    z-index: 2400;
     left: 0;
     top: 0;
     width: 100%;
@@ -306,12 +303,6 @@ button:disabled {
     align-items: center !important;
 
 }
-
-/* #confirmBooking:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
-    position: relative;
-} */
 
 #confirmBooking:focus {
     outline: none;
@@ -477,16 +468,6 @@ button:disabled {
     box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 }
 
-/* #submitReason:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
-} */
-
-/* #submitReason:active {
-    position: relative;
-    transform: translateY(0);
-    box-shadow: 0 2px 6px rgba(52, 152, 219, 0.3);
-} */
 
 .close-reason {
     color: #6c757d;
@@ -511,7 +492,6 @@ button:disabled {
     font-size: 0.9em;
 }
 
-/* 不可用状态样式 */
 .classroom-card[style*="opacity:0.6"] {
     position: relative;
 }
@@ -526,4 +506,13 @@ button:disabled {
     font-weight: bold;
     font-size: 1.5em;
     opacity: 1;
+}
+
+.time-slot-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.time-slot-disabled label {
+    color: #999;
 }

@@ -8,83 +8,127 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
-    <!-- 自定义 CSS -->
+    <!-- user-defined CSS -->
     <link rel="stylesheet" href="../static/css/user_management.css">
     <link rel="stylesheet" href="../static/css/sidebar.css">
 
 </head>
 <body>
-        <div class="sidebar">
-        
-            <a class="nav-item" href="{{ url_for('booking_centre_admin') }}">
-                <i class="fas fa-calendar-alt nav-icon"></i>
-                Booking Center
-            </a>
-            <a class="nav-item" href="{{ url_for('my_reservation_admin') }}">
-                <i class="fas fa-list-ul nav-icon"></i>
-                My Bookings
-            </a>
-            <a class="nav-item" href="{{ url_for('Approval_Center') }}">
-                <i class="fas fa-check-circle nav-icon"></i>
-                Approval Management
-            </a>
-            <a class="nav-item" href="{{ url_for('cancel_reservation') }}">
-                <i class="fas fa-calendar-times nav-icon"></i>
-                Cancel Reservation
-            </a>
-            <a class="nav-item" href="{{ url_for('room_management') }}">
-                <i class="fas fa-door-open nav-icon"></i>
-                Room Management
-            </a>
-            <a class="nav-item" href="{{ url_for('room_issue_management') }}">
-                <i class="fas fa-tools nav-icon"></i>
-                Room Issue Management
-            </a>
-          <a class="nav-item active" href="{{ url_for('user_management') }}">
-            <i class="fas fa-users nav-icon"></i>
-            User Management
-          </a>
-            <a class="nav-item" href="{{ url_for('notice_admin') }}">
-                <i class="fas fa-bell nav-icon"></i>
-                Notifications
-            </a>
-            <a class="nav-item" href="{{ url_for('blacklist') }}">
-                <i class="fas fa-ban nav-icon"></i>
-                Black List
-            </a>
-            <a class="nav-item" href="{{ url_for('trust_list') }}">
-                <i class="fas fa-shield-alt nav-icon"></i>
-                Trust List
-            </a>
-            <a class="nav-item" href="{{ url_for('my_profile_admin') }}">
-                <i class="fas fa-user-circle nav-icon"></i>
-                My Profile
-            </a>
-            <a class="nav-item" href="{{ url_for('usage_report_center') }}">
-                <i class="fas fa-chart-line nav-icon"></i>
-                Usage Report Center
-            </a>
-            <div class="sidebar-logo">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
-            </div>
-        </div>
+<div class="hamburger-menu">
+        <i class="fas fa-bars"></i>
+ </div>
+    <div class="main-container">
+ <div class="sidebar">
+  <div class="nav-menu">
+    <!-- Group 1: Reservation management -->
+    <div class="menu-group">
+      <div class="group-header">
+        <span>Booking Management</span>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="group-items">
+        <a class="nav-item" href="{{ url_for('booking_centre_admin') }}">
+          <i class="fas fa-calendar-alt nav-icon"></i>
+          Booking Center
+        </a >
+        <a class="nav-item" href="{{ url_for('my_reservation_admin') }}">
+          <i class="fas fa-list-ul nav-icon"></i>
+          My Bookings
+        </a >
+        <a class="nav-item" href="{{ url_for('Approval_Center') }}">
+          <i class="fas fa-check-circle nav-icon"></i>
+          Approval Management
+        </a >
+        <a class="nav-item" href="{{ url_for('cancel_reservation') }}">
+          <i class="fas fa-calendar-times nav-icon"></i>
+          Cancel Reservation
+        </a >
+      </div>
+    </div>
+
+    <!-- Group 2: Room management -->
+    <div class="menu-group">
+      <div class="group-header">
+        <span>Room Management</span>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="group-items">
+        <a class="nav-item" href="{{ url_for('room_management') }}">
+          <i class="fas fa-door-open nav-icon"></i>
+          Room Management
+        </a >
+        <a class="nav-item" href="{{ url_for('room_issue_management') }}">
+          <i class="fas fa-tools nav-icon"></i>
+          Room Issue Management
+        </a >
+      </div>
+    </div>
+
+    <!-- Group 3: User management -->
+    <div class="menu-group">
+      <div class="group-header">
+        <span>User Management</span>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="group-items">
+        <a class="nav-item" href="{{ url_for('blacklist') }}">
+          <i class="fas fa-ban nav-icon"></i>
+          Black List
+        </a >
+        <a class="nav-item" href="{{ url_for('trust_list') }}">
+          <i class="fas fa-shield-alt nav-icon"></i>
+          Trust List
+        </a >
+        <a class="nav-item" href="{{ url_for('user_management') }}">
+          <i class="fas fa-users nav-icon"></i>
+          User Management
+        </a >
+      </div>
+    </div>
+
+    <!-- Other independent menu items -->
+    <div class="menu-group">
+      <a class="nav-item" href="{{ url_for('notice_admin') }}">
+        <i class="fas fa-bell nav-icon"></i>
+        Notifications
+      </a >
+      <a class="nav-item" href="{{ url_for('usage_report_center') }}">
+        <i class="fas fa-chart-bar nav-icon"></i>
+        Usage Report
+      </a >
+     <a class="nav-item" href="{{ url_for('my_profile_admin') }}">
+        <i class="fas fa-user-circle nav-icon"></i>
+        My profile
+      </a >
+    <a class="nav-item" href="javascript:void(0);" id="logout-btn">
+        <i class="fas fa-sign-out-alt nav-icon"></i>
+        Sign Out
+    </a> 
+    </div>
+  </div>
+
+  <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+  </div>
+</div>
+
     <div class="content-area">
 
         <div class="container mt-5">
             <h1 class="text-center mb-4" style="color: #2c3e50;">User Management</h1>
 
             
-            <!-- 用户列表的卡片 -->
+            <!-- user list -->
             <div class="card mt-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title mb-0">Users List</h3>
             
                     <div class="d-flex align-items-center">
-                        <!-- 搜索框前置 -->
+                        <!-- search box -->
                         <div class="search-box me-2 flex-grow-1">
                             <input type="text" class="form-control" placeholder="Search by ID, Name, or Role">
                         </div>
-                        <!-- 触发按钮 -->
+                        <!-- trigger button -->
                         <button type="button" class="btn btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#addUserModal">
                             Add User
                         </button>
@@ -104,14 +148,14 @@
                                 </tr>
                             </thead>
                             <tbody id="usersTableBody">
-                                <!-- 动态添加用户行 -->
+                                <!-- Add user rows dynamically -->
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-        <!-- 添加用户的弹窗 -->
+        <!--Add a popup for the user-->
         <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -152,7 +196,7 @@
             </div>
         </div>
 
-        <!-- 编辑模态框 -->
+        <!-- edit model -->
         <div class="modal fade" id="editModal">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -198,7 +242,8 @@
     <!-- Bootstrap JS and dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
-    <!-- 自定义 JavaScript -->
+    <!-- user-defined JavaScript -->
+    <script src="{{ url_for('static', filename='js/sign_off.js') }}"></script>
     <script src="../static/js/user_management.js"></script>
 </div>
 </body>

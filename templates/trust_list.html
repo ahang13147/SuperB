@@ -10,54 +10,103 @@
 </head>
 <body>
 <div class="hamburger-menu">
-    <i class="fas fa-bars"></i>
-</div>
-<div class="main-container">
-    <div class="sidebar">
+        <i class="fas fa-bars"></i>
+ </div>
+<!-- <div class="main-container"> -->
+ <div class="sidebar">
+  <div class="nav-menu">
+    <!-- Reservation management -->
+    <div class="menu-group">
+      <div class="group-header">
+        <span>Booking Management</span>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="group-items">
         <a class="nav-item" href="{{ url_for('booking_centre_admin') }}">
-            <i class="fas fa-calendar-alt nav-icon"></i>
-            Booking Center
-        </a>
+          <i class="fas fa-calendar-alt nav-icon"></i>
+          Booking Center
+        </a >
         <a class="nav-item" href="{{ url_for('my_reservation_admin') }}">
-            <i class="fas fa-list-ul nav-icon"></i>
-            My Bookings
-        </a>
+          <i class="fas fa-list-ul nav-icon"></i>
+          My Bookings
+        </a >
         <a class="nav-item" href="{{ url_for('Approval_Center') }}">
-            <i class="fas fa-check-circle nav-icon"></i>
-            Approval Management
-        </a>
+          <i class="fas fa-check-circle nav-icon"></i>
+          Approval Management
+        </a >
         <a class="nav-item" href="{{ url_for('cancel_reservation') }}">
-            <i class="fas fa-calendar-times nav-icon"></i>
-            Cancel Reservation
-        </a>
-        <a class="nav-item" href="{{ url_for('room_management') }}">
-            <i class="fas fa-door-open nav-icon"></i>
-            Room Management
-        </a>
-        <a class="nav-item" href="{{ url_for('room_issue_management') }}">
-            <i class="fas fa-tools nav-icon"></i>
-            Room Issue Management
-        </a>
-        <a class="nav-item" href="{{ url_for('notice_admin') }}">
-            <i class="fas fa-bell nav-icon"></i>
-            Notifications
-        </a>
-        <a class="nav-item" href="{{ url_for('blacklist') }}">
-            <i class="fas fa-ban nav-icon"></i>
-            Black List
-        </a>
-        <a class="nav-item active" href="{{ url_for('trust_list') }}">
-            <i class="fas fa-shield-alt nav-icon"></i>
-            Trust List
-        </a>
-        <a class="nav-item" href="{{ url_for('my_profile_admin') }}">
-            <i class="fas fa-user-circle nav-icon"></i>
-            My Profile
-        </a>
-        <div class="sidebar-logo">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
-        </div>
+          <i class="fas fa-calendar-times nav-icon"></i>
+          Cancel Reservation
+        </a >
+      </div>
     </div>
+
+    <!-- Room management -->
+    <div class="menu-group">
+      <div class="group-header">
+        <span>Room Management</span>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="group-items">
+        <a class="nav-item" href="{{ url_for('room_management') }}">
+          <i class="fas fa-door-open nav-icon"></i>
+          Room Management
+        </a >
+        <a class="nav-item" href="{{ url_for('room_issue_management') }}">
+          <i class="fas fa-tools nav-icon"></i>
+          Room Issue Management
+        </a >
+      </div>
+    </div>
+
+    <!-- User management -->
+    <div class="menu-group">
+      <div class="group-header">
+        <span>User Management</span>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="group-items">
+        <a class="nav-item" href="{{ url_for('blacklist') }}">
+          <i class="fas fa-ban nav-icon"></i>
+          Black List
+        </a >
+        <a class="nav-item active" href="{{ url_for('trust_list') }}">
+          <i class="fas fa-shield-alt nav-icon"></i>
+          Trust List
+        </a >
+        <a class="nav-item" href="{{ url_for('user_management') }}">
+          <i class="fas fa-users nav-icon"></i>
+          User Management
+        </a >
+      </div>
+    </div>
+
+    <!-- Others -->
+    <div class="menu-group">
+      <a class="nav-item" href="{{ url_for('notice_admin') }}">
+        <i class="fas fa-bell nav-icon"></i>
+        Notifications
+      </a >
+      <a class="nav-item" href="{{ url_for('usage_report_center') }}">
+        <i class="fas fa-chart-bar nav-icon"></i>
+        Usage Report
+      </a >
+     <a class="nav-item" href="{{ url_for('my_profile_admin') }}">
+        <i class="fas fa-user-circle nav-icon"></i>
+        My profile
+      </a >
+    <a class="nav-item" href="javascript:void(0);" id="logout-btn">
+        <i class="fas fa-sign-out-alt nav-icon"></i>
+        Sign Out
+    </a> 
+    </div>
+  </div>
+
+  <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+  </div>
+</div>
+
     <div class="content-area">
         <h1>Trusted List Management</h1>
 
@@ -74,7 +123,7 @@
             <!-- Dynamically loaded content -->
         </div>
     </div>
-</div>
+<!-- </div> -->
 
 <!-- Add Trusted User Modal -->
 <div id="addTrustedModal" class="modal">
@@ -97,7 +146,7 @@
         <p id="successMessage"></p>
     </div>
 </div>
-
+    <script src="{{ url_for('static', filename='js/sign_off.js') }}"></script>
 <script src="{{ url_for('static', filename='js/trust_list.js') }}"></script>
 </body>
 </html>

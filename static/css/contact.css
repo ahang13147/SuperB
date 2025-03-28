@@ -1,17 +1,15 @@
-/* 基础样式 */
 body {
     margin: 0;
     font-family: Arial, sans-serif;
 }
 
-/* 悬浮球 */
-.floating-button {
+.contact-floating-button {
     position: fixed;
     bottom: 30px;
     right: 30px;
     width: 60px;
     height: 60px;
-    background: linear-gradient(135deg, #007BFF, #00BFFF); /* 蓝色渐变 */
+    background: linear-gradient(135deg, #007BFF, #00BFFF); 
     color: white;
     border-radius: 50%;
     display: flex;
@@ -19,23 +17,23 @@ body {
     justify-content: center;
     cursor: pointer;
     box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-    animation: float 3s ease-in-out infinite;
+    animation: contact-float 3s ease-in-out infinite;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     z-index: 2000;
 }
 
-.floating-button span {
+.contact-floating-button span {
     font-size: 16px;
     font-weight: bold;
 }
 
-.floating-button:hover {
+.contact-floating-button:hover {
     transform: scale(1.1);
     box-shadow: 0 6px 20px rgba(0, 123, 255, 0.5);
 }
 
-/* 悬浮球浮动动画 */
-@keyframes float {
+
+@keyframes contact-float {
     0%, 100% {
         transform: translateY(0);
     }
@@ -44,8 +42,7 @@ body {
     }
 }
 
-/* 遮罩层 */
-.modal-overlay {
+.contact-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -60,13 +57,12 @@ body {
     z-index: 3000;
 }
 
-.modal-overlay.active {
+.contact-modal-overlay.active {
     display: flex;
     opacity: 1;
 }
 
-/* 弹窗内容 */
-.modal-content {
+.contact-modal-content {
     background: white;
     padding: 20px;
     border-radius: 10px;
@@ -79,18 +75,17 @@ body {
     z-index: 4000;
 }
 
-.modal-overlay.active .modal-content {
+.contact-modal-overlay.active .contact-modal-content {
     transform: scale(1);
     opacity: 1;
 }
 
-.modal-content h2 {
+.contact-modal-content h2 {
     margin-top: 0;
     color: #007BFF;
 }
 
-/* 输入框 */
-#userInput {
+#contact-userInput {
     width: 100%;
     padding: 10px;
     margin: 10px 0;
@@ -99,12 +94,11 @@ body {
     resize: vertical;
 }
 
-textarea#userInput {
+textarea#contact-userInput {
     margin-bottom: 30px;
 }
 
-/* 提交按钮 */
-.submit-button {
+.contact-submit-button {
     color: white;
     border: none;
     padding: 10px 20px;
@@ -114,12 +108,11 @@ textarea#userInput {
     margin-top: 20px;
 }
 
-.submit-button:hover {
+.contact-submit-button:hover {
     background: #0056b3;
 }
 
-/* 关闭按钮 */
-.close-button {
+.contact-close-button {
     background: #ccc;
     color: white;
     border: none;
@@ -130,16 +123,16 @@ textarea#userInput {
     margin-left: 10px;
 }
 
-.close-button:hover {
+.contact-close-button:hover {
     background: #999;
 }
 
-.submit-button{
+.contact-submit-button {
     padding: 10px;
 }
 
-/* 悬浮球图标 */
-.floating-button i {
-    font-size: 32px; /* 调整图标大小 */
-    color: white; /* 图标颜色 */
+.contact-floating-button i {
+    font-size: 32px;
+    color: white;
 }
+

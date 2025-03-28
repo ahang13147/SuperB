@@ -1,4 +1,3 @@
-/* Base Styles */
 body {
   font-family: "Comic Sans MS", cursive, sans-serif;
   background: linear-gradient(135deg, #f9f9f9, #e0e0e0);
@@ -19,7 +18,6 @@ body {
   position: relative;
 }
 
-/* Animated Lock */
 .animated-lock {
   font-size: 3rem;
   animation: swing 2s infinite;
@@ -30,14 +28,12 @@ body {
   50% { transform: rotate(10deg); }
 }
 
-/* Title */
 h1 {
   font-size: 2rem;
   color: #ff4757;
   margin-bottom: 1.5rem;
 }
 
-/* Reason for Ban */
 .reason-bubble {
   background: #f8f9fa;
   padding: 1rem;
@@ -63,7 +59,6 @@ h1 {
   color: #666;
 }
 
-/* Ban Duration */
 .sentence-clock {
   display: flex;
   align-items: center;
@@ -82,7 +77,6 @@ h1 {
   50% { transform: rotate(180deg); }
 }
 
-/* Fun Button */
 .apology-button {
   background: #ff4757;
   color: white;
@@ -98,7 +92,6 @@ h1 {
   background: #ff6b81;
 }
 
-/* Shake Animation */
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-5px); }
