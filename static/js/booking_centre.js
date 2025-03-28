@@ -40,6 +40,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         timeSlots.forEach(slot => {
             const [start, end] = slot.split('-');
             elements.startSelect.innerHTML += `<option value="${start}">${start}</option>`;
+        });
+
+        // Add event listener to start time selector
+        elements.startSelect.addEventListener('change', function() {
+            const selectedStartTime = this.value;
+            elements.endSelect.innerHTML = '<option value="">Select end time</option>';
+            
+            if (selectedStartTime) {
+                // Find the index of the selected start time
+                const startIndex = timeSlots.findIndex(slot => slot.startsWith(selectedStartTime));
+                
+                // Only show end times that are after the selected start time
+                if (startIndex >= 0) {
+                    for (let i = startIndex; i < timeSlots.length; i++) {
+                        const [_, endTime] = timeSlots[i].split('-');
+                        elements.endSelect.innerHTML += `<option value="${endTime}">${endTime}</option>`;
+                    }
+                }
+            } else {
+                // If no start time selected, show all end times
+                timeSlots.forEach(slot => {
+                    const [_, end] = slot.split('-');
+                    elements.endSelect.innerHTML += `<option value="${end}">${end}</option>`;
+                });
+            }
+        });
+
+        // Initialize with all end times
+        timeSlots.forEach(slot => {
+            const [_, end] = slot.split('-');
             elements.endSelect.innerHTML += `<option value="${end}">${end}</option>`;
         });
     }
@@ -47,16 +77,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Get classroom data
     async function fetchClassrooms() {
         console.log(elements.datePicker.value);
-        const requestData = {
-            capacity: parseInt(elements.capacityFilter.value) || undefined,
-            room_name: elements.searchInput.value.trim() || undefined,
-            date: elements.datePicker?.value || undefined,
-            start_time: elements.startSelect.value || undefined,
-            end_time: elements.endSelect.value || undefined,
-            equipment: elements.equipmentFilter?.value || undefined
-        };
+    
+            const capacityValue = parseInt(elements.capacityFilter.value);
+            
+            const requestData = {
+                room_name: elements.searchInput.value.trim() || null,
+                date: elements.datePicker?.value || null,
+                start_time: elements.startSelect.value || null,
+                end_time: elements.endSelect.value || null,
+                equipment: elements.equipmentFilter?.value || null
+            };
 
-        Object.keys(requestData).forEach(key => requestData[key] === undefined && delete requestData[key]);
+            //Use capacity or max_capacity based on the selected value
+            if (capacityValue > 0) {
+                if (capacityValue === 29) {
+                    requestData.max_capacity = 29;
+                    requestData.capacity = null; 
+                } else {
+                    requestData.capacity = capacityValue;
+                    requestData.max_capacity = null;
+                }
+            }
+
+            Object.keys(requestData).forEach(key => {
+                if (requestData[key] === null) {
+                    delete requestData[key];
+                }
+            });
 
         try {
             const response = await fetch('https://www.diicsu.top:8000/search-rooms', {
@@ -71,15 +118,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const classroomMap = new Map();
 
-            // 1. 过滤掉状态为3的房间
+            // 1.Filter out rooms with status 3
             const filteredRooms = responseData.results.filter(room => room.room_status !== 3);
 
-            // 2. 获取所有需要展示issue的房间ID
+            // 2. Gets all the room ids that need to be displayed
             const issueRoomIds = filteredRooms
                 .filter(room => room.room_status === 1)
                 .map(room => room.room_id);
 
-            // 3. 批量获取issue数据
+            // 3. Obtain issue data in batches
             const issuesMap = await fetchIssuesForRooms(issueRoomIds);
 
             filteredRooms.forEach(room => {
@@ -95,14 +142,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                         availableTimes: [],
                         status: room.room_status,
                         issues: issuesMap.get(room.room_id) || [],
-                        disabled: isUnavailable // 标记不可预订
+                        disabled: isUnavailable // Mark not available for booking
                     });
                 }
 
                 const classroom = classroomMap.get(room.room_id);
                 classroom.availableTimes.push({
                     time: `${room.available_begin}-${room.available_end}`,
-                    booked: room.availability === 2 || classroom.disabled // 叠加不可预订状态
+                    booked: room.availability === 2 || classroom.disabled //Overlay unbookable state 
                 });
             });
 
@@ -114,7 +161,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 新增：批量获取issue数据
+    // Obtain issue data in batches
     async function fetchIssuesForRooms(roomIds) {
         if (roomIds.length === 0) return new Map();
 
@@ -136,40 +183,61 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     //  Rendering Classroom List
     function renderClassrooms() {
-            elements.classroomList.innerHTML = classrooms.map(classroom => `
-        <div class="classroom-card" data-classroom="${classroom.name}" ${classroom.disabled ? 'style="opacity:0.6"' : ''}>
-            <h3>${classroom.name}</h3>
-            
-            ${classroom.status === 1 ? `
-                <div class="issue-alert">
-                    ⚠️ Issues: 
-                    ${classroom.issues.map(issue =>
-                `${issue.issue} (${issue.status})`
-            ).join(', ')}
-                </div>
-            ` : ''}
+        const now = new Date();
+        const currentHours = now.getHours();
+        const currentMinutes = now.getMinutes();
+        const isToday = elements.datePicker.value === `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-            <div class="details">
-                <p>Capacity: ${classroom.capacity} people</p>
-                <p>Equipment: ${classroom.equipment.join(', ')}</p>
-                <p>Available time slots:</p>
-                <ul>
-                    ${classroom.availableTimes.map(t => `
-                        <li class="${t.booked ? 'booked-slot' : ''}">
-                            ${t.time}
-                            ${t.booked ? '<span class="booked-marker">⛔️</span>' : ''}
-                        </li>
-                    `).join('')}
-                </ul>
+        elements.classroomList.innerHTML = classrooms.map(classroom => `
+            <div class="classroom-card" data-classroom="${classroom.name}" ${classroom.disabled ? 'style="opacity:0.6"' : ''}>
+                <h3>${classroom.name}</h3>
+                
+                ${classroom.status === 1 ? `
+                    <div class="issue-alert">
+                        ⚠️ Issues: 
+                        ${classroom.issues.map(issue =>
+                    `${issue.issue} (${issue.status})`
+                ).join(', ')}
+                    </div>
+                ` : ''}
+
+                <div class="details">
+                    <p>Capacity: ${classroom.capacity} people</p>
+                    <p>Equipment: ${classroom.equipment.join(', ')}</p>
+                    <p>Available time slots:</p>
+                    <ul>
+                        ${classroom.availableTimes.map(t => {
+                            let isPast = false;
+                            if (isToday) {
+                                const [start] = t.time.split('-');
+                                const [startHour, startMinute] = start.split(':').map(Number);
+                                if (startHour < currentHours || 
+                                    (startHour === currentHours && startMinute < currentMinutes)) {
+                                    isPast = true;
+                                }
+                            }
+                            
+                            const isDisabled = t.booked || isPast || classroom.disabled;
+                            const pastText = isPast ? '<small>(Time passed)</small>' : '';
+                            
+                            return `
+                            <li class="${isDisabled ? 'booked-slot' : ''}">
+                                ${t.time}
+                                ${t.booked ? '<span class="booked-marker">⛔️</span>' : ''}
+                                ${pastText}
+                            </li>
+                            `;
+                        }).join('')}
+                    </ul>
+                </div>
+                <button ${classroom.disabled ? 'disabled style="background:#ccc"' : ''}>
+                    ${classroom.disabled ? 'Unavailable' : 'Book Now'}
+                </button>
             </div>
-            <button ${classroom.disabled ? 'disabled style="background:#ccc"' : ''}>
-                ${classroom.disabled ? 'Unavailable' : 'Book Now'}
-            </button>
-        </div>
-    `).join('');
+        `).join('');
 
         document.querySelectorAll('.classroom-card button').forEach(button => {
-            button.addEventListener('click', function () {
+            button.addEventListener('click', function() {
                 const classroomName = this.closest('.classroom-card').dataset.classroom;
                 const classroom = classrooms.find(c => c.name === classroomName);
                 showBookingModal(classroom);
@@ -178,35 +246,58 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Shows the scheduled popup window
-    function showBookingModal(classroom) {
-        currentClassroom = classroom;
-        elements.availableTimesContainer.innerHTML = classroom.availableTimes.map(timeSlot => `
-        <div class="time-slot ${timeSlot.booked ? 'time-slot-booked' : ''}">
+function showBookingModal(classroom) {
+    currentClassroom = classroom;
+    const now = new Date();
+    const currentHours = now.getHours();
+    const currentMinutes = now.getMinutes();
+    const isToday = elements.datePicker.value === `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+    elements.availableTimesContainer.innerHTML = classroom.availableTimes.map(timeSlot => {
+        const [start, end] = timeSlot.time.split('-');
+        const [startHour, startMinute] = start.split(':').map(Number);
+        const [endHour, endMinute] = end.split(':').map(Number);
+        
+        // Check if the time slot is in the past
+        let isPast = false;
+        if (isToday) {
+            if (startHour < currentHours || 
+                (startHour === currentHours && startMinute < currentMinutes)) {
+                isPast = true;
+            }
+        }
+        
+        const isDisabled = timeSlot.booked || isPast;
+        const pastText = isPast ? '<small>(Time passed)</small>' : '';
+
+        return `
+        <div class="time-slot ${isDisabled ? 'time-slot-disabled' : ''}">
             <input
                 type="radio"
                 name="timeSlot"
                 id="slot_${timeSlot.time.replace(/:/g, '')}"
                 value="${timeSlot.time}"
-                ${timeSlot.booked ? 'disabled' : ''}
+                ${isDisabled ? 'disabled' : ''}
             >
             <label for="slot_${timeSlot.time.replace(/:/g, '')}">
-                ${timeSlot.booked ? '⛔️ ' : '🕒 '}
+                ${isDisabled ? '⛔️ ' : '🕒 '}
                 ${timeSlot.time}
-                ${timeSlot.booked ? '<small>(Booked)</small>' : ''}
+                ${timeSlot.booked ? '<small>(Booked)</small>' : pastText}
             </label>
         </div>
-    `).join('');
+        `;
+    }).join('');
 
-        elements.availableTimesContainer.querySelectorAll('.time-slot').forEach(slot => {
-            const radio = slot.querySelector('input[type="radio"]');
-            radio.addEventListener('change', () => {
-                document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('checked'));
-                if (radio.checked) slot.classList.add('checked');
-            });
+    elements.availableTimesContainer.querySelectorAll('.time-slot').forEach(slot => {
+        const radio = slot.querySelector('input[type="radio"]');
+        radio.addEventListener('change', () => {
+            document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('checked'));
+            if (radio.checked) slot.classList.add('checked');
         });
+    });
 
-        elements.modal.style.display = 'block';
-    }
+    elements.modal.style.display = 'block';
+}
 
     // Initialize event listening
     function initEventListeners() {
@@ -220,12 +311,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.confirmBookingButton.addEventListener('click', handleBookingConfirmation);
         });
 
-        // 绑定关闭原因模态框事件
+        // Bind closed cause Mode frame event
         document.querySelector('.close-reason').addEventListener('click', () => {
             document.getElementById('reasonModal').style.display = 'none';
         });
 
-        // 绑定提交原因事件
+        // Bind commit cause event
         document.getElementById('submitReason').addEventListener('click', handleReasonSubmit);
 
         // Disable Modal event listening
@@ -299,16 +390,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             alert('Booking successful!');
             elements.modal.style.display = 'none';
-
             // todo: add new function for send email
             await fetch('https://www.diicsu.top:8000/send_email/success', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    booking_id: data.booking_id  // 确保后端返回了 booking_id
+                    booking_id: data.booking_id  // Make sure the back end returns booking_id
                 })
             });
             await fetchClassrooms();
+            await fetch('https://www.diicsu.top:8000/send_email/calendar_invite',{
+                method:'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    room_id: data.room_id,
+                    booking_date: data.booking_date,
+                    start_time: data.start_time,
+                    end_time: data.end_time
+                })
+            })
         } catch (error) {
             console.error('Booking Error:', error);
             alert(`Booking failed: ${error.message}`);
@@ -338,8 +438,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             alert('Booking request submitted, awaiting approval.');
 
-             //todo ：0326 Call backend email notification after successful insertion
-            const emailResponse = await fetch('http://localhost:8000/send_email/broadcast_pending', {
+            //todo ：0326 Call backend email notification after successful insertion
+            const emailResponse = await fetch('https://www.diicsu.top:8000/send_email/broadcast_pending', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ booking_id: data.booking_id })
@@ -366,11 +466,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         initTimeSelectors();
         initEventListeners();
         const today = new Date();
-        elements.datePicker.value =
-            `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const todayFormatted = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        
+        // Set minimum date to today
+        elements.datePicker.min = todayFormatted;
+        elements.datePicker.value = todayFormatted;
+        
         await fetchClassrooms();
         console.log('System initialization complete');
-
     } catch (error) {
         console.error('Initialization error:', error);
         alert('System initialization failed');
@@ -397,6 +500,9 @@ document.addEventListener('DOMContentLoaded', function () {
             sidebar.classList.remove('active');
         }
     });
+
+
+    
 });
 
 

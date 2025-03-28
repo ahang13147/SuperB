@@ -1,53 +1,65 @@
-document.addEventListener('DOMContentLoaded', function () {
-    const hamburger = document.querySelector('.hamburger-menu');
-    const sidebar = document.querySelector('.sidebar');
+document.addEventListener('DOMContentLoaded', function() {
+  // Process menu group click
+  document.querySelectorAll('.group-header').forEach(header => {
+    header.addEventListener('click', function() {
+      const group = this.closest('.menu-group');
+      group.classList.toggle('active');
 
-    // 侧边栏菜单切换
-    hamburger.addEventListener('click', function () {
-        sidebar.classList.toggle('active');
-    });
-
-    // 点击外部关闭侧边栏
-    document.addEventListener('click', function (e) {
-        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
-            sidebar.classList.remove('active');
+    // Close other expanded menu groups
+      document.querySelectorAll('.menu-group').forEach(otherGroup => {
+        if (otherGroup !== group) {
+          otherGroup.classList.remove('active');
         }
+      });
     });
+  });
 
-    // 响应式布局切换
-    window.addEventListener('resize', function () {
-        if (window.innerWidth > 768) {
-            sidebar.classList.remove('active');
-            document.querySelector('.room-table-container').style.display = 'block';
-            document.querySelector('.room-cards-container').style.display = 'none';
-        } else {
-            document.querySelector('.room-table-container').style.display = 'none';
-            document.querySelector('.room-cards-container').style.display = 'grid';
-        }
-    });
+    // Mobile burger menu switch
+  const hamburger = document.querySelector('.hamburger-menu');
+  const sidebar = document.querySelector('.sidebar');
 
-    // 初始化加载房间数据
+  hamburger.addEventListener('click', function(e) {
+    e.stopPropagation(); 
+    sidebar.classList.toggle('active');
+  });
+
+    // Click external to close the sidebar
+  document.addEventListener('click', function(e) {
+    if (sidebar.classList.contains('active') &&
+        !e.target.closest('.sidebar') &&
+        !e.target.closest('.hamburger-menu')) {
+      sidebar.classList.remove('active');
+    }
+  });
+
+    // Prevents clicking inside the sidebar from triggering closure
+  sidebar.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });    
+    
     loadRooms();
 });
+
+
 
 let currentEditingRoomId = null;
 let activeRooms = [];
 let deletedRooms = [];
 
-// 加载房间数据
+// load room data
 async function loadRooms() {
     try {
-        const response = await fetch('http://localhost:8000/rooms');
+        const response = await fetch('https://www.diicsu.top:8000/rooms');
         const data = await response.json();
-        activeRooms = data.rooms;
+         activeRooms = data.rooms.filter(room => room.room_status !== 2); //Filter out the deleted rooms 
+        deletedRooms = data.rooms.filter(room => room.room_status === 2); //Filter out the deleted rooms 
         renderTables();
     } catch (error) {
         console.error('Failed to load:', error);
         alert('Unable to load room data, please check network connection');
     }
 }
-
-// 将room_type数字转换为文本
+// Convert room_type numbers to text
 function getRoomTypeText(roomType) {
     switch (roomType) {
         case 0: return "Available for all";
@@ -57,13 +69,13 @@ function getRoomTypeText(roomType) {
     }
 }
 
-// 渲染表格和卡片
+// Render tables and cards
 function renderTables() {
     const activeTbody = document.querySelector('#activeTable tbody');
     const deletedTbody = document.querySelector('#deletedTable tbody');
     const cardsContainer = document.querySelector('.room-cards-container');
 
-    // 桌面端表格渲染
+    // Desktop table rendering
     activeTbody.innerHTML = activeRooms.map(room => `
         <tr class="room-item" data-room-id="${room.room_id}">
             <td>${room.room_id}</td>
@@ -79,7 +91,6 @@ function renderTables() {
         </tr>
     `).join('');
 
-    // 移动端卡片渲染
     cardsContainer.innerHTML = activeRooms.map(room => `
         <div class="room-card" data-room-id="${room.room_id}">
             <div class="card-header">
@@ -111,7 +122,6 @@ function renderTables() {
         </div>
     `).join('');
 
-    // 已删除表格渲染
     deletedTbody.innerHTML = deletedRooms.map(room => `
         <tr class="deleted-item">
             <td>${room.room_id}</td>
@@ -125,7 +135,7 @@ function renderTables() {
     `).join('');
 }
 
-// 打开编辑模态框
+// open edit model
 function openEditModal(roomId) {
     const room = activeRooms.find(r => r.room_id == roomId);
     if (!room) return;
@@ -136,28 +146,28 @@ function openEditModal(roomId) {
     document.getElementById('editCapacity').value = room.capacity;
     document.getElementById('editLocation').value = room.location;
     document.getElementById('editEquipment').value = room.equipment;
-    document.getElementById('editRoomType').value = room.room_type; // 设置 room type
+    document.getElementById('editRoomType').value = room.room_type; // set room type
 
     document.getElementById('editModal').style.display = 'flex';
 }
 
-// 关闭编辑模态框
+// close edit model 
 function closeEditModal() {
     document.getElementById('editModal').style.display = 'none';
 }
 
-// 保存编辑后的房间信息
+// save edited information
 async function saveRoom() {
     const updatedData = {
         room_name: document.getElementById('editRoomName').value,
         capacity: parseInt(document.getElementById('editCapacity').value),
         location: document.getElementById('editLocation').value,
         equipment: document.getElementById('editEquipment').value,
-        type: parseInt(document.getElementById('editRoomType').value) // 获取 room type
+        type: parseInt(document.getElementById('editRoomType').value) // get room type
     };
 
     try {
-        const response = await fetch(`http://localhost:8000/update-room/${currentEditingRoomId}`, {
+        const response = await fetch(`https://www.diicsu.top:8000/update-room/${currentEditingRoomId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updatedData)
@@ -178,24 +188,25 @@ async function saveRoom() {
     }
 }
 
-// 软删除房间
+// soft delete
 async function softDeleteRoom(roomId) {
     if (confirm(`Are you sure to delete ${roomId} 吗？`)) {
         try {
-            const response = await fetch('http://localhost:8000/update_room_status', {
+            const response = await fetch('https://www.diicsu.top:8000/update_room_status', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     room_id: roomId,
-                    action: 'delete' // 操作类型为删除
+                    action: 'delete' 
                 })
             });
 
             const result = await response.json();
 
             if (response.ok) {
-                // 从 activeRooms 中移除该房间
+                // Remove the room from activeRooms
                 const index = activeRooms.findIndex(r => r.room_id == roomId);
+                
                 if (index > -1) {
                     const deletedRoom = activeRooms.splice(index, 1)[0];
                     deletedRooms.push({ ...deletedRoom, deletedAt: new Date() });
@@ -212,26 +223,62 @@ async function softDeleteRoom(roomId) {
     }
 }
 
-// 切换标签页
+// Switch TAB
 function showTab(tabId) {
+    // Desktop table switching
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.room-table').forEach(t => t.style.display = 'none');
     document.querySelector(`#${tabId}Table`).style.display = 'table';
     document.querySelector(`[onclick="showTab('${tabId}')"]`).classList.add('active');
+
+    const cardsContainer = document.querySelector('.room-cards-container');
+    if (window.innerWidth <= 768) {
+        cardsContainer.innerHTML = (tabId === 'active' ? activeRooms : deletedRooms).map(room => `
+            <div class="room-card" data-room-id="${room.room_id}">
+                <div class="card-header">
+                    <span class="card-id">ID: ${room.room_id}</span>
+                    <h3 class="card-title">${room.room_name}</h3>
+                </div>
+                <div class="card-details">
+                <div>
+                    <span class="card-label">Capacity:</span>
+                    <span class="card-value">${room.capacity}</span>
+                </div>
+                <div>
+                    <span class="card-label">Location:</span>
+                    <span class="card-value">${room.location}</span>
+                </div>
+                <div>
+                    <span class="card-label">Equipment:</span>
+                    <span class="card-value">${room.equipment}</span>
+                </div>
+                <div>
+                    <span class="card-label">Room Type:</span>
+                    <span class="card-value">${getRoomTypeText(room.room_type)}</span>
+                </div>
+                </div>
+                ${tabId === 'active' ? `
+                <div class="card-actions">
+                    <button class="edit-btn" onclick="openEditModal(${room.room_id})">Edit</button>
+                    <button class="delete-btn" onclick="softDeleteRoom('${room.room_id}')">Delete</button>
+                </div>
+                ` : ''}
+            </div>
+        `).join('');
+    }
 }
 
-// 打开添加房间模态框
+// Open the Add Room mode box
 function openAddRoomModal() {
     document.getElementById('addRoomModal').style.display = 'flex';
 }
-
-// 关闭添加房间模态框
+// Close the Add Room mode box
 function closeAddRoomModal() {
     document.getElementById('addRoomModal').style.display = 'none';
 }
-
-// 添加新房间
+// Add a new room
 async function addRoom() {
+    
     const newRoom = {
         room_name: document.getElementById('roomName').value,
         capacity: parseInt(document.getElementById('capacity').value),
@@ -241,48 +288,49 @@ async function addRoom() {
     };
 
     try {
-        const response = await fetch('http://localhost:8000/insert_room', {
+        const response = await fetch('https://www.diicsu.top:8000/insert_room', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newRoom)
         });
 
         if (response.ok) {
-            activeRooms.push({ ...newRoom, room_id: Date.now() });
+            const result = await response.json();
+            activeRooms.push({ ...newRoom, room_id: result.room_id });
             renderTables();
             closeAddRoomModal();
             showAddSuccessModal();
+            loadRooms();
         }
     } catch (error) {
         console.error('Error:', error);
     }
 }
-
-// 显示添加成功提示
+// A message indicating that the addition succeeds is displayed
 function showAddSuccessModal() {
     const successModal = document.getElementById('addSuccessModal');
     successModal.style.display = 'flex';
     setTimeout(() => successModal.style.display = 'none', 2000);
 }
 
-// 显示删除成功提示
+// display delete successfully
 function showDeleteSuccessModal() {
     const successModal = document.getElementById('deleteSuccessModal');
     successModal.style.display = 'flex';
     setTimeout(() => successModal.style.display = 'none', 2000);
 }
 
-// 打开恢复房间模态框
+// open restore model 
 function openRestoreRoomModal() {
     document.getElementById('restoreRoomModal').style.display = 'flex';
 }
 
-// 关闭恢复房间模态框
+// cloes restore model
 function closeRestoreRoomModal() {
     document.getElementById('restoreRoomModal').style.display = 'none';
 }
 
-// 确认恢复房间
+// confirm restore room 
 async function confirmRestoreRoom() {
     const roomId = document.getElementById('restoreRoomId').value;
 
@@ -292,19 +340,18 @@ async function confirmRestoreRoom() {
     }
 
     try {
-        const response = await fetch('http://localhost:8000/update_room_status', {
+        const response = await fetch('https://www.diicsu.top:8000/update_room_status', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 room_id: roomId,
-                action: 'restore' // 操作类型为恢复
+                action: 'restore' 
             })
         });
 
         const result = await response.json();
 
         if (response.ok) {
-            // 从 deletedRooms 中移除该房间，并添加到 activeRooms
             const index = deletedRooms.findIndex(r => r.room_id == roomId);
             if (index > -1) {
                 const restoredRoom = deletedRooms.splice(index, 1)[0];
@@ -324,83 +371,61 @@ async function confirmRestoreRoom() {
     }
 }
 
-// 搜索房间功能
+// search room
 function searchRooms() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const activeTbody = document.querySelector('#activeTable tbody');
-    const deletedTbody = document.querySelector('#deletedTable tbody');
-    const cardsContainer = document.querySelector('.room-cards-container');
-
-    // 过滤 activeRooms
-    const filteredActiveRooms = activeRooms.filter(room =>
+    
+    const filteredActive = activeRooms.filter(room => 
+        room.room_id.toString().includes(searchTerm) ||
+        room.room_name.toLowerCase().includes(searchTerm)
+    );
+    
+    const filteredDeleted = deletedRooms.filter(room =>
         room.room_id.toString().includes(searchTerm) ||
         room.room_name.toLowerCase().includes(searchTerm)
     );
 
-    // 过滤 deletedRooms
-    const filteredDeletedRooms = deletedRooms.filter(room =>
-        room.room_id.toString().includes(searchTerm) ||
-        room.room_name.toLowerCase().includes(searchTerm)
-    );
+    // update display
+    updateTableDisplay('#activeTable tbody', filteredActive, true);
+    updateTableDisplay('#deletedTable tbody', filteredDeleted, false);
+    updateCardDisplay(filteredActive);
+}
 
-    // 渲染过滤后的 activeRooms
-    activeTbody.innerHTML = filteredActiveRooms.map(room => `
-        <tr class="room-item" data-room-id="${room.room_id}">
+// update table display
+function updateTableDisplay(selector, data, showActions) {
+    const tbody = document.querySelector(selector);
+    tbody.innerHTML = data.map(room => `
+        <tr class="${showActions ? 'room-item' : 'deleted-item'}" data-room-id="${room.room_id}">
             <td>${room.room_id}</td>
             <td>${room.room_name}</td>
             <td>${room.capacity}</td>
             <td>${room.location}</td>
             <td>${room.equipment}</td>
             <td>${getRoomTypeText(room.room_type)}</td>
+            ${showActions ? `
             <td class="room-actions">
                 <button class="edit-btn" onclick="openEditModal(${room.room_id})">Edit</button>
                 <button class="delete-btn" onclick="softDeleteRoom(${room.room_id})">Delete</button>
             </td>
+            ` : `<td>${new Date().toLocaleString()}</td>`}
         </tr>
     `).join('');
+}
 
-    // 渲染过滤后的 deletedRooms
-    deletedTbody.innerHTML = filteredDeletedRooms.map(room => `
-        <tr class="deleted-item">
-            <td>${room.room_id}</td>
-            <td>${room.room_name}</td>
-            <td>${room.capacity}</td>
-            <td>${room.location}</td>
-            <td>${room.equipment}</td>
-            <td>${getRoomTypeText(room.room_type)}</td>
-            <td>${new Date().toLocaleString()}</td>
-        </tr>
-    `).join('');
-
-    // 渲染过滤后的卡片（移动端）
-    cardsContainer.innerHTML = filteredActiveRooms.map(room => `
-        <div class="room-card" data-room-id="${room.room_id}">
-            <div class="card-header">
-                <span class="card-id">ID: ${room.room_id}</span>
-                <h3 class="card-title">${room.room_name}</h3>
+// update card display
+function updateCardDisplay(data) {
+    const cardsContainer = document.querySelector('.room-cards-container');
+    if (window.innerWidth <= 768) {
+        cardsContainer.innerHTML = data.map(room => `
+            <div class="room-card" data-room-id="${room.room_id}">
+                <!-- 保持原有卡片结构 -->
+                ${document.querySelector('.tab-btn.active').id === 'active' ? `
+                <div class="card-actions">
+                    <button class="edit-btn" onclick="openEditModal(${room.room_id})">Edit</button>
+                    <button class="delete-btn" onclick="softDeleteRoom(${room.room_id})">Delete</button>
+                </div>
+                ` : ''}
             </div>
-            <div class="card-details">
-                <div>
-                    <span class="card-label">Capacity:</span>
-                    <span class="card-value">${room.capacity}</span>
-                </div>
-                <div>
-                    <span class="card-label">Location:</span>
-                    <span class="card-value">${room.location}</span>
-                </div>
-                <div>
-                    <span class="card-label">Equipment:</span>
-                    <span class="card-value">${room.equipment}</span>
-                </div>
-                <div>
-                    <span class="card-label">Room Type:</span>
-                    <span class="card-value">${getRoomTypeText(room.room_type)}</span>
-                </div>
-            </div>
-            <div class="card-actions">
-                <button class="edit-btn" onclick="openEditModal(${room.room_id})">Edit</button>
-                <button class="delete-btn" onclick="softDeleteRoom(${room.room_id})">Delete</button>
-            </div>
-        </div>
-    `).join('');
+        `).join('');
+    }
 }

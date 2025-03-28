@@ -3,11 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
-    <script src="{{ url_for('static', filename='js/my_reservation.js') }}"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{url_for('static',filename='css/my_reservation.css')}}">
-    <link rel="stylesheet" href="{{url_for('static',filename='css/sidebar.css')}}">
+    <link rel="stylesheet" href="{{url_for('static',filename='css/userSidebar.css')}}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <title>My Reservations</title>
 </head>
 
@@ -34,6 +34,10 @@
                 <i class="fas fa-user-circle nav-icon"></i>
                 My Profile
             </a>
+             <a class="nav-item" href="javascript:void(0);" id="logout-btn">
+                <i class="fas fa-sign-out-alt nav-icon"></i>
+                Sign Out
+             </a>            
             <div class="sidebar-logo">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
             </div>
@@ -44,6 +48,14 @@
             <header>
                 <h1>My Reservations</h1>
             </header>
+
+            <!-- search box -->
+            <div class="search-container">
+                <input type="text" id="dateSearchInput" placeholder="Search by date" class="date-picker">
+                <button id="clearDateSearch" class="clear-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div> 
 
             <!-- booking area -->
             <div class="reservations-container">
@@ -85,5 +97,7 @@
     </div>
 
 </body>
-
+    <script src="{{ url_for('static', filename='js/sign_off.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/my_reservation.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </html>

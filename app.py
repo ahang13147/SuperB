@@ -1,5 +1,5 @@
 #  @version: 3/12/2025
-#  @author: Xin Yu, Siyan Guo, Zibang Nie
+#  @author: Xin Yu, Siyan Guo, Zibang Nie，Guanhang Zhang
 # add: finished-workflow-booking get api
 from contextlib import closing
 
@@ -1641,6 +1641,13 @@ def black():
 def login():
     return render_template('login.html')
 
+@app.route('/terms_of_service')
+def terms_of_service():
+    return render_template('terms_of_service.html')
+
+@app.route('/privacy_policy')
+def privacy_policy():
+    return render_template('privacy_policy.html')
 
 @app.route('/login_via_code')
 def login_via_code():

@@ -11,6 +11,7 @@ body {
 
 .container {
     padding:50px;
+    /* max-width: 1200px; */
 }
 
 .content-area {
@@ -31,7 +32,6 @@ h1 {
     font-size: 2.5em;
 }
 
-/* 选项卡样式 */
 .notification-tabs {
     margin-bottom: 20px;
     border-bottom: 2px solid #eee;
@@ -49,10 +49,9 @@ h1 {
 
 .tab.active {
     color: #2c3e50;
-    border-bottom: 3px solid #00f2c3;
+    border-bottom: 3px solid #335797;
 }
 
-/* 通知面板 */
 .notification-panel {
     display: none;
     background: white;
@@ -73,12 +72,12 @@ h1 {
 }
 
 .notification-item.unread {
-    border-left-color: #00f2c3;
+    border-left-color: #335797;
     background: rgba(0,242,195,0.03);
 }
 
 .notification-item.system {
-    border-left-color: #ff9f43;
+    border-left-color: #000000;
     background: rgba(255,159,67,0.03);
 }
 
@@ -90,7 +89,7 @@ h1 {
 
 .notification-type {
     font-weight: 600;
-    color: #ff9f43;
+    color: #000000;
 }
 
 .notification-time {
@@ -103,7 +102,6 @@ h1 {
     line-height: 1.5;
 }
 
-/* 按钮样式 */
 .notification-content button {
     margin-left: 10px;
     padding: 4px 8px;
@@ -113,16 +111,15 @@ h1 {
 }
 
 .mark-read {
-    background: #00f2c3;
+    background: #335797;
     color: white;
 }
 
 .delete {
-    background: #ff4757;
+    background:  #f44336;
     color: white;
 }
 
-    /* 移动端适配 */
     @media (max-width: 768px) {
      .main-container {
     padding-left: 0;

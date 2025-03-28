@@ -1,8 +1,5 @@
 * {
-    margin: 0;
-    padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', 'PingFang SC', system-ui;
 }
 
 body {
@@ -40,7 +37,7 @@ h1 {
 }
 
 .tab-btn.active {
-    background: #4299e1;
+    background:  #335797;
     color: white;
 }
 
@@ -67,11 +64,11 @@ h1 {
 }
 
 .restore-room-btn {
-    background: #4299e1;
+    background:  #335797;
 }
 
 .restore-room-btn:hover {
-    background: #3182ce;
+    background:  #335797;
 }
 
 .search-container {
@@ -82,11 +79,11 @@ h1 {
 }
 
 #searchInput {
-    padding: 12px 20px 12px 40px; /* 左侧留出图标空间 */
+    padding: 12px 20px 12px 40px; 
     border: 2px solid #e2e8f0;
-    border-radius: 30px; /* 更圆的边角 */
+    border-radius: 30px; 
     font-size: 1em;
-    width: 350px; /* 稍宽一些 */
+    width: 350px;
     transition: all 0.3s ease;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     background-color: #fff;
@@ -97,13 +94,12 @@ h1 {
 }
 
 #searchInput:focus {
-    border-color: #4299e1;
+    border-color:  #335797;
     outline: none;
     box-shadow: 0 2px 15px rgba(66, 153, 225, 0.2);
-    width: 400px; /* 聚焦时稍微变宽 */
+    width: 400px; 
 }
 
-/* 响应式调整 */
 @media (max-width: 768px) {
     #searchInput {
         width: 90%;
@@ -117,7 +113,7 @@ h1 {
 
 .search-btn {
     padding: 10px 20px;
-    background: #4299e1;
+    background:  #335797;
     color: white;
     border: none;
     border-radius: 6px;
@@ -126,7 +122,7 @@ h1 {
 }
 
 .search-btn:hover {
-    background: #3182ce;
+    background:  #335797;
      border-color: #cbd5e0;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
@@ -214,7 +210,7 @@ button {
 
 .edit-btn {
     padding-left: 20px;
-    background: #4299e1;
+    background:  #335797;
     color: white;
 }
 
@@ -222,6 +218,7 @@ button {
     background: #f56565;
     color: white;
 }
+
 
 .modal {
     display: none;
@@ -345,7 +342,6 @@ button {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* 新增卡片样式 */
 .room-cards-container {
     display: none;
     gap: 15px;
@@ -402,7 +398,6 @@ button {
     justify-content: flex-end;
 }
 
-/* 移动端显示卡片 */
 @media (max-width: 768px) {
     .room-table-container {
         display: none;
@@ -413,6 +408,7 @@ button {
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     }
 
+   
     .edit-btn, .delete-btn {
         padding: 6px 12px;
         font-size: 0.9em;

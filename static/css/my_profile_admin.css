@@ -54,7 +54,7 @@ h1 {
   height: 150px;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid #4CAF50;
+  border: 4px solid #335797;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -62,7 +62,7 @@ h1 {
   position: absolute;
   bottom: 10px;
   right: 10px;
-  background-color: #4CAF50;
+  background-color: #335797;;
   color: #fff;
   border: none;
   border-radius: 50%;
@@ -76,7 +76,7 @@ h1 {
 }
 
 .edit-picture-btn:hover {
-  background-color: #45a049;
+  background-color: #335797;
 }
 
 #username {
@@ -116,7 +116,7 @@ h1 {
 }
 
 .form-group input:focus {
-  border-color: #4CAF50;
+  border-color: #335797;
   outline: none;
 }
 
@@ -143,12 +143,12 @@ h1 {
 }
 
 #edit-btn {
-  background-color: #4CAF50;
+  background: #335797;
   color: #fff;
 }
 
 #save-btn {
-  background-color: #007bff;
+  background-color: #335797;
   color: #fff;
 }
 
@@ -170,7 +170,7 @@ h1 {
         color: #2c3e50;
         margin-bottom: 1rem;
         padding-bottom: 0.7rem;
-        border-bottom: 2px solid #3498db;
+        border-bottom: 2px solid #335797;
         display: flex;
         align-items: center;
         gap: 8px;

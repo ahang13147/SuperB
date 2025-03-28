@@ -18,7 +18,7 @@
         .container {
             background: rgba(255, 255, 255, 0.95);
             padding: 40px;
-            border-radius: 8px; /* 减少圆角弧度 */
+            border-radius: 8px; 
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             width: 450px;
         }
@@ -65,7 +65,7 @@
         }
         input[type="number"] {
             -moz-appearance: textfield;
-            width: calc(100% - 12px); /* 调整验证码输入框宽度 */
+            width: calc(100% - 12px); 
         }
 
         input:focus {
@@ -81,7 +81,7 @@
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.3s;
-            min-width: 160px; /* 固定按钮宽度 */
+            min-width: 160px; 
         }
 
         .send-btn:disabled {
@@ -92,7 +92,7 @@
 
         .verify-code-input {
             margin-bottom: 25px;
-            padding-right: 20px; /* 右侧对齐调整 */
+            padding-right: 20px; 
         }
 
         .button-group {
@@ -115,7 +115,8 @@
         }
 
         .login-btn {
-            linear-gradient(135deg, #6b81c0 0%, #1f418f 100%)
+            background: #335797;
+            /* linear-gradient(135deg, #6b81c0 0%, #1f418f 100%); */
             color: white;
         }
 
@@ -135,7 +136,7 @@
     <a class="back-btn" href="{{ url_for('login') }}">←</a>
 
     <div class="container">
-        <h1 class="title">Login Via Code</h1> <!-- 新增标题 -->
+        <h1 class="title">Login Via Code</h1> <!-- new title -->
         <div class="hint-text">Please enter your E-mail address:</div>
         <div class="input-group">
             <input type="email" id="email" placeholder="example@dundee.ac.uk">
@@ -160,7 +161,7 @@
 
             const email = document.getElementById('email').value;
 
-            // 判断邮箱是否符合@dundee.ac.uk后缀
+            
             if (!validateEmail(email)) {
                 alert('Please enter a valid email address ending with @dundee.ac.uk');
                 return;
@@ -210,7 +211,7 @@
             }).then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    window.location.href = data.redirect; // 修改此行;
+                    window.location.href = data.redirect; 
                 } else {
                     alert('The account or the verify code is wrong, please try again.');
                 }

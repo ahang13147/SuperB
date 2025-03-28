@@ -33,13 +33,12 @@ h1 {
 }
 
 :root {
-    --primary-color: #2c3e50;
-    --danger-color: #e74c3c;
+    --primary-color: #e3f2fd;;
+    --danger-color: #f44336;
     --background: #f8f9fa;
     --border-color: #dee2e6;
 }
 
-/* 搜索框样式 */
 .search-container {
     margin: 20px auto;
     max-width: 600px;
@@ -83,7 +82,7 @@ table {
 
 th {
     background: var(--primary-color);
-    color: white;
+    color: #2c3e50;
     padding: 1rem;
     font-weight: 500;
     position: sticky;
@@ -137,7 +136,7 @@ td:nth-child(5) {
 }
 
 .btn-danger:hover {
-    background: #c0392b;
+    background: #f44336;
 }
 
 .add-section {
@@ -166,15 +165,16 @@ input {
 }
 
 .error-message {
-    color: #dc3545;
+    color: #f44336;
     font-size: 0.875rem;
     margin-top: 0.25rem;
     display: none;
 }
 
 .input-error {
-    border-color: #dc3545 !important;
+    border-color: #f44336 !important;
 }
+
 
 @media (max-width: 768px) {
   .main-container {
@@ -182,17 +182,17 @@ input {
     box-sizing: content-box;
   }
     body {
+
         font-size: 14px;
     }
+
+
 
     h1 {
         font-size: 1.5rem;
         margin-bottom: 1rem;
     }
 
-    .search-container {
-        padding: 0 15px;
-    }
 
     .table-wrapper {
         max-height: none;
@@ -202,6 +202,7 @@ input {
 
     table {
         min-width: 100%;
+
     }
 
     thead {
@@ -211,6 +212,8 @@ input {
     tbody tr {
         display: block;
         margin: 0 auto 1rem;
+
+
         background: white;
         border-radius: 8px;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
@@ -238,6 +241,7 @@ input {
         gap: 8px;
     }
 
+
     .add-section {
         padding: 15px;
         margin-top: 1rem;
@@ -257,6 +261,7 @@ input {
         justify-content: center;
         padding: 12px;
     }
+
 
     .flatpickr-input {
         font-size: 14px;
@@ -309,4 +314,3 @@ input {
     box-sizing: content-box;
   }
 }
-

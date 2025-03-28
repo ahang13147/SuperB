@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const personalPanel = document.querySelector('.personal-panel');
     let activePanel = document.querySelector('.notification-panel.active');
 
-    // 显示加载状态
+    // Displays the loading status
     function showLoading(panel) {
         panel.innerHTML = `
             <div class="loading-spinner">
@@ -12,21 +12,21 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
-    // 隐藏加载状态
+    // Hide the loading state
     function hideLoading(panel) {
         const loadingSpinner = panel.querySelector('.loading-spinner');
         if (loadingSpinner) loadingSpinner.remove();
     }
 
-    // 统一错误处理
+    // Unified error handling
     function showError(panel, message) {
         panel.innerHTML = `<p class="error">${message}</p>`;
     }
 
-    // 获取通知数据（Async/Await 版本）
+    // Get notification data (Async/Await version)
     async function loadNotifications() {
         try {
-            // 显示加载状态（保持当前活动面板）
+            // Display loading status (keep current active panel)
             if (activePanel) showLoading(activePanel);
 
             const response = await fetch('https://www.diicsu.top:8000/notifications', {
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     `).join('');
 
-        // 动态绑定事件
+        // Dynamic binding event
         if (panelSelector === '.personal-panel') {
             panel.querySelectorAll('.mark-read').forEach(btn => {
                 btn.addEventListener('click', handleMarkRead);
@@ -81,11 +81,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-     // 标记已读处理
+    // Mark read processed
     async function handleMarkRead(e) {
         const notificationId = e.target.closest('.notification-item').dataset.id;
-        const markReadButton = e.target; // 获取点击的按钮
-
+        const markReadButton = e.target;
         try {
             const response = await fetch('https://www.diicsu.top:8000/update_notification_status', {
                 method: 'POST',
@@ -100,10 +99,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (response.ok) {
-                // 标记为已读后，移除未读样式
+                // After marking as read, remove unread styles
                 e.target.closest('.notification-item').classList.remove('unread');
 
-                // 禁用按钮并更改文本为 "Read"
+                // Disable button and change text to "Read"
                 markReadButton.disabled = true;
                 markReadButton.textContent = 'Read';
             } else {
@@ -113,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Update Error:', error);
         }
     }
-    // 删除处理
+    // Delete processing
     async function handleDelete(e) {
         const notificationId = e.target.closest('.notification-item').dataset.id;
         try {
@@ -138,7 +137,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 选项卡切换
     document.querySelectorAll('.tab').forEach(tab => {
         tab.addEventListener('click', function() {
             document.querySelectorAll('.tab, .notification-panel').forEach(el => {
@@ -147,23 +145,48 @@ document.addEventListener('DOMContentLoaded', () => {
             this.classList.add('active');
             activePanel = document.querySelector(`.${this.dataset.tab}-panel`);
             activePanel.classList.add('active');
-            loadNotifications(); // 切换时重新加载
+            loadNotifications(); 
         });
     });
 
-    // 初始化加载
     loadNotifications();
+});
 
-    // 侧边栏切换（与原代码相同）
-    const hamburger = document.querySelector('.hamburger-menu');
-    const sidebar = document.querySelector('.sidebar');
-    hamburger.addEventListener('click', () => sidebar.classList.toggle('active'));
-    document.addEventListener('click', (e) => {
-        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
-            sidebar.classList.remove('active');
+document.addEventListener('DOMContentLoaded', function() {
+    // Process menu group click
+  document.querySelectorAll('.group-header').forEach(header => {
+    header.addEventListener('click', function() {
+      const group = this.closest('.menu-group');
+      group.classList.toggle('active');
+        // Close other expanded menu groups
+      document.querySelectorAll('.menu-group').forEach(otherGroup => {
+        if (otherGroup !== group) {
+          otherGroup.classList.remove('active');
         }
+      });
     });
-    window.addEventListener('resize', () => {
-        if (window.innerWidth > 768) sidebar.classList.remove('active');
-    });
+  });
+
+    // Mobile burger menu switch
+  const hamburger = document.querySelector('.hamburger-menu');
+  const sidebar = document.querySelector('.sidebar');
+
+  hamburger.addEventListener('click', function(e) {
+    e.stopPropagation(); 
+    sidebar.classList.toggle('active');
+  });
+
+    // Click external to close the sidebar
+  document.addEventListener('click', function(e) {
+    if (sidebar.classList.contains('active') &&
+        !e.target.closest('.sidebar') &&
+        !e.target.closest('.hamburger-menu')) {
+      sidebar.classList.remove('active');
+    }
+  });
+
+    // Prevents clicking inside the sidebar from triggering closure
+  sidebar.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
 });

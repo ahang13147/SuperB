@@ -6,10 +6,15 @@
     --pending-color: #f1c40f;
 }
 
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+* {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
     min-height: 100vh;
     background-color: #f5f6fa;
     display: flex;
@@ -18,19 +23,36 @@ body {
 }
 
 header {
-    width: 90%;
-    background-color: var(--primary-color);
-    color: white;
-    padding: 20px;
-    border-radius: 10px;
-    margin-top: 30px;
-    margin-left: 80px;
-    margin-bottom: 30px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    color: var(--primary-color);
+    padding: 0;
+    margin: 30px 0;
     text-align: center;
+    background-color: transparent;
 }
 
-/* 搜索框样式 */
+header h1 {
+    text-align: center;
+    color: var(--primary-color);
+    margin-bottom: 30px;
+    font-size: 2.5em;
+    font-weight: 700;
+}
+
+.main-content {
+    width: calc(100% - 200px);
+    margin-left: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.content-area {
+    flex: 1;
+    padding: 30px;
+    width: 100%;
+}
+
 .search-container {
     display: flex;
     align-items: center;
@@ -81,7 +103,6 @@ header {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 25px;
     width: 100%;
-    padding: 0 20px;
 }
 
 .reservation-card {
@@ -92,6 +113,7 @@ header {
     transition: transform 0.2s, box-shadow 0.2s;
     position: relative;
     max-width: 600px;
+    padding-bottom: 70px;/* add */
 }
 
 .reservation-card:hover {
@@ -99,26 +121,23 @@ header {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.reservation-info {
     margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    color: #333;
 }
 
-.room-tag {
+.reservation-info label {
     font-weight: 600;
+    min-width: 100px;
     color: var(--primary-color);
-    font-size: 1.1em;
-}
-
-.card-body p {
-    margin: 10px 0;
-    color: #555;
 }
 
 .status-indicator {
-    background-color: var(--success-color);
+    position: absolute;
+    top: 15px;
+    right: 15px;
     color: white;
     padding: 5px 10px;
     border-radius: 15px;
@@ -134,17 +153,16 @@ header {
     cursor: pointer;
     font-weight: 500;
     transition: background-color 0.2s;
-    width: 100%;
-    margin-top: 15px;
+    position: absolute;
+    bottom: 15px;
+    left: 20px;
+    right: 20px;
+    width: calc(100% - 40px); 
+    margin-top: 0;
 }
 
 .cancel-btn:hover {
     background-color: #c0392b;
-}
-
-.cancel-btn:disabled {
-    background-color: #95a5a6;
-    cursor: not-allowed;
 }
 
 .modal {
@@ -180,6 +198,16 @@ header {
     }
 }
 
+.modal-content h3 {
+    margin-top: 0;
+    color: var(--primary-color);
+}
+
+.modal-content p {
+    color: #666;
+    margin: 15px 0;
+}
+
 .modal-actions {
     display: flex;
     gap: 10px;
@@ -212,17 +240,12 @@ header {
     background-color: #7f8c8d;
 }
 
-.loading-spinner {
+#user-id {
     text-align: center;
-    padding: 20px;
-    font-size: 1.2em;
-    color: var(--primary-color);
-}
-
-.error {
-    color: var(--danger-color);
-    text-align: center;
-    padding: 20px;
+    color: #666;
+    font-size: 16px;
+    font-style: italic;
+    margin-bottom: 10px;
 }
 
 .status-indicator[data-status="approved"] {
@@ -234,7 +257,7 @@ header {
 }
 
 .status-indicator[data-status="pending"] {
-    background: var(--pending-color);
+    background: #f1c40f;
 }
 
 .status-indicator[data-status="changed"] {
@@ -248,95 +271,57 @@ header {
 .status-indicator[data-status="rejected"] {
     background: var(--danger-color);
 }
-
-.main-content {
-    width: calc(100% - 200px);
-    margin-left: 200px; 
-    display: flex;
-    flex-direction: column;
-    align-items: center; 
+.status-indicator[data-status="finished"] {
+      background: #7e7c7e;
 }
-
 @media (max-width: 768px) {
     .main-content {
-        width: 100% !important;     
-        justify-content: center;     
+        width: 100% !important;
+        margin-left: 0 !important;
     }
     
     .content-area {
-        margin-left: 0 !important;   
-        width: 100% !important;     
-        padding: 30px 0 15px !important; 
-        display: flex !important;    
-        flex-direction: column;   
-        align-items: center;          
+        padding: 20px 15px !important;
+        margin-left: 0 !important;
+    }
+    
+    header h1 {
+        font-size: 1.8em;
+        margin-bottom: 20px;
+        font-weight: 700;
     }
     
     .reservations-container {
-        max-width: 100% !important; 
+        grid-template-columns: 1fr;
+        gap: 15px;
         padding: 0 15px;
     }
-
+    
     .reservation-card {
-        width: 100% !important;     
+        width: 100%;
+        max-width: 100%;
     }
-    
-    header {
-        margin-top: 25px!important; 
-        min-width: 270px;
-        max-height: 70px;
-        width: calc(100% - 100px);
-        margin-left: 200px;      
-        background-color: var(--primary-color);
-        color: white;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 30px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        text-align: center;
-        max-width: 320px;
-    }
-    
-    body {
-        font-size: 14px;
-    }
-
-    h1 {
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
-    }
-    
-    header {
-        margin-left: 35px;
-        width: 100%; 
-    }
-    
-    .search-container {
-        width: 90%;
-        margin: 15px auto;
-    }
-
-    .no-results {
-    text-align: center;
-    color: var(--primary-color);
-    padding: 20px;
-    grid-column: 1 / -1; /* 跨所有列 */
-}
 }
 
 @media (max-width: 480px) {
-    header {
-        padding: 15px;
-        margin-left: 20px !important;
-        width: calc(100% - 40px) !important;
+    header h1 {
+        font-size: 1.6em;
+        padding: 0 15px;
+        font-weight: 700;
     }
     
-    .date-picker {
-        padding: 10px 15px 10px 35px;
-        font-size: 0.9em;
+    .reservation-info {
+        flex-wrap: wrap;
     }
     
-    .clear-btn {
-        right: 10px;
+    .reservation-info label {
+        min-width: 80px;
+        margin-bottom: 5px;
+    }
+    
+    .status-indicator {
+        position: static;
+        margin-bottom: 10px;
+        width: fit-content;
     }
 }
